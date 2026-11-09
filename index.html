@@ -187,7 +187,6 @@ body {
 
 #status { min-height: 25px; color: #ffd36a; margin-top: 15px; }
 
-/* How to use guide */
 .guide-box {
   background: rgba(12,25,48,.88);
   border: 1px solid #176caa;
@@ -282,7 +281,6 @@ footer { margin-top: 30px; color: #879bb2; font-size: 12px; }
 
   <div id="status" role="status"></div>
 
-  <!-- HOW TO USE -->
   <section class="guide-box">
     <h2 class="guide-title" id="guideTitle">📖 كيفية إكمال الإعلانات</h2>
     <div id="guideSteps"></div>
@@ -454,7 +452,11 @@ function getActiveSession() {
 
     const session = JSON.parse(raw);
 
-    if (Date.now() - session.startedAt >= LOCK_DURATION) {
+    if (
+      !session ||
+      !Number.isFinite(Number(session.startedAt)) ||
+      Date.now() - Number(session.startedAt) >= LOCK_DURATION
+    ) {
       localStorage.removeItem(LOCK_KEY);
       return null;
     }
@@ -524,6 +526,7 @@ function changeLanguage(language) {
   }
 }
 
+/* Updated stage unlocking logic */
 function updateProgress(value) {
   progress = Math.max(0, Math.min(REQUIRED, Number(value) || 0));
 
@@ -532,8 +535,6 @@ function updateProgress(value) {
 
   document.getElementById("bar").style.width =
     (progress / REQUIRED * 100) + "%";
-
-  const session = getActiveSession();
 
   for (let i = 1; i <= REQUIRED; i++) {
     const button = document.getElementById("btn" + i);
@@ -547,7 +548,7 @@ function updateProgress(value) {
       button.textContent = "✓ " + t("completed");
       button.disabled = true;
       button.className = "";
-    } else if (i === progress + 1 && !session) {
+    } else if (i === progress + 1) {
       button.textContent = t("watch");
       button.disabled = false;
       button.className = "";
@@ -586,9 +587,26 @@ async function refreshProgress() {
     if (!response.ok) throw new Error("Progress request failed");
 
     const data = await response.json();
-    const newProgress = Number(data.progress) || 0;
+    const newProgress = Math.max(
+      0,
+      Math.min(REQUIRED, Number(data.progress) || 0)
+    );
 
-    if (lastProgress !== null && newProgress > lastProgress) {
+    const session = getActiveSession();
+
+    if (
+      session &&
+      Number(session.stage) <= newProgress
+    ) {
+      clearActiveSession();
+
+      if (newProgress < REQUIRED) {
+        statusBox.textContent = t("confirmed");
+      }
+    } else if (
+      lastProgress !== null &&
+      newProgress > lastProgress
+    ) {
       clearActiveSession();
 
       if (newProgress < REQUIRED) {
@@ -644,7 +662,11 @@ async function watchAd(number) {
     }
 
     const ads = Array.isArray(data.ads) ? data.ads : [];
-    const ad = ads[progress];
+
+    /* Use an available ad without assuming there are 3 ads */
+    const ad = ads.length
+      ? ads[(number - 1) % ads.length]
+      : null;
 
     if (!ad || !ad.url) {
       throw new Error(t("noAd"));
