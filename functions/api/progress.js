@@ -1,5 +1,9 @@
 
-import { getVisitor, json } from "./_lib/session.js";
+import {
+  getVisitor,
+  json,
+  createVisitorCookie
+} from "./_lib/session.js";
 
 export async function onRequestGet({ request, env }) {
   try {
@@ -7,14 +11,19 @@ export async function onRequestGet({ request, env }) {
       return json({ error: "Server configuration missing" }, 500);
     }
 
-    const userId = await getVisitor(request, env);
+    let userId = await getVisitor(request, env);
+    let cookie = null;
 
+    // Create a visitor session on the first visit
     if (!userId) {
-      return json({
-        progress: 0,
-        required: 3,
-        unlocked: false
-      });
+      cookie = await createVisitorCookie(env);
+      const match = cookie.match(/^oxide_visitor=([^;]+)/);
+
+      if (!match) {
+        return json({ error: "Could not create visitor session" }, 500);
+      }
+
+      userId = decodeURIComponent(match[1]).split(".")[0];
     }
 
     const now = Math.floor(Date.now() / 1000);
@@ -59,10 +68,22 @@ export async function onRequestGet({ request, env }) {
       Math.min(3, Number(row?.progress || 0))
     );
 
-    return json({
+    const headers = {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store"
+    };
+
+    if (cookie) {
+      headers["Set-Cookie"] = cookie;
+    }
+
+    return new Response(JSON.stringify({
       progress,
       required: 3,
       unlocked: progress >= 3
+    }), {
+      status: 200,
+      headers
     });
 
   } catch (error) {
