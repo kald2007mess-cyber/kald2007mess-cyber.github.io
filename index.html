@@ -6,8 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OXIDE HUB</title>
 
-  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-
   <style>
     * { box-sizing: border-box; }
 
@@ -152,7 +150,7 @@
 
     <div id="stages"></div>
 
-    <a id="download" href="#" target="_blank" rel="noopener">
+    <a id="download" href="#" aria-disabled="true">
       DOWNLOAD
     </a>
 
@@ -162,88 +160,135 @@
   </main>
 
   <script>
-    const BLOCK_ID = "58793";
-
-    // ضع رابط ملف التحميل الحقيقي هنا بعد تجهيزه
-    const DOWNLOAD_URL = "";
-
     const stages = document.getElementById("stages");
     const statusBox = document.getElementById("status");
-    const completed = new Set();
-    let adController = null;
+
+    let progress = 0;
     let busy = false;
 
     for (let i = 1; i <= 5; i++) {
       const item = document.createElement("div");
       item.className = "stage";
+
       item.innerHTML = `
-        <span>المرحلة ${i}/5 <span class="check" id="check${i}"></span></span>
+        <span>
+          المرحلة ${i}/5
+          <span class="check" id="check${i}"></span>
+        </span>
         <button id="btn${i}" onclick="watchAd(${i})">
           WATCH AD
         </button>
       `;
+
       stages.appendChild(item);
     }
 
-    function updateProgress() {
-      const total = completed.size;
-      document.getElementById("count").textContent = total + "/5";
+    function updateProgress(value) {
+      progress = Math.max(0, Math.min(5, Number(value) || 0));
+
+      document.getElementById("count").textContent =
+        progress + "/5";
+
       document.getElementById("bar").style.width =
-        (total * 20) + "%";
+        (progress * 20) + "%";
 
-      if (total === 5) {
-        const download = document.getElementById("download");
+      for (let i = 1; i <= 5; i++) {
+        const button = document.getElementById("btn" + i);
+        const check = document.getElementById("check" + i);
 
-        if (DOWNLOAD_URL) {
-          download.href = DOWNLOAD_URL;
-          download.classList.add("ready");
-          statusBox.textContent = "All stages completed!";
+        if (i <= progress) {
+          button.textContent = "COMPLETED";
+          button.disabled = true;
+          check.textContent = "✓";
         } else {
-          statusBox.textContent =
-            "اكتملت المراحل الخمس. رابط التحميل لم يُضف بعد.";
+          button.textContent = "WATCH AD";
+          button.disabled = false;
+          check.textContent = "";
         }
+      }
+
+      if (progress === 5) {
+        statusBox.textContent =
+          "اكتملت المراحل الخمس! التحميل غير مجهز بعد.";
+      }
+    }
+
+    async function refreshProgress() {
+      try {
+        const response = await fetch("/api/progress", {
+          method: "GET",
+          cache: "no-store",
+          credentials: "same-origin"
+        });
+
+        if (!response.ok) {
+          throw new Error("Progress request failed");
+        }
+
+        const data = await response.json();
+        updateProgress(data.progress);
+
+      } catch (error) {
+        statusBox.textContent =
+          "تعذر تحديث التقدم. أعد تحميل الصفحة.";
       }
     }
 
     async function watchAd(number) {
-      if (completed.has(number) || busy) return;
+      if (busy || number <= progress) return;
 
-      if (!window.Adsgram) {
-        statusBox.textContent = "تعذر تحميل مكتبة الإعلانات.";
+      const popup = window.open("about:blank", "_blank");
+
+      if (!popup) {
+        statusBox.textContent =
+          "اسمح بفتح النوافذ المنبثقة للمتابعة.";
         return;
       }
 
       try {
         busy = true;
-        statusBox.textContent = "جاري تحميل الإعلان...";
+        statusBox.textContent = "جاري فتح Offerwall...";
 
-        if (!adController) {
-          adController = window.Adsgram.init({
-            blockId: BLOCK_ID
-          });
+        const response = await fetch("/api/offerwall", {
+          method: "GET",
+          cache: "no-store",
+          credentials: "same-origin"
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.url) {
+          throw new Error(
+            data.error || "تعذر إنشاء رابط المهام"
+          );
         }
 
-        const result = await adController.show();
+        popup.location.href = data.url;
 
-        if (result && result.done === true && !result.error) {
-          completed.add(number);
-          document.getElementById("check" + number).textContent = "✓";
+        statusBox.textContent =
+          "أكمل المهام وانتظر تأكيد المكافأة.";
 
-          const button = document.getElementById("btn" + number);
-          button.textContent = "COMPLETED";
-          button.disabled = true;
-
-          statusBox.textContent = "تم إكمال المرحلة بنجاح!";
-          updateProgress();
-        } else {
-          statusBox.textContent = "لم يكتمل الإعلان، حاول مرة أخرى.";
-        }
       } catch (error) {
-        statusBox.textContent = "تعذر عرض الإعلان. حاول لاحقاً.";
+        popup.close();
+
+        statusBox.textContent =
+          error.message || "حدث خطأ. حاول مرة أخرى.";
+
       } finally {
         busy = false;
+        refreshProgress();
       }
     }
+
+    refreshProgress();
+
+    setInterval(refreshProgress, 5000);
+
+    window.addEventListener("focus", refreshProgress);
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) refreshProgress();
+    });
   </script>
 </body>
 </html>
