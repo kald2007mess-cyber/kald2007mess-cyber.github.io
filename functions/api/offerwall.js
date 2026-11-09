@@ -1,3 +1,4 @@
+
 import {
   getVisitor,
   json,
@@ -5,18 +6,6 @@ import {
 } from "./_lib/session.js";
 
 const encoder = new TextEncoder();
-
-function toBase64Url(bytes) {
-  let binary = "";
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-
-  return btoa(binary)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
 
 async function sign(secret, message) {
   const key = await crypto.subtle.importKey(
@@ -27,9 +16,15 @@ async function sign(secret, message) {
     ["sign"]
   );
 
-  return new Uint8Array(
-    await crypto.subtle.sign("HMAC", key, encoder.encode(message))
+  const signature = await crypto.subtle.sign(
+    "HMAC",
+    key,
+    encoder.encode(message)
   );
+
+  return Array.from(new Uint8Array(signature))
+    .map(byte => byte.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 export async function onRequestGet({ request, env }) {
@@ -46,31 +41,38 @@ export async function onRequestGet({ request, env }) {
     let cookie = null;
 
     if (!userId) {
-      const newCookie = await createVisitorCookie(env);
-      userId = newCookie.split("=")[1].split(".")[0];
-      cookie = newCookie;
+      cookie = await createVisitorCookie(env);
+      userId = cookie.split("=")[1].split(".")[0];
     }
 
-    const expiry = Math.floor(Date.now() / 1000) + 3600;
+    const expiry = String(
+      Math.floor(Date.now() / 1000) + 3600
+    );
 
     const message = [
       "offerwall-user-v1",
       env.OFFERWALL_PUBLIC_KEY,
       userId,
-      String(expiry)
+      expiry
     ].join("\n");
 
-    const signature = toBase64Url(
-      await sign(env.OFFERWALL_SECRET, message)
+    const signature = await sign(
+      env.OFFERWALL_SECRET,
+      message
     );
 
-    const url = new URL("https://offerwall.me/offerwall");
-    url.searchParams.set("apiKey", env.OFFERWALL_PUBLIC_KEY);
-    url.searchParams.set("userId", userId);
-    url.searchParams.set("identityExpires", String(expiry));
-    url.searchParams.set("identitySignature", signature);
+    const url =
+      "https://offerwall.me/offerwall/" +
+      encodeURIComponent(env.OFFERWALL_PUBLIC_KEY) +
+      "/" +
+      encodeURIComponent(userId) +
+      "?identityExpires=" +
+      encodeURIComponent(expiry) +
+      "&identitySignature=" +
+      encodeURIComponent(signature);
 
     const headers = {
+      "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store"
     };
 
@@ -79,17 +81,13 @@ export async function onRequestGet({ request, env }) {
     }
 
     return new Response(
-      JSON.stringify({ url: url.toString() }),
-      {
-        status: 200,
-        headers: {
-          ...headers,
-          "Content-Type": "application/json; charset=utf-8"
-        }
-      }
+      JSON.stringify({ url }),
+      { status: 200, headers }
     );
 
   } catch (error) {
-    return json({ error: "Could not create offerwall link" }, 500);
+    return json({
+      error: "Could not create offerwall link"
+    }, 500);
   }
 }
