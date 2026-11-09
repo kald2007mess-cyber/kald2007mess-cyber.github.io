@@ -2,562 +2,582 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OXIDE HUB</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OXIDE HUB</title>
 
-  <style>
-    * { box-sizing: border-box; }
+<style>
+* { box-sizing: border-box; }
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, sans-serif;
-      color: white;
-      text-align: center;
-      background:
-        linear-gradient(rgba(3,8,22,.68), rgba(3,8,22,.88)),
-        url("background.png") center/cover fixed;
-      background-size: auto, 105% 105%;
-      padding: 25px 15px;
-      animation: backgroundDrift 35s ease-in-out infinite alternate;
-    }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  color: white;
+  text-align: center;
+  background:
+    linear-gradient(rgba(3,8,22,.68), rgba(3,8,22,.88)),
+    url("background.png") center/cover fixed;
+  background-size: auto, 105% 105%;
+  padding: 25px 15px;
+  animation: backgroundDrift 35s ease-in-out infinite alternate;
+}
 
-    @keyframes backgroundDrift {
-      from { background-position: center, 48% 48%; }
-      to { background-position: center, 52% 52%; }
-    }
+@keyframes backgroundDrift {
+  from { background-position: center, 48% 48%; }
+  to { background-position: center, 52% 52%; }
+}
 
-    .container {
-      max-width: 430px;
-      margin: auto;
-    }
+.container { max-width: 430px; margin: auto; }
 
-    .language-box {
-      display: flex;
-      justify-content: flex-end;
-      margin-bottom: 5px;
-    }
+.language-box {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 5px;
+}
 
-    .language-box select {
-      background: rgba(12, 25, 48, .9);
-      color: white;
-      border: 1px solid #176caa;
-      border-radius: 8px;
-      padding: 9px 12px;
-      font-size: 14px;
-      outline: none;
-    }
+.language-box select {
+  background: rgba(12,25,48,.9);
+  color: white;
+  border: 1px solid #176caa;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 14px;
+  outline: none;
+}
 
-    .language-box option {
-      background: #0c1930;
-      color: white;
-    }
+.language-box option { background: #0c1930; color: white; }
 
-    .logo {
-      font-size: 35px;
-      font-weight: 900;
-      letter-spacing: 3px;
-      color: #fff;
-      text-shadow: 0 0 15px #00aaff;
-      margin: 25px 0 8px;
-    }
+.logo {
+  font-size: 35px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: #fff;
+  text-shadow: 0 0 15px #00aaff;
+  margin: 25px 0 8px;
+}
 
-    .subtitle {
-      color: #b8c9dd;
-      margin-bottom: 28px;
-    }
+.subtitle { color: #b8c9dd; margin-bottom: 28px; }
 
-    .progress-box {
-      background: rgba(12, 25, 48, .85);
-      border: 1px solid #176caa;
-      border-radius: 14px;
-      padding: 15px;
-      margin-bottom: 20px;
-    }
+.progress-box {
+  background: rgba(12,25,48,.85);
+  border: 1px solid #176caa;
+  border-radius: 14px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
 
-    .progress-text {
-      font-size: 19px;
-      font-weight: bold;
-      margin-bottom: 12px;
-    }
+.progress-text {
+  font-size: 19px;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
 
-    .bar {
-      height: 10px;
-      background: #25364b;
-      border-radius: 20px;
-      overflow: hidden;
-    }
+.bar {
+  height: 10px;
+  background: #25364b;
+  border-radius: 20px;
+  overflow: hidden;
+}
 
-    .bar-fill {
-      height: 100%;
-      width: 0%;
-      background: #00b7ff;
-      transition: width .3s;
-    }
+.bar-fill {
+  height: 100%;
+  width: 0%;
+  background: #00b7ff;
+  transition: width .3s;
+}
 
-    .stage {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: rgba(13, 29, 52, .88);
-      border: 1px solid #244765;
-      padding: 16px;
-      margin: 12px 0;
-      border-radius: 13px;
-    }
+.stage {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(13,29,52,.88);
+  border: 1px solid #244765;
+  padding: 16px;
+  margin: 12px 0;
+  border-radius: 13px;
+  gap: 8px;
+}
 
-    .stage button {
-      border: 0;
-      padding: 11px 18px;
-      border-radius: 8px;
-      color: white;
-      background: #087ed0;
-      font-weight: bold;
-      cursor: pointer;
-    }
+.stage button {
+  border: 0;
+  padding: 11px 14px;
+  border-radius: 8px;
+  color: white;
+  background: #087ed0;
+  font-weight: bold;
+  cursor: pointer;
+  white-space: nowrap;
+}
 
-    .stage button:disabled {
-      background: #28634c;
-      cursor: default;
-    }
+.stage button:disabled {
+  background: #28634c;
+  cursor: default;
+}
 
-    .check {
-      color: #35ef91;
-      font-size: 23px;
-      margin-right: 8px;
-    }
+.stage button.locked {
+  background: #344253;
+  color: #b6c1ce;
+  cursor: not-allowed;
+}
 
-    .download-button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
-      margin-top: 25px;
-      padding: 16px;
-      border-radius: 12px;
-      color: white;
-      background: #087ed0;
-      font-size: 18px;
-      font-weight: bold;
-      text-decoration: none;
-      border: 0;
-      opacity: .4;
-      pointer-events: none;
-      cursor: default;
-      font-family: Arial, sans-serif;
-    }
+.check { color: #35ef91; font-size: 23px; margin-right: 8px; }
+.lock-icon { color: #aab6c4; margin-right: 5px; }
 
-    .download-button.ready {
-      opacity: 1;
-      pointer-events: auto;
-      cursor: pointer;
-    }
+.download-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 25px;
+  padding: 16px;
+  border-radius: 12px;
+  color: white;
+  background: #087ed0;
+  font-size: 18px;
+  font-weight: bold;
+  text-decoration: none;
+  border: 0;
+  opacity: .4;
+  pointer-events: none;
+  cursor: default;
+  font-family: Arial, sans-serif;
+}
 
-    .download-button.ready:hover {
-      filter: brightness(1.1);
-    }
+.download-button.ready {
+  opacity: 1;
+  pointer-events: auto;
+  cursor: pointer;
+}
 
-    .platform-icon {
-      font-size: 25px;
-      line-height: 1;
-    }
+.download-button.ready:hover { filter: brightness(1.1); }
 
-    .soon-button {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
-      margin-top: 12px;
-      padding: 16px;
-      border-radius: 12px;
-      color: white;
-      background: #087ed0;
-      font-size: 18px;
-      font-weight: bold;
-      opacity: .55;
-      border: 0;
-      cursor: not-allowed;
-      font-family: Arial, sans-serif;
-    }
+.android-icon {
+  width: 29px;
+  height: 29px;
+  fill: #3ddc84;
+  flex-shrink: 0;
+}
 
-    .soon-label {
-      font-size: 11px;
-      background: rgba(0,0,0,.3);
-      padding: 5px 8px;
-      border-radius: 6px;
-    }
+.platform-icon { font-size: 25px; line-height: 1; }
 
-    #status {
-      min-height: 25px;
-      color: #ffd36a;
-      margin-top: 15px;
-    }
+.soon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  color: white;
+  background: #087ed0;
+  font-size: 18px;
+  font-weight: bold;
+  opacity: .55;
+  border: 0;
+  cursor: not-allowed;
+  font-family: Arial, sans-serif;
+}
 
-    footer {
-      margin-top: 35px;
-      color: #879bb2;
-      font-size: 12px;
-    }
-  </style>
+.soon-label {
+  font-size: 11px;
+  background: rgba(0,0,0,.3);
+  padding: 5px 8px;
+  border-radius: 6px;
+}
+
+#status { min-height: 25px; color: #ffd36a; margin-top: 15px; }
+
+footer { margin-top: 35px; color: #879bb2; font-size: 12px; }
+</style>
 </head>
 
 <body>
-  <main class="container">
+<main class="container">
 
-    <div class="language-box">
-      <select id="language" onchange="changeLanguage(this.value)">
-        <option value="ar">🇩🇿 العربية</option>
-        <option value="en">🇬🇧 English</option>
-        <option value="ru">🇷🇺 Русский</option>
-      </select>
+  <div class="language-box">
+    <select id="language" onchange="changeLanguage(this.value)">
+      <option value="ar">🇩🇿 العربية</option>
+      <option value="en">🇬🇧 English</option>
+      <option value="ru">🇷🇺 Русский</option>
+    </select>
+  </div>
+
+  <div class="logo">OXIDE HUB</div>
+  <div class="subtitle">SURVIVE • EXPLORE • DOMINATE</div>
+
+  <section class="progress-box">
+    <div class="progress-text">
+      <span id="progressLabel">التقدم:</span>
+      <span id="count">0/3</span>
     </div>
-
-    <div class="logo">OXIDE HUB</div>
-
-    <div class="subtitle" id="subtitle">
-      SURVIVE • EXPLORE • DOMINATE
+    <div class="bar">
+      <div class="bar-fill" id="bar"></div>
     </div>
+  </section>
 
-    <section class="progress-box">
-      <div class="progress-text">
-        <span id="progressLabel">التقدم:</span>
-        <span id="count">0/3</span>
-      </div>
+  <div id="stages"></div>
 
-      <div class="bar">
-        <div class="bar-fill" id="bar"></div>
-      </div>
-    </section>
+  <a id="download" class="download-button" href="#" aria-disabled="true">
+    <svg class="android-icon" viewBox="0 0 24 24" aria-label="Android">
+      <path d="M6.2 7.2 4.6 4.5a.5.5 0 0 1 .86-.5l1.65 2.8a8.2 8.2 0 0 1 9.78 0l1.65-2.8a.5.5 0 1 1 .86.5l-1.6 2.7A7.2 7.2 0 0 1 21 13H3a7.2 7.2 0 0 1 3.2-5.8ZM7 14h10v5.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 7 19.5V14Zm-3-1h2v6H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 1-2Zm15 0h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1v-6ZM9 2.8a.6.6 0 1 0 0 1.2.6.6 0 0 0 0-1.2Zm6 0a.6.6 0 1 0 0 1.2.6.6 0 0 0 0-1.2Z"/>
+    </svg>
+    <span id="androidText">تحميل ANDROID</span>
+  </a>
 
-    <div id="stages"></div>
+  <button class="soon-button" disabled>
+    <span class="platform-icon">🍎</span>
+    <span id="iphoneText">تحميل iPHONE</span>
+    <span class="soon-label">🔒 SOON</span>
+  </button>
 
-    <a
-      id="download"
-      class="download-button"
-      href="#"
-      aria-disabled="true"
-    >
-      <span class="platform-icon">🤖</span>
-      <span id="androidText">تحميل ANDROID</span>
-    </a>
+  <div id="status" role="status"></div>
 
-    <button class="soon-button" disabled>
-      <span class="platform-icon">🍎</span>
-      <span id="iphoneText">تحميل iPHONE</span>
-      <span class="soon-label">🔒 SOON</span>
-    </button>
+  <footer>
+    OXIDE HUB © 2026<br>
+    Created by SKIMI_17
+  </footer>
 
-    <div id="status" role="status"></div>
+</main>
 
-    <footer>
-      OXIDE HUB © 2026<br>
-      Created by SKIMI_17
-    </footer>
+<script>
+const REQUIRED = 3;
+const LOCK_DURATION = 2 * 60 * 60 * 1000;
 
-  </main>
+const DRIVE_DOWNLOAD =
+  "https://drive.google.com/uc?export=download&id=1HsDZMwz8_zLSSsHKSd9m4S02hza2GHr5";
 
-  <script>
-    const REQUIRED = 3;
+const stages = document.getElementById("stages");
+const statusBox = document.getElementById("status");
 
-    const DRIVE_DOWNLOAD =
-      "https://drive.google.com/uc?export=download&id=1HsDZMwz8_zLSSsHKSd9m4S02hza2GHr5";
+let progress = 0;
+let busy = false;
+let lastProgress = null;
+let currentLanguage = "ar";
+let activePopup = null;
 
-    const stages = document.getElementById("stages");
-    const statusBox = document.getElementById("status");
+const LOCK_KEY = "oxide_active_ad_session";
 
-    let progress = 0;
-    let busy = false;
-    let lastProgress = null;
-    let currentLanguage = "ar";
+const translations = {
+  ar: {
+    progress: "التقدم:",
+    stage: "المرحلة",
+    watch: "مشاهدة الإعلان",
+    completed: "مكتمل",
+    locked: "مقفل",
+    android: "تحميل ANDROID",
+    iphone: "تحميل iPHONE",
+    waiting: "أكمل الإعلان السابق أولاً.",
+    searching: "جاري البحث عن إعلان متاح...",
+    noAd: "لا يوجد إعلان متاح حاليًا. حاول لاحقًا.",
+    popup: "اسمح بفتح النوافذ المنبثقة للمتابعة.",
+    invalid: "بيانات الإعلان غير صالحة.",
+    opened: "تم فتح الإعلان:",
+    seconds: "ثانية. أكمله وانتظر تأكيد المكافأة.",
+    confirmed: "تم تأكيد إكمال الإعلان! يمكنك الانتقال للمرحلة التالية.",
+    complete: "اكتملت الإعلانات الثلاثة! يمكنك الآن تحميل تطبيق Android.",
+    session: "لديك جلسة إعلان سابقة لم تنتهِ بعد. أكملها أولاً.",
+    error: "حدث خطأ. حاول مرة أخرى.",
+    refreshError: "تعذر تحديث التقدم. أعد تحميل الصفحة."
+  },
+  en: {
+    progress: "Progress:",
+    stage: "Stage",
+    watch: "WATCH AD",
+    completed: "COMPLETED",
+    locked: "LOCKED",
+    android: "DOWNLOAD ANDROID",
+    iphone: "DOWNLOAD iPHONE",
+    waiting: "Complete the previous ad first.",
+    searching: "Searching for an available ad...",
+    noAd: "No ad is available right now. Try later.",
+    popup: "Allow pop-ups to continue.",
+    invalid: "Invalid advertisement data.",
+    opened: "Advertisement opened:",
+    seconds: "seconds. Complete it and wait for reward confirmation.",
+    confirmed: "Ad completion confirmed! Continue to the next stage.",
+    complete: "All three ads completed! You can now download Android.",
+    session: "You have an unfinished ad session. Complete it first.",
+    error: "An error occurred. Please try again.",
+    refreshError: "Could not update progress. Reload the page."
+  },
+  ru: {
+    progress: "Прогресс:",
+    stage: "Этап",
+    watch: "СМОТРЕТЬ РЕКЛАМУ",
+    completed: "ЗАВЕРШЕНО",
+    locked: "ЗАКРЫТО",
+    android: "СКАЧАТЬ ANDROID",
+    iphone: "СКАЧАТЬ iPHONE",
+    waiting: "Сначала завершите предыдущую рекламу.",
+    searching: "Поиск доступной рекламы...",
+    noAd: "Сейчас нет доступной рекламы. Попробуйте позже.",
+    popup: "Разрешите всплывающие окна.",
+    invalid: "Недействительные данные рекламы.",
+    opened: "Реклама открыта:",
+    seconds: "секунд. Завершите её и дождитесь подтверждения.",
+    confirmed: "Реклама подтверждена! Можно продолжить.",
+    complete: "Все три рекламы завершены! Можно скачать Android.",
+    session: "У вас есть незавершённая рекламная сессия.",
+    error: "Произошла ошибка. Попробуйте снова.",
+    refreshError: "Не удалось обновить прогресс."
+  }
+};
 
-    const translations = {
-      ar: {
-        direction: "rtl",
-        progress: "التقدم:",
-        stage: "المرحلة",
-        watch: "مشاهدة الإعلان",
-        completed: "مكتمل",
-        android: "تحميل ANDROID",
-        iphone: "تحميل iPHONE",
-        waiting: "أكمل الإعلان السابق أولاً.",
-        searching: "جاري البحث عن إعلان متاح...",
-        noAd: "لا يوجد إعلان متاح لهذه المرحلة حالياً. حاول لاحقاً.",
-        popup: "اسمح بفتح النوافذ المنبثقة للمتابعة.",
-        invalid: "بيانات الإعلان غير صالحة.",
-        opened: "تم فتح الإعلان:",
-        seconds: "ثانية. أكمله وانتظر تأكيد المكافأة.",
-        confirmed: "تم تأكيد إكمال الإعلان! يمكنك الانتقال للمرحلة التالية.",
-        complete: "اكتملت الإعلانات الثلاثة! يمكنك الآن تحميل تطبيق Android.",
-        error: "حدث خطأ. حاول مرة أخرى.",
-        refreshError: "تعذر تحديث التقدم. أعد تحميل الصفحة."
-      },
+function t(key) {
+  return translations[currentLanguage][key];
+}
 
-      en: {
-        direction: "ltr",
-        progress: "Progress:",
-        stage: "Stage",
-        watch: "WATCH AD",
-        completed: "COMPLETED",
-        android: "DOWNLOAD ANDROID",
-        iphone: "DOWNLOAD iPHONE",
-        waiting: "Complete the previous ad first.",
-        searching: "Searching for an available ad...",
-        noAd: "No ad is available for this stage right now. Try again later.",
-        popup: "Allow pop-ups to continue.",
-        invalid: "Invalid advertisement data.",
-        opened: "Advertisement opened:",
-        seconds: "seconds. Complete it and wait for reward confirmation.",
-        confirmed: "Ad completion confirmed! You can continue to the next stage.",
-        complete: "All three ads completed! You can now download Android.",
-        error: "An error occurred. Please try again.",
-        refreshError: "Could not update progress. Reload the page."
-      },
+function getActiveSession() {
+  try {
+    const raw = localStorage.getItem(LOCK_KEY);
+    if (!raw) return null;
 
-      ru: {
-        direction: "ltr",
-        progress: "Прогресс:",
-        stage: "Этап",
-        watch: "СМОТРЕТЬ РЕКЛАМУ",
-        completed: "ЗАВЕРШЕНО",
-        android: "СКАЧАТЬ ANDROID",
-        iphone: "СКАЧАТЬ iPHONE",
-        waiting: "Сначала завершите предыдущую рекламу.",
-        searching: "Поиск доступной рекламы...",
-        noAd: "Для этого этапа сейчас нет рекламы. Попробуйте позже.",
-        popup: "Разрешите всплывающие окна, чтобы продолжить.",
-        invalid: "Недействительные данные рекламы.",
-        opened: "Реклама открыта:",
-        seconds: "секунд. Завершите её и дождитесь подтверждения награды.",
-        confirmed: "Завершение рекламы подтверждено! Можно перейти к следующему этапу.",
-        complete: "Все три рекламы завершены! Теперь можно скачать Android.",
-        error: "Произошла ошибка. Попробуйте снова.",
-        refreshError: "Не удалось обновить прогресс. Перезагрузите страницу."
-      }
-    };
+    const session = JSON.parse(raw);
 
-    function t(key) {
-      return translations[currentLanguage][key];
+    if (Date.now() - session.startedAt >= LOCK_DURATION) {
+      localStorage.removeItem(LOCK_KEY);
+      return null;
     }
 
-    function createStages() {
-      stages.innerHTML = "";
+    return session;
+  } catch {
+    localStorage.removeItem(LOCK_KEY);
+    return null;
+  }
+}
 
-      for (let i = 1; i <= REQUIRED; i++) {
-        const item = document.createElement("div");
-        item.className = "stage";
+function saveActiveSession(number) {
+  localStorage.setItem(LOCK_KEY, JSON.stringify({
+    stage: number,
+    startedAt: Date.now()
+  }));
+}
 
-        const label = document.createElement("span");
-        label.innerHTML =
-          `${t("stage")} ${i}/${REQUIRED} ` +
-          `<span class="check" id="check${i}"></span>`;
+function clearActiveSession() {
+  localStorage.removeItem(LOCK_KEY);
 
-        const button = document.createElement("button");
-        button.id = "btn" + i;
-        button.textContent = t("watch");
-        button.onclick = () => watchAd(i);
+  if (activePopup && !activePopup.closed) {
+    try { activePopup.close(); } catch {}
+  }
 
-        item.appendChild(label);
-        item.appendChild(button);
-        stages.appendChild(item);
-      }
+  activePopup = null;
+}
 
-      updateProgress(progress);
+function createStages() {
+  stages.innerHTML = "";
+
+  for (let i = 1; i <= REQUIRED; i++) {
+    const item = document.createElement("div");
+    item.className = "stage";
+
+    const label = document.createElement("span");
+    label.id = "label" + i;
+
+    const button = document.createElement("button");
+    button.id = "btn" + i;
+    button.onclick = () => watchAd(i);
+
+    item.appendChild(label);
+    item.appendChild(button);
+    stages.appendChild(item);
+  }
+
+  updateProgress(progress);
+}
+
+function changeLanguage(language) {
+  if (!translations[language]) return;
+
+  currentLanguage = language;
+  document.documentElement.lang = language;
+  document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
+
+  document.getElementById("progressLabel").textContent = t("progress");
+  document.getElementById("androidText").textContent = t("android");
+  document.getElementById("iphoneText").textContent = t("iphone");
+
+  createStages();
+
+  if (progress >= REQUIRED) {
+    statusBox.textContent = t("complete");
+  }
+}
+
+function updateProgress(value) {
+  progress = Math.max(0, Math.min(REQUIRED, Number(value) || 0));
+
+  document.getElementById("count").textContent =
+    progress + "/" + REQUIRED;
+
+  document.getElementById("bar").style.width =
+    (progress / REQUIRED * 100) + "%";
+
+  const session = getActiveSession();
+
+  for (let i = 1; i <= REQUIRED; i++) {
+    const button = document.getElementById("btn" + i);
+    const label = document.getElementById("label" + i);
+
+    if (!button || !label) continue;
+
+    label.textContent = t("stage") + " " + i + "/" + REQUIRED;
+
+    if (i <= progress) {
+      button.textContent = "✓ " + t("completed");
+      button.disabled = true;
+      button.className = "";
+    } else if (i === progress + 1 && !session) {
+      button.textContent = t("watch");
+      button.disabled = false;
+      button.className = "";
+    } else if (i === progress + 1 && session) {
+      button.textContent = "🔒 " + t("locked");
+      button.disabled = true;
+      button.className = "locked";
+    } else {
+      button.textContent = "🔒 " + t("locked");
+      button.disabled = true;
+      button.className = "locked";
     }
+  }
 
-    function changeLanguage(language) {
-      if (!translations[language]) return;
+  const download = document.getElementById("download");
 
-      currentLanguage = language;
+  if (progress >= REQUIRED) {
+    download.classList.add("ready");
+    download.href = DRIVE_DOWNLOAD;
+    download.target = "_blank";
+    download.rel = "noopener noreferrer";
+    download.setAttribute("aria-disabled", "false");
+    statusBox.textContent = t("complete");
+  } else {
+    download.classList.remove("ready");
+    download.href = "#";
+    download.removeAttribute("target");
+    download.setAttribute("aria-disabled", "true");
+  }
+}
 
-      document.documentElement.lang = language;
-      document.documentElement.dir =
-        translations[language].direction;
+async function refreshProgress() {
+  try {
+    const response = await fetch("/api/progress", {
+      method: "GET",
+      cache: "no-store",
+      credentials: "same-origin"
+    });
 
-      document.getElementById("progressLabel").textContent =
-        t("progress");
+    if (!response.ok) throw new Error("Progress request failed");
 
-      document.getElementById("androidText").textContent =
-        t("android");
+    const data = await response.json();
+    const newProgress = Number(data.progress) || 0;
 
-      document.getElementById("iphoneText").textContent =
-        t("iphone");
+    if (lastProgress !== null && newProgress > lastProgress) {
+      clearActiveSession();
 
-      createStages();
-
-      if (progress >= REQUIRED) {
-        statusBox.textContent = t("complete");
-      }
-    }
-
-    function updateProgress(value) {
-      progress = Math.max(
-        0,
-        Math.min(REQUIRED, Number(value) || 0)
-      );
-
-      document.getElementById("count").textContent =
-        progress + "/" + REQUIRED;
-
-      document.getElementById("bar").style.width =
-        (progress / REQUIRED * 100) + "%";
-
-      for (let i = 1; i <= REQUIRED; i++) {
-        const button = document.getElementById("btn" + i);
-        const check = document.getElementById("check" + i);
-
-        if (!button || !check) continue;
-
-        if (i <= progress) {
-          button.textContent = t("completed");
-          button.disabled = true;
-          check.textContent = "✓";
-        } else {
-          button.textContent = t("watch");
-          button.disabled = false;
-          check.textContent = "";
-        }
-      }
-
-      const download = document.getElementById("download");
-
-      if (progress >= REQUIRED) {
-        download.classList.add("ready");
-        download.href = DRIVE_DOWNLOAD;
-        download.target = "_blank";
-        download.rel = "noopener noreferrer";
-        download.setAttribute("aria-disabled", "false");
-
-        statusBox.textContent = t("complete");
-      } else {
-        download.classList.remove("ready");
-        download.href = "#";
-        download.removeAttribute("target");
-        download.setAttribute("aria-disabled", "true");
-      }
-    }
-
-    async function refreshProgress() {
-      try {
-        const response = await fetch("/api/progress", {
-          method: "GET",
-          cache: "no-store",
-          credentials: "same-origin"
-        });
-
-        if (!response.ok) {
-          throw new Error("Progress request failed");
-        }
-
-        const data = await response.json();
-        const newProgress = Number(data.progress) || 0;
-
-        if (
-          lastProgress !== null &&
-          newProgress > lastProgress &&
-          newProgress < REQUIRED
-        ) {
-          statusBox.textContent = t("confirmed");
-        }
-
-        lastProgress = newProgress;
-        updateProgress(newProgress);
-
-      } catch (error) {
-        statusBox.textContent = t("refreshError");
-      }
-    }
-
-    async function watchAd(number) {
-      if (busy) return;
-      if (number <= progress) return;
-
-      if (number !== progress + 1) {
-        statusBox.textContent = t("waiting");
-        return;
-      }
-
-      const popup = window.open("about:blank", "_blank");
-
-      if (!popup) {
-        statusBox.textContent = t("popup");
-        return;
-      }
-
-      busy = true;
-
-      try {
-        statusBox.textContent = t("searching");
-
-        const response = await fetch("/api/ptc", {
-          method: "GET",
-          cache: "no-store",
-          credentials: "same-origin"
-        });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-          throw new Error(data.error || t("error"));
-        }
-
-        const ads = Array.isArray(data.ads)
-          ? data.ads
-          : [];
-
-        const ad = ads[progress];
-
-        if (!ad || !ad.url) {
-          popup.close();
-          statusBox.textContent = t("noAd");
-          return;
-        }
-
-        if (
-          ![30, 60].includes(Number(ad.duration)) ||
-          !ad.url.startsWith("https://")
-        ) {
-          throw new Error(t("invalid"));
-        }
-
-        popup.location.href = ad.url;
-
-        statusBox.textContent =
-          t("opened") + " " + ad.title +
-          " — " + ad.duration + " " + t("seconds");
-
-      } catch (error) {
-        if (popup && !popup.closed) {
-          popup.close();
-        }
-
-        statusBox.textContent =
-          error.message || t("error");
-
-      } finally {
-        busy = false;
-        refreshProgress();
+      if (newProgress < REQUIRED) {
+        statusBox.textContent = t("confirmed");
       }
     }
 
-    createStages();
-    changeLanguage("ar");
-    refreshProgress();
+    lastProgress = newProgress;
+    updateProgress(newProgress);
 
-    setInterval(refreshProgress, 3000);
+  } catch (error) {
+    statusBox.textContent = t("refreshError");
+  }
+}
 
-    window.addEventListener("focus", refreshProgress);
+async function watchAd(number) {
+  if (busy) return;
+  if (number !== progress + 1) return;
 
-    document.addEventListener(
-      "visibilitychange",
-      () => {
-        if (!document.hidden) {
-          refreshProgress();
-        }
-      }
-    );
-  </script>
+  const existingSession = getActiveSession();
+
+  if (existingSession) {
+    statusBox.textContent = t("session");
+    updateProgress(progress);
+    return;
+  }
+
+  const popup = window.open("about:blank", "_blank");
+
+  if (!popup) {
+    statusBox.textContent = t("popup");
+    return;
+  }
+
+  busy = true;
+  saveActiveSession(number);
+  activePopup = popup;
+  updateProgress(progress);
+
+  try {
+    statusBox.textContent = t("searching");
+
+    const response = await fetch("/api/ptc", {
+      method: "GET",
+      cache: "no-store",
+      credentials: "same-origin"
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || t("error"));
+    }
+
+    const ads = Array.isArray(data.ads) ? data.ads : [];
+    const ad = ads[progress];
+
+    if (!ad || !ad.url) {
+      throw new Error(t("noAd"));
+    }
+
+    if (
+      ![30, 60].includes(Number(ad.duration)) ||
+      !ad.url.startsWith("https://")
+    ) {
+      throw new Error(t("invalid"));
+    }
+
+    popup.location.href = ad.url;
+
+    statusBox.textContent =
+      t("opened") + " " + ad.title +
+      " — " + ad.duration + " " + t("seconds");
+
+  } catch (error) {
+    if (popup && !popup.closed) popup.close();
+
+    clearActiveSession();
+    statusBox.textContent = error.message || t("error");
+
+  } finally {
+    busy = false;
+    await refreshProgress();
+  }
+}
+
+createStages();
+changeLanguage("ar");
+refreshProgress();
+
+setInterval(refreshProgress, 3000);
+
+window.addEventListener("focus", refreshProgress);
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) refreshProgress();
+});
+
+window.addEventListener("storage", event => {
+  if (event.key === LOCK_KEY) {
+    updateProgress(progress);
+  }
+});
+</script>
 </body>
 </html>
