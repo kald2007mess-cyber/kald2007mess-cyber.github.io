@@ -12,6 +12,7 @@ function md5(input) {
   for (let i = 0; i < 4; i++) {
     data.push((low >>> (i * 8)) & 255);
   }
+
   for (let i = 0; i < 4; i++) {
     data.push((high >>> (i * 8)) & 255);
   }
@@ -37,6 +38,7 @@ function md5(input) {
 
     for (let i = 0; i < 16; i++) {
       const p = offset + i * 4;
+
       M[i] = (
         data[p] |
         (data[p + 1] << 8) |
@@ -85,7 +87,9 @@ function md5(input) {
   return [a0, b0, c0, d0]
     .map(n =>
       [0, 8, 16, 24]
-        .map(s => ((n >>> s) & 255).toString(16).padStart(2, "0"))
+        .map(s =>
+          ((n >>> s) & 255).toString(16).padStart(2, "0")
+        )
         .join("")
     )
     .join("");
@@ -94,16 +98,21 @@ function md5(input) {
 export async function onRequestPost({ request, env }) {
   try {
     if (!env.DB || !env.OFFERWALL_SECRET) {
-      return new Response("Configuration missing", { status: 500 });
+      return new Response("Configuration missing", {
+        status: 500
+      });
     }
 
-    const contentType = request.headers.get("content-type") || "";
+    const contentType =
+      request.headers.get("content-type") || "";
+
     let params = {};
 
     if (contentType.includes("application/json")) {
       params = await request.json();
     } else {
       const form = await request.formData();
+
       for (const [key, value] of form.entries()) {
         params[key] = String(value);
       }
@@ -114,7 +123,9 @@ export async function onRequestPost({ request, env }) {
     const reward = String(params.reward || "");
     const status = Number(params.status);
     const signature = String(params.signature || "");
-    const offerType = String(params.offer_type || "").toLowerCase();
+    const offerType = String(
+      params.offer_type || ""
+    ).toLowerCase();
 
     if (
       !subId ||
@@ -124,7 +135,9 @@ export async function onRequestPost({ request, env }) {
       ![1, 2].includes(status) ||
       !Number.isFinite(Number(reward))
     ) {
-      return new Response("Invalid data", { status: 400 });
+      return new Response("Invalid data", {
+        status: 400
+      });
     }
 
     const expected = md5(
@@ -132,9 +145,21 @@ export async function onRequestPost({ request, env }) {
     );
 
     if (signature.toLowerCase() !== expected) {
-      return new Response("Invalid signature", { status: 403 });
+      return new Response("Invalid signature", {
+        status: 403
+      });
     }
 
+    // Ignore test callbacks completely.
+    const isTest =
+      String(params.debug || "") === "1" ||
+      transId.toUpperCase().startsWith("TEST-");
+
+    if (isTest) {
+      return new Response("ok", { status: 200 });
+    }
+
+    // Only PTC events can change the progress counter.
     await env.DB.prepare(`
       INSERT OR IGNORE INTO visitors (user_id, progress)
       VALUES (?, 0)
@@ -152,7 +177,10 @@ export async function onRequestPost({ request, env }) {
         offerType
       ).run();
 
-      if (result.meta.changes > 0 && offerType === "ptc") {
+      if (
+        result.meta.changes > 0 &&
+        offerType === "ptc"
+      ) {
         await env.DB.prepare(`
           UPDATE visitors
           SET progress = MIN(5, progress + 1)
@@ -171,7 +199,9 @@ export async function onRequestPost({ request, env }) {
         await env.DB.prepare(`
           UPDATE offerwall_events
           SET status = 2
-          WHERE trans_id = ? AND user_id = ? AND status = 1
+          WHERE trans_id = ?
+            AND user_id = ?
+            AND status = 1
         `).bind(transId, subId).run();
 
         if (existing.offer_type === "ptc") {
@@ -199,6 +229,8 @@ export async function onRequestPost({ request, env }) {
     return new Response("ok", { status: 200 });
 
   } catch (error) {
-    return new Response("Server error", { status: 500 });
+    return new Response("Server error", {
+      status: 500
+    });
   }
 }
