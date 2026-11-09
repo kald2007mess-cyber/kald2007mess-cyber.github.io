@@ -1,18 +1,22 @@
+import { json } from "./_lib/session.js";
 
 function md5(input) {
   const bytes = new TextEncoder().encode(input);
   const bitLength = bytes.length * 8;
-  const paddedLength = Math.ceil((bytes.length + 9) / 64) * 64;
-  const data = new Uint8Array(paddedLength);
-  data.set(bytes);
-  data[bytes.length] = 0x80;
+  const data = [...bytes, 0x80];
 
-  const view = new DataView(data.buffer);
-  view.setUint32(paddedLength - 8, bitLength >>> 0, true);
-  view.setUint32(paddedLength - 4, Math.floor(bitLength / 4294967296), true);
+  while (data.length % 64 !== 56) data.push(0);
 
-  let a0 = 0x67452301, b0 = 0xefcdab89;
-  let c0 = 0x98badcfe, d0 = 0x10325476;
+  const low = bitLength >>> 0;
+  const high = Math.floor(bitLength / 4294967296);
+
+  for (let i = 0; i < 4; i++) data.push((low >>> (i * 8)) & 255);
+  for (let i = 0; i < 4; i++) data.push((high >>> (i * 8)) & 255);
+
+  let a0 = 0x67452301;
+  let b0 = 0xefcdab89;
+  let c0 = 0x98badcfe;
+  let d0 = 0x10325476;
 
   const shifts = [
     7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,
@@ -21,104 +25,166 @@ function md5(input) {
     6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21
   ];
 
-  const k = Array.from({length:64}, (_,i) =>
-    Math.floor(Math.abs(Math.sin(i+1)) * 4294967296) >>> 0
+  const K = Array.from({ length: 64 }, (_, i) =>
+    Math.floor(Math.abs(Math.sin(i + 1)) * 4294967296) >>> 0
   );
 
-  for (let offset=0; offset<paddedLength; offset+=64) {
-    const words = Array.from({length:16}, (_,i) =>
-      view.getUint32(offset+i*4, true)
-    );
+  for (let offset = 0; offset < data.length; offset += 64) {
+    const M = [];
 
-    let a=a0, b=b0, c=c0, d=d0;
-
-    for (let i=0; i<64; i++) {
-      let f, g;
-      if (i<16) { f=(b&c)|(~b&d); g=i; }
-      else if (i<32) { f=(d&b)|(~d&c); g=(5*i+1)%16; }
-      else if (i<48) { f=b^c^d; g=(3*i+5)%16; }
-      else { f=c^(b|~d); g=(7*i)%16; }
-
-      const x=(a+f+k[i]+words[g])|0;
-      const rotated=(x<<shifts[i])|(x>>>(32-shifts[i]));
-      a=d; d=c; c=b; b=(b+rotated)|0;
+    for (let i = 0; i < 16; i++) {
+      const p = offset + i * 4;
+      M[i] = (
+        data[p] |
+        (data[p + 1] << 8) |
+        (data[p + 2] << 16) |
+        (data[p + 3] << 24)
+      ) >>> 0;
     }
 
-    a0=(a0+a)|0; b0=(b0+b)|0;
-    c0=(c0+c)|0; d0=(d0+d)|0;
+    let A = a0, B = b0, C = c0, D = d0;
+
+    for (let i = 0; i < 64; i++) {
+      let F, g;
+
+      if (i < 16) {
+        F = (B & C) | (~B & D);
+        g = i;
+      } else if (i < 32) {
+        F = (D & B) | (~D & C);
+        g = (5 * i + 1) % 16;
+      } else if (i < 48) {
+        F = B ^ C ^ D;
+        g = (3 * i + 5) % 16;
+      } else {
+        F = C ^ (B | ~D);
+        g = (7 * i) % 16;
+      }
+
+      const sum = (A + F + K[i] + M[g]) >>> 0;
+      const rotated = (sum << shifts[i]) | (sum >>> (32 - shifts[i]));
+
+      const next = (B + rotated) >>> 0;
+      A = D;
+      D = C;
+      C = B;
+      B = next;
+    }
+
+    a0 = (a0 + A) >>> 0;
+    b0 = (b0 + B) >>> 0;
+    c0 = (c0 + C) >>> 0;
+    d0 = (d0 + D) >>> 0;
   }
 
-  return [a0,b0,c0,d0].map(n =>
-    [0,8,16,24].map(s =>
-      ((n>>>s)&255).toString(16).padStart(2,"0")
-    ).join("")
-  ).join("");
+  return [a0, b0, c0, d0]
+    .map(n => [0, 8, 16, 24]
+      .map(s => ((n >>> s) & 255).toString(16).padStart(2, "0"))
+      .join("")
+    )
+    .join("");
 }
 
 export async function onRequestPost({ request, env }) {
   try {
     if (!env.DB || !env.OFFERWALL_SECRET) {
-      return new Response("Server configuration missing", {status:500});
+      return new Response("Configuration missing", { status: 500 });
     }
 
-    const type = request.headers.get("content-type") || "";
-    let p;
+    const contentType = request.headers.get("content-type") || "";
+    let params = {};
 
-    if (type.includes("application/json")) {
-      p = await request.json();
+    if (contentType.includes("application/json")) {
+      params = await request.json();
     } else {
-      p = Object.fromEntries(new URLSearchParams(await request.text()));
+      const form = await request.formData();
+      for (const [key, value] of form.entries()) {
+        params[key] = String(value);
+      }
     }
 
-    const subId = String(p.subId || "");
-    const transId = String(p.transId || "");
-    const reward = String(p.reward || "");
-    const status = Number(p.status);
-    const signature = String(p.signature || "").toLowerCase();
+    const subId = String(params.subId || "");
+    const transId = String(params.transId || "");
+    const reward = String(params.reward || "");
+    const status = Number(params.status);
+    const signature = String(params.signature || "");
 
-    if (!subId || !transId || !reward || ![1,2].includes(status)) {
-      return new Response("Invalid parameters", {status:400});
+    if (!subId || !transId || !reward || !signature ||
+        ![1, 2].includes(status)) {
+      return new Response("Invalid data", { status: 400 });
     }
 
     const expected = md5(
       subId + transId + reward + env.OFFERWALL_SECRET
     );
 
-    if (signature !== expected) {
-      return new Response("Invalid signature", {status:403});
+    if (signature.toLowerCase() !== expected) {
+      return new Response("Invalid signature", { status: 403 });
     }
 
     await env.DB.prepare(`
       CREATE TABLE IF NOT EXISTS offerwall_events (
         trans_id TEXT PRIMARY KEY,
-        sub_id TEXT NOT NULL,
-        reward TEXT NOT NULL,
-        offer_type TEXT,
-        status INTEGER NOT NULL,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        user_id TEXT NOT NULL,
+        reward REAL NOT NULL,
+        status INTEGER NOT NULL
       )
     `).run();
 
     await env.DB.prepare(`
-      INSERT OR IGNORE INTO offerwall_events
-      (trans_id, sub_id, reward, offer_type, status)
-      VALUES (?, ?, ?, ?, ?)
-    `).bind(
-      transId, subId, reward,
-      String(p.offer_type || ""), status
-    ).run();
+      CREATE TABLE IF NOT EXISTS visitors (
+        user_id TEXT PRIMARY KEY,
+        progress INTEGER NOT NULL DEFAULT 0
+      )
+    `).run();
 
-    if (status === 2) {
-      await env.DB.prepare(`
-        UPDATE offerwall_events SET status = 2
-        WHERE trans_id = ?
-      `).bind(transId).run();
+    if (status === 1) {
+      const result = await env.DB.prepare(`
+        INSERT OR IGNORE INTO offerwall_events
+        (trans_id, user_id, reward, status)
+        VALUES (?, ?, ?, 1)
+      `).bind(transId, subId, Number(reward)).run();
+
+      if (result.meta.changes > 0) {
+        await env.DB.prepare(`
+          INSERT OR IGNORE INTO visitors (user_id, progress)
+          VALUES (?, 0)
+        `).bind(subId).run();
+
+        await env.DB.prepare(`
+          UPDATE visitors
+          SET progress = MIN(5, progress + 1)
+          WHERE user_id = ?
+        `).bind(subId).run();
+      }
+    } else {
+      const existing = await env.DB.prepare(`
+        SELECT status FROM offerwall_events WHERE trans_id = ?
+      `).bind(transId).first();
+
+      if (existing && existing.status === 1) {
+        await env.DB.prepare(`
+          UPDATE offerwall_events SET status = 2
+          WHERE trans_id = ? AND status = 1
+        `).bind(transId).run();
+
+        await env.DB.prepare(`
+          UPDATE visitors
+          SET progress = MAX(0, progress - 1)
+          WHERE user_id = ?
+        `).bind(subId).run();
+      } else if (!existing) {
+        await env.DB.prepare(`
+          INSERT OR IGNORE INTO offerwall_events
+          (trans_id, user_id, reward, status)
+          VALUES (?, ?, ?, 2)
+        `).bind(transId, subId, Number(reward)).run();
+      }
     }
 
-    return new Response("ok", {status:200});
+    return new Response("ok", { status: 200 });
 
   } catch (error) {
-    console.error("Postback error:", error);
-    return new Response("Server error", {status:500});
+    return new Response("Server error", { status: 500 });
   }
-}
+      }
