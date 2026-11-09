@@ -94,6 +94,30 @@ function md5(input) {
     .join("");
 }
 
+async function sendTelegram(env, message) {
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_ADMIN_ID) {
+    return;
+  }
+
+  try {
+    await fetch(
+      `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          chat_id: env.TELEGRAM_ADMIN_ID,
+          text: message
+        })
+      }
+    );
+  } catch (error) {
+    // Telegram errors must not cancel the ad confirmation
+  }
+}
+
 export async function onRequestPost({ request, env }) {
   try {
     if (!env.DB || !env.OFFERWALL_SECRET) {
@@ -160,20 +184,29 @@ export async function onRequestPost({ request, env }) {
     const now = Math.floor(Date.now() / 1000);
 
     await env.DB.prepare(`
-      INSERT OR IGNORE INTO visitors (user_id, progress)
-      VALUES (?, 0)
-    `).bind(subId).run();
+      INSERT OR IGNORE INTO visitors
+      (user_id, progress, cycle_started_at, created_at)
+      VALUES (?, 0, ?, ?)
+    `).bind(subId, now, now).run();
+
+    await env.DB.prepare(`
+      UPDATE visitors
+      SET created_at = ?
+      WHERE user_id = ?
+      AND created_at IS NULL
+    `).bind(now, subId).run();
 
     if (status === 1) {
       const result = await env.DB.prepare(`
         INSERT OR IGNORE INTO offerwall_events
-        (trans_id, user_id, reward, status, offer_type)
-        VALUES (?, ?, ?, 1, ?)
+        (trans_id, user_id, reward, status, offer_type, created_at)
+        VALUES (?, ?, ?, 1, ?, ?)
       `).bind(
         transId,
         subId,
         Number(reward),
-        offerType
+        offerType,
+        now
       ).run();
 
       if (
@@ -202,6 +235,29 @@ export async function onRequestPost({ request, env }) {
           now,
           subId
         ).run();
+
+        const visitor = await env.DB.prepare(`
+          SELECT progress
+          FROM visitors
+          WHERE user_id = ?
+        `).bind(subId).first();
+
+        const stage = Math.min(
+          3,
+          Math.max(1, Number(visitor?.progress || 1))
+        );
+
+        const message =
+          `🎉 إعلان مكتمل في OXIDE HUB!\n\n` +
+          `📺 المرحلة: ${stage}/3\n` +
+          `👤 الزائر: ${subId}\n` +
+          `💰 المكافأة: ${reward}\n` +
+          `🧾 رقم العملية: ${transId}\n\n` +
+          (stage === 3
+            ? "🏆 أكمل الزائر المراحل الثلاث!"
+            : `⏳ المتبقي: ${3 - stage} مرحلة`);
+
+        await sendTelegram(env, message);
       }
 
     } else {
@@ -231,13 +287,14 @@ export async function onRequestPost({ request, env }) {
       } else if (!existing) {
         await env.DB.prepare(`
           INSERT OR IGNORE INTO offerwall_events
-          (trans_id, user_id, reward, status, offer_type)
-          VALUES (?, ?, ?, 2, ?)
+          (trans_id, user_id, reward, status, offer_type, created_at)
+          VALUES (?, ?, ?, 2, ?, ?)
         `).bind(
           transId,
           subId,
           Number(reward),
-          offerType
+          offerType,
+          now
         ).run();
       }
     }
