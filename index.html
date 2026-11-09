@@ -165,7 +165,9 @@
 
     let progress = 0;
     let busy = false;
+    let lastProgress = null;
 
+    // Create the five stages.
     for (let i = 1; i <= 5; i++) {
       const item = document.createElement("div");
       item.className = "stage";
@@ -184,7 +186,10 @@
     }
 
     function updateProgress(value) {
-      progress = Math.max(0, Math.min(5, Number(value) || 0));
+      progress = Math.max(
+        0,
+        Math.min(5, Number(value) || 0)
+      );
 
       document.getElementById("count").textContent =
         progress + "/5";
@@ -209,7 +214,7 @@
 
       if (progress === 5) {
         statusBox.textContent =
-          "اكتملت المراحل الخمس! التحميل غير مجهز بعد.";
+          "اكتملت الإعلانات الخمسة! التحميل غير مجهز بعد.";
       }
     }
 
@@ -226,7 +231,18 @@
         }
 
         const data = await response.json();
-        updateProgress(data.progress);
+        const newProgress = Number(data.progress) || 0;
+
+        if (
+          lastProgress !== null &&
+          newProgress > lastProgress
+        ) {
+          statusBox.textContent =
+            "تم تأكيد إكمال الإعلان! يمكنك الانتقال للمرحلة التالية.";
+        }
+
+        lastProgress = newProgress;
+        updateProgress(newProgress);
 
       } catch (error) {
         statusBox.textContent =
@@ -235,8 +251,18 @@
     }
 
     async function watchAd(number) {
-      if (busy || number <= progress) return;
+      if (busy) return;
 
+      if (number <= progress) return;
+
+      // Only the next stage can be started.
+      if (number !== progress + 1) {
+        statusBox.textContent =
+          "أكمل الإعلان السابق أولاً.";
+        return;
+      }
+
+      // Open synchronously to avoid popup blocking.
       const popup = window.open("about:blank", "_blank");
 
       if (!popup) {
@@ -245,11 +271,13 @@
         return;
       }
 
-      try {
-        busy = true;
-        statusBox.textContent = "جاري فتح Offerwall...";
+      busy = true;
 
-        const response = await fetch("/api/offerwall", {
+      try {
+        statusBox.textContent =
+          "جاري البحث عن إعلان متاح...";
+
+        const response = await fetch("/api/ptc", {
           method: "GET",
           cache: "no-store",
           credentials: "same-origin"
@@ -257,19 +285,46 @@
 
         const data = await response.json();
 
-        if (!response.ok || !data.url) {
+        if (!response.ok || !data.success) {
           throw new Error(
-            data.error || "تعذر إنشاء رابط المهام"
+            data.error || "تعذر جلب الإعلانات."
           );
         }
 
-        popup.location.href = data.url;
+        const ads = Array.isArray(data.ads)
+          ? data.ads
+          : [];
+
+        // Select the ad matching the current stage.
+        const ad = ads[progress];
+
+        if (!ad || !ad.url) {
+          popup.close();
+
+          statusBox.textContent =
+            "لا يوجد إعلان متاح لهذه المرحلة حالياً. حاول لاحقاً.";
+
+          return;
+        }
+
+        if (
+          ![30, 60].includes(Number(ad.duration)) ||
+          !ad.url.startsWith("https://")
+        ) {
+          throw new Error("بيانات الإعلان غير صالحة.");
+        }
+
+        popup.location.href = ad.url;
 
         statusBox.textContent =
-          "أكمل المهام وانتظر تأكيد المكافأة.";
+          "تم فتح الإعلان: " + ad.title +
+          " — المدة " + ad.duration +
+          " ثانية. أكمله وانتظر تأكيد المكافأة.";
 
       } catch (error) {
-        popup.close();
+        if (popup && !popup.closed) {
+          popup.close();
+        }
 
         statusBox.textContent =
           error.message || "حدث خطأ. حاول مرة أخرى.";
@@ -280,15 +335,22 @@
       }
     }
 
+    // Read confirmed progress from the server.
     refreshProgress();
 
-    setInterval(refreshProgress, 5000);
+    // Keep checking for provider confirmation.
+    setInterval(refreshProgress, 3000);
 
     window.addEventListener("focus", refreshProgress);
 
-    document.addEventListener("visibilitychange", () => {
-      if (!document.hidden) refreshProgress();
-    });
+    document.addEventListener(
+      "visibilitychange",
+      () => {
+        if (!document.hidden) {
+          refreshProgress();
+        }
+      }
+    );
   </script>
 </body>
 </html>
