@@ -157,6 +157,8 @@ export async function onRequestPost({ request, env }) {
       return new Response("ok", { status: 200 });
     }
 
+    const now = Math.floor(Date.now() / 1000);
+
     await env.DB.prepare(`
       INSERT OR IGNORE INTO visitors (user_id, progress)
       VALUES (?, 0)
@@ -180,9 +182,26 @@ export async function onRequestPost({ request, env }) {
       ) {
         await env.DB.prepare(`
           UPDATE visitors
-          SET progress = MIN(3, progress + 1)
+          SET
+            progress = CASE
+              WHEN cycle_started_at IS NULL
+                OR (? - cycle_started_at) >= 7200
+              THEN 1
+              ELSE MIN(3, progress + 1)
+            END,
+            cycle_started_at = CASE
+              WHEN cycle_started_at IS NULL
+                OR (? - cycle_started_at) >= 7200
+              THEN ?
+              ELSE cycle_started_at
+            END
           WHERE user_id = ?
-        `).bind(subId).run();
+        `).bind(
+          now,
+          now,
+          now,
+          subId
+        ).run();
       }
 
     } else {
