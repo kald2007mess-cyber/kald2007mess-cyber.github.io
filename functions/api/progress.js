@@ -14,7 +14,7 @@ export async function onRequestGet({ request, env }) {
     let userId = await getVisitor(request, env);
     let cookie = null;
 
-    // Create a visitor session on the first visit
+    // Create visitor session on first visit
     if (!userId) {
       cookie = await createVisitorCookie(env);
       const match = cookie.match(/^oxide_visitor=([^;]+)/);
@@ -28,11 +28,20 @@ export async function onRequestGet({ request, env }) {
 
     const now = Math.floor(Date.now() / 1000);
 
+    // Register visitor and save first recorded date
     await env.DB.prepare(`
       INSERT OR IGNORE INTO visitors
-      (user_id, progress, cycle_started_at)
-      VALUES (?, 0, ?)
-    `).bind(userId, now).run();
+      (user_id, progress, cycle_started_at, created_at)
+      VALUES (?, 0, ?, ?)
+    `).bind(userId, now, now).run();
+
+    // Fill date for existing visitors that do not have one
+    await env.DB.prepare(`
+      UPDATE visitors
+      SET created_at = ?
+      WHERE user_id = ?
+      AND created_at IS NULL
+    `).bind(now, userId).run();
 
     let row = await env.DB.prepare(`
       SELECT progress, cycle_started_at
@@ -52,6 +61,7 @@ export async function onRequestGet({ request, env }) {
       startedAt = now;
     }
 
+    // Reset progress every 2 hours
     if (now - startedAt >= 7200) {
       await env.DB.prepare(`
         UPDATE visitors
