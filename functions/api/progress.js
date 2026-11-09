@@ -17,9 +17,42 @@ export async function onRequestGet({ request, env }) {
       });
     }
 
-    const row = await env.DB.prepare(
-      "SELECT progress FROM visitors WHERE user_id = ?"
-    ).bind(userId).first();
+    const now = Math.floor(Date.now() / 1000);
+
+    await env.DB.prepare(`
+      INSERT OR IGNORE INTO visitors
+      (user_id, progress, cycle_started_at)
+      VALUES (?, 0, ?)
+    `).bind(userId, now).run();
+
+    let row = await env.DB.prepare(`
+      SELECT progress, cycle_started_at
+      FROM visitors
+      WHERE user_id = ?
+    `).bind(userId).first();
+
+    let startedAt = Number(row?.cycle_started_at) || 0;
+
+    if (!startedAt) {
+      await env.DB.prepare(`
+        UPDATE visitors
+        SET cycle_started_at = ?
+        WHERE user_id = ?
+      `).bind(now, userId).run();
+
+      startedAt = now;
+    }
+
+    if (now - startedAt >= 7200) {
+      await env.DB.prepare(`
+        UPDATE visitors
+        SET progress = 0,
+            cycle_started_at = ?
+        WHERE user_id = ?
+      `).bind(now, userId).run();
+
+      row = { progress: 0 };
+    }
 
     const progress = Math.max(
       0,
