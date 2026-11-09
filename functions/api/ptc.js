@@ -9,14 +9,22 @@ export async function onRequestGet({ request, env }) {
       return json({ error: "No visitor session" }, 401);
     }
 
-    if (!env.OFFERWALL_BEARER_TOKEN) {
-      return json({ error: "Missing API token" }, 500);
+    if (
+      !env.OFFERWALL_BEARER_TOKEN ||
+      !env.OFFERWALL_PUBLIC_KEY ||
+      !env.OFFERWALL_SECRET
+    ) {
+      return json({ error: "Missing server configuration" }, 500);
     }
 
     const ip = request.headers.get("CF-Connecting-IP");
     const country = (
       request.headers.get("CF-IPCountry") || ""
     ).toUpperCase();
+
+    if (!ip || !/^[A-Z]{2}$/.test(country)) {
+      return json({ error: "User location unavailable" }, 400);
+    }
 
     const expiry = String(
       Math.floor(Date.now() / 1000) + 3600
@@ -54,44 +62,41 @@ export async function onRequestGet({ request, env }) {
     apiUrl.search = new URLSearchParams({
       api: env.OFFERWALL_PUBLIC_KEY,
       id: userId,
-      ip: ip || "",
+      ip,
       token: env.OFFERWALL_BEARER_TOKEN,
       country,
       identityExpires: expiry,
       identitySignature: signature
     }).toString();
 
-    const response = await fetch(apiUrl.toString(), {
-      headers: { Accept: "application/json" }
-    });
-
+    const response = await fetch(apiUrl.toString());
     const result = await response.json();
 
-    if (!response.ok) {
-      return json({
-        error: "API request failed",
-        status: response.status
-      }, 502);
+    if (!response.ok || result.status !== 200) {
+      return json({ error: "PTC API request failed" }, 502);
     }
 
-    const ads = result.data || [];
+    const ads = (result.data || [])
+      .filter(ad =>
+        Number(ad.type) === 1 &&
+        [30, 60].includes(Number(ad.duration)) &&
+        typeof ad.url === "string" &&
+        ad.url.startsWith("https://")
+      )
+      .map(ad => ({
+        title: ad.title,
+        duration: Number(ad.duration),
+        reward: ad.reward,
+        url: ad.url
+      }));
 
     return json({
       success: true,
-      apiStatus: result.status,
-      total: ads.length,
-      ads: ads.map(ad => ({
-        title: ad.title,
-        type: ad.type,
-        duration: ad.duration,
-        reward: ad.reward
-      }))
+      count: ads.length,
+      ads
     });
 
-  } catch (error) {
-    return json({
-      error: "PTC test failed",
-      message: String(error.message || error)
-    }, 500);
+  } catch {
+    return json({ error: "PTC service error" }, 500);
   }
 }
