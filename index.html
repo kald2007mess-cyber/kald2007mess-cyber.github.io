@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OXIDE HUB</title>
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(3,4,15,.55), rgba(3,4,15,.8)),
+    url("background.png") center center / cover fixed;
+  color: white;
+  font-family: Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Moving stars */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(2px 2px at 20% 30%, white, transparent),
+    radial-gradient(1px 1px at 70% 60%, white, transparent),
+    radial-gradient(2px 2px at 40% 80%, #b68cff, transparent),
+    radial-gradient(1px 1px at 90% 20%, white, transparent);
+  background-size: 250px 250px;
+  animation: stars 35s linear infinite;
+  z-index: -1;
+}
+
+@keyframes stars {
+  from { transform: translateY(0); }
+  to { transform: translateY(-250px); }
+}
+
+header {
+  text-align: center;
+  padding: 35px 15px;
+}
+
+.logo {
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: 5px;
+  color: white;
+  text-shadow: 0 0 15px #9d5cff,
+               0 0 35px #713bff;
+}
+
+.logo span {
+  color: #ff762e;
+}
+
+.subtitle {
+  color: #c7b7e9;
+  margin-top: 10px;
+  letter-spacing: 3px;
+  font-size: 12px;
+}
+
+.content {
+  max-width: 850px;
+  margin: 80px auto;
+  padding: 20px;
+  text-align: center;
+}
+
+.panel {
+  background: rgba(12, 10, 28, .65);
+  border: 1px solid rgba(165, 110, 255, .4);
+  border-radius: 18px;
+  padding: 35px 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 35px rgba(110, 50, 255, .18);
+}
+
+h2 {
+  color: #d6bdff;
+  margin-bottom: 15px;
+}
+
+p {
+  color: #c7c2d5;
+  line-height: 1.8;
+}
+
+.fire {
+  font-size: 35px;
+  margin: 20px;
+  filter: drop-shadow(0 0 12px #ff6a00);
+}
+
+footer {
+  text-align: center;
+  padding: 30px;
+  color: #aaa;
+  font-size: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">OXIDE <span>HUB</span></div>
+  <div class="subtitle">SPACE SURVIVAL GAMING HUB</div>
+</header>
+
+<main class="content">
+  <section class="panel">
+    <div class="fire">🔥</div>
+    <h2>WELCOME TO OXIDE HUB</h2>
+    <p>
+      Explore the unknown.<br>
+      Survive the darkness.<br>
+      Discover a new world.
+    </p>
+  </section>
+</main>
+
+<footer>
+  CREATED BY SKIMI_17 © 2026
+</footer>
+
+</body>
+</html>
