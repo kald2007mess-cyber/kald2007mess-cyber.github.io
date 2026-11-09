@@ -1,4 +1,3 @@
-import { json } from "./_lib/session.js";
 
 function md5(input) {
   const bytes = new TextEncoder().encode(input);
@@ -10,8 +9,12 @@ function md5(input) {
   const low = bitLength >>> 0;
   const high = Math.floor(bitLength / 4294967296);
 
-  for (let i = 0; i < 4; i++) data.push((low >>> (i * 8)) & 255);
-  for (let i = 0; i < 4; i++) data.push((high >>> (i * 8)) & 255);
+  for (let i = 0; i < 4; i++) {
+    data.push((low >>> (i * 8)) & 255);
+  }
+  for (let i = 0; i < 4; i++) {
+    data.push((high >>> (i * 8)) & 255);
+  }
 
   let a0 = 0x67452301;
   let b0 = 0xefcdab89;
@@ -62,9 +65,11 @@ function md5(input) {
       }
 
       const sum = (A + F + K[i] + M[g]) >>> 0;
-      const rotated = (sum << shifts[i]) | (sum >>> (32 - shifts[i]));
+      const rotated =
+        (sum << shifts[i]) | (sum >>> (32 - shifts[i]));
 
       const next = (B + rotated) >>> 0;
+
       A = D;
       D = C;
       C = B;
@@ -78,9 +83,10 @@ function md5(input) {
   }
 
   return [a0, b0, c0, d0]
-    .map(n => [0, 8, 16, 24]
-      .map(s => ((n >>> s) & 255).toString(16).padStart(2, "0"))
-      .join("")
+    .map(n =>
+      [0, 8, 16, 24]
+        .map(s => ((n >>> s) & 255).toString(16).padStart(2, "0"))
+        .join("")
     )
     .join("");
 }
@@ -108,9 +114,16 @@ export async function onRequestPost({ request, env }) {
     const reward = String(params.reward || "");
     const status = Number(params.status);
     const signature = String(params.signature || "");
+    const offerType = String(params.offer_type || "").toLowerCase();
 
-    if (!subId || !transId || !reward || !signature ||
-        ![1, 2].includes(status)) {
+    if (
+      !subId ||
+      !transId ||
+      !reward ||
+      !signature ||
+      ![1, 2].includes(status) ||
+      !Number.isFinite(Number(reward))
+    ) {
       return new Response("Invalid data", { status: 400 });
     }
 
@@ -123,62 +136,63 @@ export async function onRequestPost({ request, env }) {
     }
 
     await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS offerwall_events (
-        trans_id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        reward REAL NOT NULL,
-        status INTEGER NOT NULL
-      )
-    `).run();
-
-    await env.DB.prepare(`
-      CREATE TABLE IF NOT EXISTS visitors (
-        user_id TEXT PRIMARY KEY,
-        progress INTEGER NOT NULL DEFAULT 0
-      )
-    `).run();
+      INSERT OR IGNORE INTO visitors (user_id, progress)
+      VALUES (?, 0)
+    `).bind(subId).run();
 
     if (status === 1) {
       const result = await env.DB.prepare(`
         INSERT OR IGNORE INTO offerwall_events
-        (trans_id, user_id, reward, status)
-        VALUES (?, ?, ?, 1)
-      `).bind(transId, subId, Number(reward)).run();
+        (trans_id, user_id, reward, status, offer_type)
+        VALUES (?, ?, ?, 1, ?)
+      `).bind(
+        transId,
+        subId,
+        Number(reward),
+        offerType
+      ).run();
 
-      if (result.meta.changes > 0) {
-        await env.DB.prepare(`
-          INSERT OR IGNORE INTO visitors (user_id, progress)
-          VALUES (?, 0)
-        `).bind(subId).run();
-
+      if (result.meta.changes > 0 && offerType === "ptc") {
         await env.DB.prepare(`
           UPDATE visitors
           SET progress = MIN(5, progress + 1)
           WHERE user_id = ?
         `).bind(subId).run();
       }
+
     } else {
       const existing = await env.DB.prepare(`
-        SELECT status FROM offerwall_events WHERE trans_id = ?
-      `).bind(transId).first();
+        SELECT status, offer_type
+        FROM offerwall_events
+        WHERE trans_id = ? AND user_id = ?
+      `).bind(transId, subId).first();
 
       if (existing && existing.status === 1) {
         await env.DB.prepare(`
-          UPDATE offerwall_events SET status = 2
-          WHERE trans_id = ? AND status = 1
-        `).bind(transId).run();
+          UPDATE offerwall_events
+          SET status = 2
+          WHERE trans_id = ? AND user_id = ? AND status = 1
+        `).bind(transId, subId).run();
 
-        await env.DB.prepare(`
-          UPDATE visitors
-          SET progress = MAX(0, progress - 1)
-          WHERE user_id = ?
-        `).bind(subId).run();
+        if (existing.offer_type === "ptc") {
+          await env.DB.prepare(`
+            UPDATE visitors
+            SET progress = MAX(0, progress - 1)
+            WHERE user_id = ?
+          `).bind(subId).run();
+        }
+
       } else if (!existing) {
         await env.DB.prepare(`
           INSERT OR IGNORE INTO offerwall_events
-          (trans_id, user_id, reward, status)
-          VALUES (?, ?, ?, 2)
-        `).bind(transId, subId, Number(reward)).run();
+          (trans_id, user_id, reward, status, offer_type)
+          VALUES (?, ?, ?, 2, ?)
+        `).bind(
+          transId,
+          subId,
+          Number(reward),
+          offerType
+        ).run();
       }
     }
 
@@ -187,4 +201,4 @@ export async function onRequestPost({ request, env }) {
   } catch (error) {
     return new Response("Server error", { status: 500 });
   }
-      }
+}
