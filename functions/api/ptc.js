@@ -3,28 +3,20 @@ import { getVisitor, json } from "./_lib/session.js";
 
 export async function onRequestGet({ request, env }) {
   try {
-    if (
-      !env.OFFERWALL_BEARER_TOKEN ||
-      !env.OFFERWALL_PUBLIC_KEY ||
-      !env.OFFERWALL_SECRET
-    ) {
-      return json({ error: "Server configuration missing" }, 500);
-    }
-
     const userId = await getVisitor(request, env);
 
     if (!userId) {
-      return json({ error: "Open OXIDE HUB first" }, 401);
+      return json({ error: "No visitor session" }, 401);
+    }
+
+    if (!env.OFFERWALL_BEARER_TOKEN) {
+      return json({ error: "Missing API token" }, 500);
     }
 
     const ip = request.headers.get("CF-Connecting-IP");
     const country = (
       request.headers.get("CF-IPCountry") || ""
     ).toUpperCase();
-
-    if (!ip || !/^[A-Z]{2}$/.test(country)) {
-      return json({ error: "Could not detect user location" }, 400);
-    }
 
     const expiry = String(
       Math.floor(Date.now() / 1000) + 3600
@@ -62,7 +54,7 @@ export async function onRequestGet({ request, env }) {
     apiUrl.search = new URLSearchParams({
       api: env.OFFERWALL_PUBLIC_KEY,
       id: userId,
-      ip,
+      ip: ip || "",
       token: env.OFFERWALL_BEARER_TOKEN,
       country,
       identityExpires: expiry,
@@ -70,35 +62,36 @@ export async function onRequestGet({ request, env }) {
     }).toString();
 
     const response = await fetch(apiUrl.toString(), {
-      headers: { "Accept": "application/json" }
+      headers: { Accept: "application/json" }
     });
 
     const result = await response.json();
 
-    if (!response.ok || result.status !== 200) {
+    if (!response.ok) {
       return json({
-        error: "Offerwall API request failed",
-        status: result.status || response.status
+        error: "API request failed",
+        status: response.status
       }, 502);
     }
 
-    const ads = (result.data || []).filter(ad =>
-      Number(ad.type) === 0 &&
-      [30, 60].includes(Number(ad.duration))
-    );
+    const ads = result.data || [];
 
     return json({
       success: true,
-      count: ads.length,
+      apiStatus: result.status,
+      total: ads.length,
       ads: ads.map(ad => ({
         title: ad.title,
-        duration: Number(ad.duration),
-        reward: ad.reward,
-        url: ad.url
+        type: ad.type,
+        duration: ad.duration,
+        reward: ad.reward
       }))
     });
 
   } catch (error) {
-    return json({ error: "PTC service error" }, 500);
+    return json({
+      error: "PTC test failed",
+      message: String(error.message || error)
+    }, 500);
   }
 }
