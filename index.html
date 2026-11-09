@@ -2,195 +2,248 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OXIDE HUB 2027</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OXIDE HUB</title>
 
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 
-body{
-  font-family:Arial,sans-serif;
-  color:white;
-  min-height:100vh;
-  background:
-  linear-gradient(180deg,rgba(3,8,18,.78),rgba(3,8,18,.96)),
-  url("background.png") center/cover fixed;
-}
+  <style>
+    * { box-sizing: border-box; }
 
-header{
-  text-align:center;
-  padding:45px 15px 25px;
-}
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: white;
+      text-align: center;
+      background:
+        linear-gradient(rgba(3,8,22,.68), rgba(3,8,22,.88)),
+        url("background.png") center/cover fixed;
+      padding: 25px 15px;
+    }
 
-.logo{
-  direction:ltr;
-  font-size:48px;
-  font-weight:1000;
-  letter-spacing:5px;
-  font-style:italic;
-  text-shadow:0 3px 0 #333,0 0 20px #ff6b27;
-}
+    .container {
+      max-width: 430px;
+      margin: auto;
+    }
 
-.logo span{color:#ff702c}
+    .logo {
+      font-size: 35px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: #fff;
+      text-shadow: 0 0 15px #00aaff;
+      margin: 25px 0 8px;
+    }
 
-.tag{
-  color:#aebbd0;
-  letter-spacing:4px;
-  font-size:11px;
-  margin-top:10px;
-}
+    .subtitle {
+      color: #b8c9dd;
+      margin-bottom: 28px;
+    }
 
-.container{
-  max-width:520px;
-  margin:25px auto;
-  padding:15px;
-}
+    .progress-box {
+      background: rgba(12, 25, 48, .85);
+      border: 1px solid #176caa;
+      border-radius: 14px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
 
-.panel{
-  background:rgba(7,15,29,.88);
-  border:1px solid #34465d;
-  border-radius:15px;
-  padding:24px 18px;
-  box-shadow:0 10px 40px #0009;
-}
+    .progress-text {
+      font-size: 19px;
+      font-weight: bold;
+      margin-bottom: 12px;
+    }
 
-h2{
-  text-align:center;
-  font-size:20px;
-  margin-bottom:10px;
-}
+    .bar {
+      height: 10px;
+      background: #25364b;
+      border-radius: 20px;
+      overflow: hidden;
+    }
 
-.description{
-  text-align:center;
-  color:#aab7c9;
-  font-size:13px;
-  margin-bottom:25px;
-}
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #00b7ff;
+      transition: width .3s;
+    }
 
-.progress{
-  display:flex;
-  gap:7px;
-  direction:ltr;
-  margin-bottom:25px;
-}
+    .stage {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(13, 29, 52, .88);
+      border: 1px solid #244765;
+      padding: 16px;
+      margin: 12px 0;
+      border-radius: 13px;
+    }
 
-.segment{
-  height:7px;
-  flex:1;
-  border-radius:10px;
-  background:#29394c;
-}
+    .stage button {
+      border: 0;
+      padding: 11px 18px;
+      border-radius: 8px;
+      color: white;
+      background: #087ed0;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-.segment.active{background:#ff762e}
+    .stage button:disabled {
+      background: #28634c;
+      cursor: default;
+    }
 
-.stage{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:14px;
-  margin:10px 0;
-  border:1px solid #263a50;
-  background:#101e30;
-  border-radius:10px;
-}
+    .check {
+      color: #35ef91;
+      font-size: 23px;
+      margin-right: 8px;
+    }
 
-.stage strong{font-size:14px}
-.stage small{color:#8295aa}
+    #download {
+      display: block;
+      width: 100%;
+      margin-top: 25px;
+      padding: 16px;
+      border-radius: 12px;
+      color: white;
+      background: #087ed0;
+      font-size: 18px;
+      font-weight: bold;
+      text-decoration: none;
+      opacity: .4;
+      pointer-events: none;
+    }
 
-.stage button{
-  border:1px solid #ff762e;
-  background:#382316;
-  color:#ff9b5d;
-  padding:9px 13px;
-  border-radius:7px;
-  font-weight:bold;
-}
+    #download.ready {
+      opacity: 1;
+      pointer-events: auto;
+    }
 
-.download{
-  display:block;
-  width:100%;
-  margin-top:25px;
-  padding:17px;
-  border:0;
-  border-radius:10px;
-  background:#087cf0;
-  color:white;
-  font-size:18px;
-  font-weight:bold;
-  text-align:center;
-  text-decoration:none;
-  box-shadow:0 0 22px #087cf055;
-}
+    #status {
+      min-height: 25px;
+      color: #ffd36a;
+      margin-top: 15px;
+    }
 
-.download.disabled{
-  opacity:.45;
-  pointer-events:none;
-}
-
-footer{
-  text-align:center;
-  padding:30px;
-  color:#77869a;
-  font-size:11px;
-}
-</style>
+    footer {
+      margin-top: 35px;
+      color: #879bb2;
+      font-size: 12px;
+    }
+  </style>
 </head>
 
 <body>
+  <main class="container">
+    <div class="logo">OXIDE HUB</div>
+    <div class="subtitle">SURVIVE • EXPLORE • DOMINATE</div>
 
-<header>
-  <div class="logo">OXIDE <span>HUB</span></div>
-  <div class="tag">SURVIVE • EXPLORE • DISCOVER</div>
-</header>
-
-<div class="container">
-  <section class="panel">
-
-    <h2>مركز تحميل اللعبة</h2>
-    <p class="description">
-      أكمل المراحل المطلوبة للوصول إلى التحميل
-    </p>
-
-    <div class="progress">
-      <div class="segment"></div>
-      <div class="segment"></div>
-      <div class="segment"></div>
-      <div class="segment"></div>
-      <div class="segment"></div>
-    </div>
+    <section class="progress-box">
+      <div class="progress-text">
+        Progress: <span id="count">0/5</span>
+      </div>
+      <div class="bar">
+        <div class="bar-fill" id="bar"></div>
+      </div>
+    </section>
 
     <div id="stages"></div>
 
-    <a class="download disabled" id="download" href="#">
-      🔒 تنزيل الملف
+    <a id="download" href="#" target="_blank" rel="noopener">
+      DOWNLOAD
     </a>
 
-  </section>
-</div>
+    <div id="status" role="status"></div>
 
-<footer>
-  OXIDE HUB © 2027<br>
-  CREATED BY SKIMI_17
-</footer>
+    <footer>OXIDE HUB © 2026<br>Created by SKIMI_17</footer>
+  </main>
 
-<script>
-const stages = document.getElementById("stages");
+  <script>
+    const BLOCK_ID = "58793";
 
-for(let i=1;i<=5;i++){
-  stages.innerHTML += `
-    <div class="stage">
-      <div>
-        <strong>المرحلة ${i}/5</strong><br>
-        <small>بانتظار ربط نظام الإعلانات</small>
-      </div>
-      <button onclick="alert('سيتم ربط الإعلان الحقيقي بهذه المرحلة لاحقاً')">
-        مشاهدة الإعلان
-      </button>
-    </div>
-  `;
-}
-</script>
+    // ضع رابط ملف التحميل الحقيقي هنا بعد تجهيزه
+    const DOWNLOAD_URL = "";
 
+    const stages = document.getElementById("stages");
+    const statusBox = document.getElementById("status");
+    const completed = new Set();
+    let adController = null;
+    let busy = false;
+
+    for (let i = 1; i <= 5; i++) {
+      const item = document.createElement("div");
+      item.className = "stage";
+      item.innerHTML = `
+        <span>المرحلة ${i}/5 <span class="check" id="check${i}"></span></span>
+        <button id="btn${i}" onclick="watchAd(${i})">
+          WATCH AD
+        </button>
+      `;
+      stages.appendChild(item);
+    }
+
+    function updateProgress() {
+      const total = completed.size;
+      document.getElementById("count").textContent = total + "/5";
+      document.getElementById("bar").style.width =
+        (total * 20) + "%";
+
+      if (total === 5) {
+        const download = document.getElementById("download");
+
+        if (DOWNLOAD_URL) {
+          download.href = DOWNLOAD_URL;
+          download.classList.add("ready");
+          statusBox.textContent = "All stages completed!";
+        } else {
+          statusBox.textContent =
+            "اكتملت المراحل الخمس. رابط التحميل لم يُضف بعد.";
+        }
+      }
+    }
+
+    async function watchAd(number) {
+      if (completed.has(number) || busy) return;
+
+      if (!window.Adsgram) {
+        statusBox.textContent = "تعذر تحميل مكتبة الإعلانات.";
+        return;
+      }
+
+      try {
+        busy = true;
+        statusBox.textContent = "جاري تحميل الإعلان...";
+
+        if (!adController) {
+          adController = window.Adsgram.init({
+            blockId: BLOCK_ID
+          });
+        }
+
+        const result = await adController.show();
+
+        if (result && result.done === true && !result.error) {
+          completed.add(number);
+          document.getElementById("check" + number).textContent = "✓";
+
+          const button = document.getElementById("btn" + number);
+          button.textContent = "COMPLETED";
+          button.disabled = true;
+
+          statusBox.textContent = "تم إكمال المرحلة بنجاح!";
+          updateProgress();
+        } else {
+          statusBox.textContent = "لم يكتمل الإعلان، حاول مرة أخرى.";
+        }
+      } catch (error) {
+        statusBox.textContent = "تعذر عرض الإعلان. حاول لاحقاً.";
+      } finally {
+        busy = false;
+      }
+    }
+  </script>
 </body>
 </html>
