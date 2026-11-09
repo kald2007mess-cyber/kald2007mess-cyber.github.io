@@ -1,111 +1,138 @@
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OXIDE HUB</title>
+<title>OXIDE HUB 2027</title>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+*{box-sizing:border-box;margin:0;padding:0}
 
-body {
-  min-height: 100vh;
+body{
+  font-family:Arial,sans-serif;
+  color:white;
+  min-height:100vh;
   background:
-    linear-gradient(rgba(3,4,15,.55), rgba(3,4,15,.8)),
-    url("background.png") center center / cover fixed;
-  color: white;
-  font-family: Arial, sans-serif;
-  overflow-x: hidden;
+  linear-gradient(180deg,rgba(3,8,18,.78),rgba(3,8,18,.96)),
+  url("background.png") center/cover fixed;
 }
 
-/* Moving stars */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    radial-gradient(2px 2px at 20% 30%, white, transparent),
-    radial-gradient(1px 1px at 70% 60%, white, transparent),
-    radial-gradient(2px 2px at 40% 80%, #b68cff, transparent),
-    radial-gradient(1px 1px at 90% 20%, white, transparent);
-  background-size: 250px 250px;
-  animation: stars 35s linear infinite;
-  z-index: -1;
+header{
+  text-align:center;
+  padding:45px 15px 25px;
 }
 
-@keyframes stars {
-  from { transform: translateY(0); }
-  to { transform: translateY(-250px); }
+.logo{
+  direction:ltr;
+  font-size:48px;
+  font-weight:1000;
+  letter-spacing:5px;
+  font-style:italic;
+  text-shadow:0 3px 0 #333,0 0 20px #ff6b27;
 }
 
-header {
-  text-align: center;
-  padding: 35px 15px;
+.logo span{color:#ff702c}
+
+.tag{
+  color:#aebbd0;
+  letter-spacing:4px;
+  font-size:11px;
+  margin-top:10px;
 }
 
-.logo {
-  font-size: 42px;
-  font-weight: 900;
-  letter-spacing: 5px;
-  color: white;
-  text-shadow: 0 0 15px #9d5cff,
-               0 0 35px #713bff;
+.container{
+  max-width:520px;
+  margin:25px auto;
+  padding:15px;
 }
 
-.logo span {
-  color: #ff762e;
+.panel{
+  background:rgba(7,15,29,.88);
+  border:1px solid #34465d;
+  border-radius:15px;
+  padding:24px 18px;
+  box-shadow:0 10px 40px #0009;
 }
 
-.subtitle {
-  color: #c7b7e9;
-  margin-top: 10px;
-  letter-spacing: 3px;
-  font-size: 12px;
+h2{
+  text-align:center;
+  font-size:20px;
+  margin-bottom:10px;
 }
 
-.content {
-  max-width: 850px;
-  margin: 80px auto;
-  padding: 20px;
-  text-align: center;
+.description{
+  text-align:center;
+  color:#aab7c9;
+  font-size:13px;
+  margin-bottom:25px;
 }
 
-.panel {
-  background: rgba(12, 10, 28, .65);
-  border: 1px solid rgba(165, 110, 255, .4);
-  border-radius: 18px;
-  padding: 35px 20px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 0 35px rgba(110, 50, 255, .18);
+.progress{
+  display:flex;
+  gap:7px;
+  direction:ltr;
+  margin-bottom:25px;
 }
 
-h2 {
-  color: #d6bdff;
-  margin-bottom: 15px;
+.segment{
+  height:7px;
+  flex:1;
+  border-radius:10px;
+  background:#29394c;
 }
 
-p {
-  color: #c7c2d5;
-  line-height: 1.8;
+.segment.active{background:#ff762e}
+
+.stage{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px;
+  margin:10px 0;
+  border:1px solid #263a50;
+  background:#101e30;
+  border-radius:10px;
 }
 
-.fire {
-  font-size: 35px;
-  margin: 20px;
-  filter: drop-shadow(0 0 12px #ff6a00);
+.stage strong{font-size:14px}
+.stage small{color:#8295aa}
+
+.stage button{
+  border:1px solid #ff762e;
+  background:#382316;
+  color:#ff9b5d;
+  padding:9px 13px;
+  border-radius:7px;
+  font-weight:bold;
 }
 
-footer {
-  text-align: center;
-  padding: 30px;
-  color: #aaa;
-  font-size: 12px;
+.download{
+  display:block;
+  width:100%;
+  margin-top:25px;
+  padding:17px;
+  border:0;
+  border-radius:10px;
+  background:#087cf0;
+  color:white;
+  font-size:18px;
+  font-weight:bold;
+  text-align:center;
+  text-decoration:none;
+  box-shadow:0 0 22px #087cf055;
+}
+
+.download.disabled{
+  opacity:.45;
+  pointer-events:none;
+}
+
+footer{
+  text-align:center;
+  padding:30px;
+  color:#77869a;
+  font-size:11px;
 }
 </style>
 </head>
@@ -114,24 +141,56 @@ footer {
 
 <header>
   <div class="logo">OXIDE <span>HUB</span></div>
-  <div class="subtitle">SPACE SURVIVAL GAMING HUB</div>
+  <div class="tag">SURVIVE • EXPLORE • DISCOVER</div>
 </header>
 
-<main class="content">
+<div class="container">
   <section class="panel">
-    <div class="fire">🔥</div>
-    <h2>WELCOME TO OXIDE HUB</h2>
-    <p>
-      Explore the unknown.<br>
-      Survive the darkness.<br>
-      Discover a new world.
+
+    <h2>مركز تحميل اللعبة</h2>
+    <p class="description">
+      أكمل المراحل المطلوبة للوصول إلى التحميل
     </p>
+
+    <div class="progress">
+      <div class="segment"></div>
+      <div class="segment"></div>
+      <div class="segment"></div>
+      <div class="segment"></div>
+      <div class="segment"></div>
+    </div>
+
+    <div id="stages"></div>
+
+    <a class="download disabled" id="download" href="#">
+      🔒 تنزيل الملف
+    </a>
+
   </section>
-</main>
+</div>
 
 <footer>
-  CREATED BY SKIMI_17 © 2026
+  OXIDE HUB © 2027<br>
+  CREATED BY SKIMI_17
 </footer>
+
+<script>
+const stages = document.getElementById("stages");
+
+for(let i=1;i<=5;i++){
+  stages.innerHTML += `
+    <div class="stage">
+      <div>
+        <strong>المرحلة ${i}/5</strong><br>
+        <small>بانتظار ربط نظام الإعلانات</small>
+      </div>
+      <button onclick="alert('سيتم ربط الإعلان الحقيقي بهذه المرحلة لاحقاً')">
+        مشاهدة الإعلان
+      </button>
+    </div>
+  `;
+}
+</script>
 
 </body>
 </html>
