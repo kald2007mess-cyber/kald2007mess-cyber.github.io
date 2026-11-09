@@ -38,7 +38,6 @@ function md5(input) {
 
     for (let i = 0; i < 16; i++) {
       const p = offset + i * 4;
-
       M[i] = (
         data[p] |
         (data[p + 1] << 8) |
@@ -150,7 +149,6 @@ export async function onRequestPost({ request, env }) {
       });
     }
 
-    // Ignore test callbacks completely.
     const isTest =
       String(params.debug || "") === "1" ||
       transId.toUpperCase().startsWith("TEST-");
@@ -159,7 +157,6 @@ export async function onRequestPost({ request, env }) {
       return new Response("ok", { status: 200 });
     }
 
-    // Only PTC events can change the progress counter.
     await env.DB.prepare(`
       INSERT OR IGNORE INTO visitors (user_id, progress)
       VALUES (?, 0)
@@ -183,7 +180,7 @@ export async function onRequestPost({ request, env }) {
       ) {
         await env.DB.prepare(`
           UPDATE visitors
-          SET progress = MIN(5, progress + 1)
+          SET progress = MIN(3, progress + 1)
           WHERE user_id = ?
         `).bind(subId).run();
       }
