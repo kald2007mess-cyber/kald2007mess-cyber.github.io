@@ -311,6 +311,7 @@ let busy = false;
 let lastProgress = null;
 let currentLanguage = "ar";
 let activePopup = null;
+let leftPageForAd = false;
 
 const LOCK_KEY = "oxide_active_ad_session";
 
@@ -418,7 +419,6 @@ function t(key) {
 
 function renderGuide() {
   const language = translations[currentLanguage];
-
   document.getElementById("guideTitle").textContent =
     language.guideTitle;
 
@@ -483,6 +483,17 @@ function clearActiveSession() {
   }
 
   activePopup = null;
+  leftPageForAd = false;
+}
+
+/* Reset the previous session when the user returns */
+async function handleReturnFromAd() {
+  if (!leftPageForAd) return;
+
+  clearActiveSession();
+  statusBox.textContent = "";
+
+  await refreshProgress();
 }
 
 function createStages() {
@@ -526,7 +537,6 @@ function changeLanguage(language) {
   }
 }
 
-/* Updated stage unlocking logic */
 function updateProgress(value) {
   progress = Math.max(0, Math.min(REQUIRED, Number(value) || 0));
 
@@ -644,6 +654,8 @@ async function watchAd(number) {
   busy = true;
   saveActiveSession(number);
   activePopup = popup;
+  leftPageForAd = true;
+
   updateProgress(progress);
 
   try {
@@ -663,7 +675,6 @@ async function watchAd(number) {
 
     const ads = Array.isArray(data.ads) ? data.ads : [];
 
-    /* Use an available ad without assuming there are 3 ads */
     const ad = ads.length
       ? ads[(number - 1) % ads.length]
       : null;
@@ -703,10 +714,21 @@ refreshProgress();
 
 setInterval(refreshProgress, 3000);
 
-window.addEventListener("focus", refreshProgress);
+/* Return from the advertisement tab */
+window.addEventListener("focus", handleReturnFromAd);
 
+/* Also support returning on mobile browsers */
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) refreshProgress();
+  if (!document.hidden) {
+    handleReturnFromAd();
+  }
+});
+
+/* Support returning through browser history */
+window.addEventListener("pageshow", () => {
+  if (leftPageForAd) {
+    handleReturnFromAd();
+  }
 });
 
 window.addEventListener("storage", event => {
