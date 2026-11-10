@@ -78,15 +78,18 @@ export async function onRequestGet({ request, env }) {
 
     const ads = (result.data || [])
       .filter(ad =>
-        Number(ad.type) === 1 &&
-        [30, 60].includes(Number(ad.duration)) &&
         typeof ad.url === "string" &&
-        ad.url.startsWith("https://")
+        ad.url.startsWith("https://") &&
+        Number.isFinite(Number(ad.duration)) &&
+        Number(ad.duration) > 0 &&
+        Number.isFinite(Number(ad.reward)) &&
+        Number(ad.reward) > 0
       )
       .map(ad => ({
-        title: ad.title,
+        title: ad.title || "PTC Advertisement",
         duration: Number(ad.duration),
         reward: ad.reward,
+        type: Number(ad.type),
         url: ad.url
       }));
 
