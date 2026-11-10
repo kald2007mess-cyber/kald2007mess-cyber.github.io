@@ -19,8 +19,9 @@ body {
     linear-gradient(rgba(3,8,22,.68), rgba(3,8,22,.88)),
     url("background.png") center/cover fixed;
   background-size: auto, 105% 105%;
-  padding: 25px 15px;
+  padding: 25px 12px;
   animation: backgroundDrift 35s ease-in-out infinite alternate;
+  isolation: isolate;
 }
 
 @keyframes backgroundDrift {
@@ -28,7 +29,34 @@ body {
   to { background-position: center, 52% 52%; }
 }
 
-.container { max-width: 430px; margin: auto; }
+/* نجوم متحركة خفيفة */
+.stars {
+  position: fixed;
+  inset: -100px;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .25;
+  background-image:
+    radial-gradient(2px 2px at 30px 40px, #fff, transparent),
+    radial-gradient(1px 1px at 100px 130px, #fff, transparent),
+    radial-gradient(2px 2px at 190px 80px, #54caff, transparent),
+    radial-gradient(1px 1px at 250px 190px, #fff, transparent),
+    radial-gradient(2px 2px at 320px 40px, #fff, transparent);
+  background-size: 350px 250px;
+  animation: starMove 65s linear infinite;
+}
+
+@keyframes starMove {
+  from { transform: translate(0,0); }
+  to { transform: translate(-100px,80px); }
+}
+
+.container {
+  max-width: 430px;
+  margin: auto;
+  position: relative;
+  z-index: 1;
+}
 
 .language-box {
   display: flex;
@@ -60,8 +88,77 @@ body {
   margin: 25px 0 8px;
 }
 
-.subtitle { color: #b8c9dd; margin-bottom: 28px; }
+.subtitle {
+  color: #b8c9dd;
+  margin-bottom: 24px;
+}
 
+/* NAVIGATION */
+.navigation {
+  display: flex;
+  direction: rtl;
+  align-items: stretch;
+  width: 100%;
+  gap: 3px;
+  padding: 5px;
+  margin: 0 0 20px;
+  background: rgba(5,15,32,.92);
+  border: 1px solid #176caa;
+  border-radius: 13px;
+  box-shadow: 0 0 12px rgba(0,145,255,.12);
+}
+
+.nav-item {
+  flex: 1;
+  min-width: 0;
+  min-height: 65px;
+  padding: 7px 2px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: #c6d5e7;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-family: Arial, sans-serif;
+  cursor: default;
+}
+
+.nav-item.active {
+  color: white;
+  background: linear-gradient(145deg, #075a9d, #06305d);
+  border-color: #00aaff;
+  box-shadow: 0 0 12px rgba(0,170,255,.45);
+}
+
+.nav-icon {
+  font-size: 19px;
+  line-height: 1;
+}
+
+.nav-label {
+  font-size: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.nav-soon {
+  font-size: 8px;
+  color: #111;
+  background: #ffc52e;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.nav-item:disabled {
+  opacity: .85;
+}
+
+/* PROGRESS */
 .progress-box {
   background: rgba(12,25,48,.85);
   border: 1px solid #176caa;
@@ -88,8 +185,10 @@ body {
   width: 0%;
   background: #00b7ff;
   transition: width .3s;
+  box-shadow: 0 0 10px #00b7ff;
 }
 
+/* AD STAGES */
 .stage {
   display: flex;
   justify-content: space-between;
@@ -124,31 +223,43 @@ body {
   cursor: not-allowed;
 }
 
-.download-button {
+/* PLATFORM BUTTONS */
+.platform-button {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   width: 100%;
-  margin-top: 25px;
+  margin-top: 13px;
   padding: 16px;
   border-radius: 12px;
   color: white;
-  background: #087ed0;
-  font-size: 18px;
+  background: #26394f;
+  font-size: 17px;
   font-weight: bold;
   text-decoration: none;
-  border: 0;
-  opacity: .4;
-  pointer-events: none;
-  cursor: default;
+  border: 1px solid #40536b;
+  opacity: .55;
+  cursor: not-allowed;
   font-family: Arial, sans-serif;
+  transition: .3s;
 }
 
-.download-button.ready {
+.platform-button.available {
   opacity: 1;
-  pointer-events: auto;
   cursor: pointer;
+  background: linear-gradient(135deg,#087ed0,#0055a0);
+  border-color: #00b7ff;
+  box-shadow: 0 0 17px rgba(0,183,255,.45);
+}
+
+.platform-button.available:active {
+  transform: scale(.98);
+}
+
+.platform-button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
 }
 
 .android-icon {
@@ -158,25 +269,9 @@ body {
   flex-shrink: 0;
 }
 
-.platform-icon { font-size: 25px; line-height: 1; }
-
-.soon-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  margin-top: 12px;
-  padding: 16px;
-  border-radius: 12px;
-  color: white;
-  background: #087ed0;
-  font-size: 18px;
-  font-weight: bold;
-  opacity: .55;
-  border: 0;
-  cursor: not-allowed;
-  font-family: Arial, sans-serif;
+.platform-icon {
+  font-size: 25px;
+  line-height: 1;
 }
 
 .soon-label {
@@ -186,6 +281,7 @@ body {
   border-radius: 6px;
 }
 
+/* STATUS */
 #status {
   min-height: 25px;
   color: #ffd36a;
@@ -193,6 +289,7 @@ body {
   line-height: 1.6;
 }
 
+/* GUIDE */
 .guide-box {
   background: rgba(12,25,48,.88);
   border: 1px solid #176caa;
@@ -247,10 +344,25 @@ footer {
   color: #879bb2;
   font-size: 12px;
 }
+
+@media (max-width: 360px) {
+  .nav-item { min-height: 60px; }
+  .nav-icon { font-size: 17px; }
+  .nav-label { font-size: 9px; }
+  .nav-soon { font-size: 7px; }
+  .navigation { gap: 1px; padding: 3px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body, .stars { animation: none; }
+}
 </style>
 </head>
 
 <body>
+
+<div class="stars"></div>
+
 <main class="container">
 
   <div class="language-box">
@@ -258,11 +370,47 @@ footer {
       <option value="ar">🇩🇿 العربية</option>
       <option value="en">🇬🇧 English</option>
       <option value="ru">🇷🇺 Русский</option>
+      <option value="es">🇪🇸 Español</option>
+      <option value="id">🇮🇩 Indonesia</option>
     </select>
   </div>
 
   <div class="logo">OXIDE HUB</div>
   <div class="subtitle">SURVIVE • EXPLORE • DOMINATE</div>
+
+  <!-- NAVIGATION -->
+  <nav class="navigation" aria-label="Main navigation">
+
+    <button class="nav-item active" type="button">
+      <span class="nav-icon">⌂</span>
+      <span class="nav-label" id="navHome">الرئيسية</span>
+    </button>
+
+    <button class="nav-item" type="button" disabled>
+      <span class="nav-icon">🎁</span>
+      <span class="nav-label" id="navRewards">مكافأة</span>
+      <span class="nav-soon" id="soon1">🔒 SOON</span>
+    </button>
+
+    <button class="nav-item" type="button" disabled>
+      <span class="nav-icon">👑</span>
+      <span class="nav-label">VIP</span>
+      <span class="nav-soon" id="soon2">🔒 SOON</span>
+    </button>
+
+    <button class="nav-item" type="button" disabled>
+      <span class="nav-icon">👤</span>
+      <span class="nav-label" id="navReferral">إحالة</span>
+      <span class="nav-soon" id="soon3">🔒 SOON</span>
+    </button>
+
+    <button class="nav-item" type="button" disabled>
+      <span class="nav-icon">📢</span>
+      <span class="nav-label" id="navNews">أخبار</span>
+      <span class="nav-soon" id="soon4">🔒 SOON</span>
+    </button>
+
+  </nav>
 
   <section class="progress-box">
     <div class="progress-text">
@@ -276,7 +424,8 @@ footer {
 
   <div id="stages"></div>
 
-  <a id="download" class="download-button"
+  <!-- ANDROID -->
+  <a id="download" class="platform-button"
      href="#" aria-disabled="true">
     <svg class="android-icon" viewBox="0 0 24 24">
       <path d="M6.2 7.2 4.6 4.5a.5.5 0 0 1 .86-.5l1.65 2.8a8.2 8.2 0 0 1 9.78 0l1.65-2.8a.5.5 0 1 1 .86.5l-1.6 2.7A7.2 7.2 0 0 1 21 13H3a7.2 7.2 0 0 1 3.2-5.8ZM7 14h10v5.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 7 19.5V14Zm-3-1h2v6H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 1-2Zm15 0h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1v-6Z"/>
@@ -284,16 +433,18 @@ footer {
     <span id="androidText">تحميل ANDROID</span>
   </a>
 
-  <button class="soon-button" disabled>
+  <!-- IPHONE -->
+  <button class="platform-button" id="iphoneButton" disabled>
     <span class="platform-icon">🍎</span>
     <span id="iphoneText">تحميل iPHONE</span>
-    <span class="soon-label">🔒 SOON</span>
+    <span class="soon-label" id="iphoneSoon">🔒 SOON</span>
   </button>
 
-  <button class="soon-button" disabled>
+  <!-- BETA -->
+  <button class="platform-button" id="betaButton" disabled>
     <span class="platform-icon">🧪</span>
     <span id="betaText">تحميل BETA</span>
-    <span class="soon-label">🔒 SOON</span>
+    <span class="soon-label" id="betaSoon">🔒 SOON</span>
   </button>
 
   <div id="status" role="status"></div>
@@ -314,11 +465,15 @@ footer {
 <script>
 const MAINTENANCE_MODE = false;
 const REQUIRED = 3;
-
-// مدة جلسة الإعلان: 5 دقائق
 const LOCK_DURATION = 5 * 60 * 1000;
 
 const DOWNLOAD_PAGE = "download.html";
+
+/* عندما تصبح المنصات جاهزة يمكن تحديث حالتها هنا */
+const PLATFORM_AVAILABILITY = {
+  iphone: false,
+  beta: false
+};
 
 const stages = document.getElementById("stages");
 const statusBox = document.getElementById("status");
@@ -332,6 +487,7 @@ let activePopup = null;
 const LOCK_KEY = "oxide_active_ad_session";
 
 const translations = {
+
   ar: {
     progress: "التقدم:",
     stage: "المرحلة",
@@ -341,6 +497,11 @@ const translations = {
     android: "تحميل ANDROID",
     iphone: "تحميل iPHONE",
     beta: "تحميل BETA",
+    soon: "🔒 SOON",
+    home: "الرئيسية",
+    rewards: "مكافأة",
+    referral: "إحالة",
+    news: "أخبار",
     searching: "جاري البحث عن إعلان متاح...",
     noAd: "لا يوجد إعلان متاح حاليًا. حاول لاحقًا.",
     popup: "اسمح بفتح النوافذ المنبثقة للمتابعة.",
@@ -371,6 +532,11 @@ const translations = {
     android: "DOWNLOAD ANDROID",
     iphone: "DOWNLOAD iPHONE",
     beta: "DOWNLOAD BETA",
+    soon: "🔒 SOON",
+    home: "HOME",
+    rewards: "REWARDS",
+    referral: "REFERRAL",
+    news: "NEWS",
     searching: "Searching for an available ad...",
     noAd: "No ad is available right now. Try later.",
     popup: "Allow pop-ups to continue.",
@@ -401,6 +567,11 @@ const translations = {
     android: "СКАЧАТЬ ANDROID",
     iphone: "СКАЧАТЬ iPHONE",
     beta: "СКАЧАТЬ BETA",
+    soon: "🔒 СКОРО",
+    home: "ГЛАВНАЯ",
+    rewards: "НАГРАДЫ",
+    referral: "РЕФЕРАЛЫ",
+    news: "НОВОСТИ",
     searching: "Поиск доступной рекламы...",
     noAd: "Сейчас нет доступной рекламы. Попробуйте позже.",
     popup: "Разрешите всплывающие окна.",
@@ -420,6 +591,76 @@ const translations = {
       "Нажмите Android, чтобы открыть страницу файлов и видео."
     ],
     guideNote: "Спасибо за использование OXIDE HUB ❤️"
+  },
+
+  es: {
+    progress: "Progreso:",
+    stage: "Etapa",
+    watch: "VER ANUNCIO",
+    completed: "COMPLETADO",
+    locked: "BLOQUEADO",
+    android: "DESCARGAR ANDROID",
+    iphone: "DESCARGAR iPHONE",
+    beta: "DESCARGAR BETA",
+    soon: "🔒 PRONTO",
+    home: "INICIO",
+    rewards: "PREMIOS",
+    referral: "REFERIDOS",
+    news: "NOTICIAS",
+    searching: "Buscando un anuncio disponible...",
+    noAd: "No hay anuncios disponibles. Inténtalo más tarde.",
+    popup: "Permite las ventanas emergentes para continuar.",
+    opened: "Anuncio abierto:",
+    seconds: "segundos. Complétalo y espera la confirmación.",
+    confirmed: "¡Anuncio confirmado! Puedes continuar.",
+    complete: "¡Los tres anuncios están completos! Ya puedes abrir las descargas.",
+    session: "Tienes una sesión activa. Complétala o espera 5 minutos.",
+    error: "Ha ocurrido un error. Inténtalo de nuevo.",
+    refreshError: "No se pudo actualizar el progreso. Comprueba la conexión.",
+    guideTitle: "📖 CÓMO USAR",
+    guideSteps: [
+      "Pulsa Ver anuncio para abrir un anuncio.",
+      "Completa el anuncio y espera la confirmación.",
+      "La siguiente etapa se desbloqueará después.",
+      "Completa los tres anuncios para desbloquear Android.",
+      "Pulsa Android para abrir los archivos y el vídeo."
+    ],
+    guideNote: "Gracias por usar OXIDE HUB ❤️"
+  },
+
+  id: {
+    progress: "Progres:",
+    stage: "Tahap",
+    watch: "TONTON IKLAN",
+    completed: "SELESAI",
+    locked: "TERKUNCI",
+    android: "UNDUH ANDROID",
+    iphone: "UNDUH iPHONE",
+    beta: "UNDUH BETA",
+    soon: "🔒 SEGERA",
+    home: "BERANDA",
+    rewards: "HADIAH",
+    referral: "REFERAL",
+    news: "BERITA",
+    searching: "Mencari iklan yang tersedia...",
+    noAd: "Belum ada iklan tersedia. Coba lagi nanti.",
+    popup: "Izinkan pop-up untuk melanjutkan.",
+    opened: "Iklan dibuka:",
+    seconds: "detik. Selesaikan dan tunggu konfirmasi hadiah.",
+    confirmed: "Iklan berhasil dikonfirmasi! Lanjut ke tahap berikutnya.",
+    complete: "Ketiga iklan selesai! Sekarang Anda dapat membuka halaman unduhan.",
+    session: "Anda memiliki sesi iklan aktif. Selesaikan atau tunggu 5 menit.",
+    error: "Terjadi kesalahan. Silakan coba lagi.",
+    refreshError: "Gagal memperbarui progres. Periksa koneksi server.",
+    guideTitle: "📖 CARA MENGGUNAKAN",
+    guideSteps: [
+      "Tekan Tonton Iklan untuk membuka iklan.",
+      "Selesaikan iklan dan tunggu konfirmasi hadiah.",
+      "Tahap berikutnya terbuka setelah konfirmasi.",
+      "Selesaikan tiga iklan untuk membuka Android.",
+      "Tekan Android untuk membuka halaman file dan video."
+    ],
+    guideNote: "Terima kasih telah menggunakan OXIDE HUB ❤️"
   }
 };
 
@@ -527,6 +768,7 @@ function changeLanguage(language) {
   if (!translations[language]) return;
 
   currentLanguage = language;
+
   document.documentElement.lang = language;
   document.documentElement.dir =
     language === "ar" ? "rtl" : "ltr";
@@ -536,12 +778,41 @@ function changeLanguage(language) {
   document.getElementById("iphoneText").textContent = t("iphone");
   document.getElementById("betaText").textContent = t("beta");
 
+  document.getElementById("navHome").textContent = t("home");
+  document.getElementById("navRewards").textContent = t("rewards");
+  document.getElementById("navReferral").textContent = t("referral");
+  document.getElementById("navNews").textContent = t("news");
+
+  ["soon1","soon2","soon3","soon4","iphoneSoon","betaSoon"]
+    .forEach(id => {
+      document.getElementById(id).textContent = t("soon");
+    });
+
   renderGuide();
   createStages();
 
   if (progress >= REQUIRED) {
     statusBox.textContent = t("complete");
   }
+}
+
+/* تحديث ألوان وحالات المنصات */
+function updatePlatforms() {
+  const download = document.getElementById("download");
+  const iphone = document.getElementById("iphoneButton");
+  const beta = document.getElementById("betaButton");
+
+  const androidReady = progress >= REQUIRED;
+
+  download.classList.toggle("available", androidReady);
+  download.href = androidReady ? DOWNLOAD_PAGE : "#";
+  download.setAttribute("aria-disabled", String(!androidReady));
+
+  iphone.disabled = !PLATFORM_AVAILABILITY.iphone;
+  iphone.classList.toggle("available", PLATFORM_AVAILABILITY.iphone);
+
+  beta.disabled = !PLATFORM_AVAILABILITY.beta;
+  beta.classList.toggle("available", PLATFORM_AVAILABILITY.beta);
 }
 
 function updateProgress(value) {
@@ -580,17 +851,7 @@ function updateProgress(value) {
     }
   }
 
-  const download = document.getElementById("download");
-
-  if (progress >= REQUIRED) {
-    download.classList.add("ready");
-    download.href = DOWNLOAD_PAGE;
-    download.setAttribute("aria-disabled", "false");
-  } else {
-    download.classList.remove("ready");
-    download.href = "#";
-    download.setAttribute("aria-disabled", "true");
-  }
+  updatePlatforms();
 }
 
 async function refreshProgress() {
@@ -740,17 +1001,14 @@ async function watchAd(number) {
   }
 }
 
-// تنظيف الجلسة المنتهية عند فتح الموقع
+/* INITIALIZATION */
 getActiveSession();
-
 createStages();
 changeLanguage("ar");
 refreshProgress();
 
-// تحديث التقدم كل 5 ثوانٍ
 setInterval(refreshProgress, 5000);
 
-// فحص التقدم عند الرجوع إلى الموقع
 window.addEventListener("focus", refreshProgress);
 
 document.addEventListener("visibilitychange", () => {
