@@ -29,7 +29,6 @@ body {
   to { background-position: center, 52% 52%; }
 }
 
-/* نجوم متحركة خفيفة */
 .stars {
   position: fixed;
   inset: -100px;
@@ -111,7 +110,7 @@ body {
 .nav-item {
   flex: 1;
   min-width: 0;
-  min-height: 65px;
+  min-height: 68px;
   padding: 7px 2px;
   border: 1px solid transparent;
   border-radius: 9px;
@@ -121,7 +120,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
+  gap: 5px;
   font-family: Arial, sans-serif;
   cursor: default;
 }
@@ -133,9 +132,28 @@ body {
   box-shadow: 0 0 12px rgba(0,170,255,.45);
 }
 
+/* SVG ICONS */
 .nav-icon {
-  font-size: 19px;
-  line-height: 1;
+  width: 23px;
+  height: 23px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d6eaff;
+}
+
+.nav-icon svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nav-item.active .nav-icon {
+  color: #ffffff;
 }
 
 .nav-label {
@@ -346,8 +364,11 @@ footer {
 }
 
 @media (max-width: 360px) {
-  .nav-item { min-height: 60px; }
-  .nav-icon { font-size: 17px; }
+  .nav-item { min-height: 62px; }
+  .nav-icon, .nav-icon svg {
+    width: 20px;
+    height: 20px;
+  }
   .nav-label { font-size: 9px; }
   .nav-soon { font-size: 7px; }
   .navigation { gap: 1px; padding: 3px; }
@@ -381,37 +402,75 @@ footer {
   <!-- NAVIGATION -->
   <nav class="navigation" aria-label="Main navigation">
 
+    <!-- HOME -->
     <button class="nav-item active" type="button">
-      <span class="nav-icon">⌂</span>
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M3 10.5 12 3l9 7.5"/>
+          <path d="M5.5 9.5V21h13V9.5"/>
+          <path d="M9 21v-7h6v7"/>
+        </svg>
+      </span>
       <span class="nav-label" id="navHome">الرئيسية</span>
     </button>
 
+    <!-- REWARDS -->
     <button class="nav-item" type="button" disabled>
-      <span class="nav-icon">🎁</span>
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M20 12v9H4v-9"/>
+          <path d="M2 7h20v5H2z"/>
+          <path d="M12 7v14"/>
+          <path d="M12 7H7.5a2.5 2.5 0 1 1 2.5-2.5C10 6 12 7 12 7Z"/>
+          <path d="M12 7h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z"/>
+        </svg>
+      </span>
       <span class="nav-label" id="navRewards">مكافأة</span>
       <span class="nav-soon" id="soon1">🔒 SOON</span>
     </button>
 
+    <!-- VIP -->
     <button class="nav-item" type="button" disabled>
-      <span class="nav-icon">👑</span>
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="m12 3 2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8L12 3Z"/>
+          <path d="M7 21h10"/>
+        </svg>
+      </span>
       <span class="nav-label">VIP</span>
       <span class="nav-soon" id="soon2">🔒 SOON</span>
     </button>
 
+    <!-- REFERRAL -->
     <button class="nav-item" type="button" disabled>
-      <span class="nav-icon">👤</span>
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="10" cy="7" r="4"/>
+          <path d="M20 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </span>
       <span class="nav-label" id="navReferral">إحالة</span>
       <span class="nav-soon" id="soon3">🔒 SOON</span>
     </button>
 
+    <!-- NEWS -->
     <button class="nav-item" type="button" disabled>
-      <span class="nav-icon">📢</span>
+      <span class="nav-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/>
+          <path d="M10 21h4"/>
+          <path d="M12 2v2"/>
+        </svg>
+      </span>
       <span class="nav-label" id="navNews">أخبار</span>
       <span class="nav-soon" id="soon4">🔒 SOON</span>
     </button>
 
   </nav>
 
+  <!-- PROGRESS -->
   <section class="progress-box">
     <div class="progress-text">
       <span id="progressLabel">التقدم:</span>
@@ -449,6 +508,7 @@ footer {
 
   <div id="status" role="status"></div>
 
+  <!-- GUIDE -->
   <section class="guide-box">
     <h2 class="guide-title" id="guideTitle">📖 طريقة الاستخدام</h2>
     <div id="guideSteps"></div>
@@ -466,10 +526,8 @@ footer {
 const MAINTENANCE_MODE = false;
 const REQUIRED = 3;
 const LOCK_DURATION = 5 * 60 * 1000;
-
 const DOWNLOAD_PAGE = "download.html";
 
-/* عندما تصبح المنصات جاهزة يمكن تحديث حالتها هنا */
 const PLATFORM_AVAILABILITY = {
   iphone: false,
   beta: false
@@ -487,7 +545,6 @@ let activePopup = null;
 const LOCK_KEY = "oxide_active_ad_session";
 
 const translations = {
-
   ar: {
     progress: "التقدم:",
     stage: "المرحلة",
@@ -699,7 +756,6 @@ function getActiveSession() {
     }
 
     return session;
-
   } catch {
     clearActiveSession();
     return null;
@@ -783,10 +839,12 @@ function changeLanguage(language) {
   document.getElementById("navReferral").textContent = t("referral");
   document.getElementById("navNews").textContent = t("news");
 
-  ["soon1","soon2","soon3","soon4","iphoneSoon","betaSoon"]
-    .forEach(id => {
-      document.getElementById(id).textContent = t("soon");
-    });
+  [
+    "soon1", "soon2", "soon3", "soon4",
+    "iphoneSoon", "betaSoon"
+  ].forEach(id => {
+    document.getElementById(id).textContent = t("soon");
+  });
 
   renderGuide();
   createStages();
@@ -796,7 +854,6 @@ function changeLanguage(language) {
   }
 }
 
-/* تحديث ألوان وحالات المنصات */
 function updatePlatforms() {
   const download = document.getElementById("download");
   const iphone = document.getElementById("iphoneButton");
