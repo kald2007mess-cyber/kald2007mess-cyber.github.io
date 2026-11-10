@@ -46,7 +46,10 @@ body {
   outline: none;
 }
 
-.language-box option { background: #0c1930; color: white; }
+.language-box option {
+  background: #0c1930;
+  color: white;
+}
 
 .logo {
   font-size: 35px;
@@ -58,9 +61,6 @@ body {
 }
 
 .subtitle { color: #b8c9dd; margin-bottom: 28px; }
-
-/* رسالة الصيانة مخفية */
-.maintenance-box { display: none; }
 
 .progress-box {
   background: rgba(12,25,48,.85);
@@ -186,7 +186,12 @@ body {
   border-radius: 6px;
 }
 
-#status { min-height: 25px; color: #ffd36a; margin-top: 15px; }
+#status {
+  min-height: 25px;
+  color: #ffd36a;
+  margin-top: 15px;
+  line-height: 1.6;
+}
 
 .guide-box {
   background: rgba(12,25,48,.88);
@@ -237,7 +242,11 @@ body {
   margin-top: 18px;
 }
 
-footer { margin-top: 30px; color: #879bb2; font-size: 12px; }
+footer {
+  margin-top: 30px;
+  color: #879bb2;
+  font-size: 12px;
+}
 </style>
 </head>
 
@@ -267,8 +276,9 @@ footer { margin-top: 30px; color: #879bb2; font-size: 12px; }
 
   <div id="stages"></div>
 
-  <a id="download" class="download-button" href="#" aria-disabled="true">
-    <svg class="android-icon" viewBox="0 0 24 24" aria-label="Android">
+  <a id="download" class="download-button"
+     href="#" aria-disabled="true">
+    <svg class="android-icon" viewBox="0 0 24 24">
       <path d="M6.2 7.2 4.6 4.5a.5.5 0 0 1 .86-.5l1.65 2.8a8.2 8.2 0 0 1 9.78 0l1.65-2.8a.5.5 0 1 1 .86.5l-1.6 2.7A7.2 7.2 0 0 1 21 13H3a7.2 7.2 0 0 1 3.2-5.8ZM7 14h10v5.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 7 19.5V14Zm-3-1h2v6H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 1-2Zm15 0h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1v-6Z"/>
     </svg>
     <span id="androidText">تحميل ANDROID</span>
@@ -304,9 +314,10 @@ footer { margin-top: 30px; color: #879bb2; font-size: 12px; }
 <script>
 const MAINTENANCE_MODE = false;
 const REQUIRED = 3;
-const LOCK_DURATION = 2 * 60 * 60 * 1000;
 
-// صفحة التحميل الجديدة بدل رابط اللعبة القديم
+// مدة جلسة الإعلان: 5 دقائق
+const LOCK_DURATION = 5 * 60 * 1000;
+
 const DOWNLOAD_PAGE = "download.html";
 
 const stages = document.getElementById("stages");
@@ -317,7 +328,6 @@ let busy = false;
 let lastProgress = null;
 let currentLanguage = "ar";
 let activePopup = null;
-let leftPageForAd = false;
 
 const LOCK_KEY = "oxide_active_ad_session";
 
@@ -331,7 +341,6 @@ const translations = {
     android: "تحميل ANDROID",
     iphone: "تحميل iPHONE",
     beta: "تحميل BETA",
-    maintenance: "صيانة",
     searching: "جاري البحث عن إعلان متاح...",
     noAd: "لا يوجد إعلان متاح حاليًا. حاول لاحقًا.",
     popup: "اسمح بفتح النوافذ المنبثقة للمتابعة.",
@@ -339,9 +348,9 @@ const translations = {
     seconds: "ثانية. أكمله وانتظر تأكيد المكافأة.",
     confirmed: "تم تأكيد إكمال الإعلان! يمكنك الانتقال للمرحلة التالية.",
     complete: "اكتملت الإعلانات الثلاثة! يمكنك الآن فتح صفحة التحميل.",
-    session: "لديك جلسة إعلان سابقة لم تنتهِ بعد. أكملها أولاً.",
+    session: "لديك جلسة إعلان نشطة. أكملها أو انتظر انتهاء 5 دقائق.",
     error: "حدث خطأ. حاول مرة أخرى.",
-    refreshError: "تعذر تحديث التقدم. أعد تحميل الصفحة.",
+    refreshError: "تعذر تحديث التقدم. تحقق من اتصال الموقع بالخادم.",
     guideTitle: "📖 طريقة الاستخدام",
     guideSteps: [
       "اضغط على زر مشاهدة الإعلان لفتح الإعلان.",
@@ -362,7 +371,6 @@ const translations = {
     android: "DOWNLOAD ANDROID",
     iphone: "DOWNLOAD iPHONE",
     beta: "DOWNLOAD BETA",
-    maintenance: "MAINTENANCE",
     searching: "Searching for an available ad...",
     noAd: "No ad is available right now. Try later.",
     popup: "Allow pop-ups to continue.",
@@ -370,9 +378,9 @@ const translations = {
     seconds: "seconds. Complete it and wait for reward confirmation.",
     confirmed: "Ad completion confirmed! Continue to the next stage.",
     complete: "All three ads completed! You can now open the download page.",
-    session: "You have an unfinished ad session. Complete it first.",
+    session: "You have an active ad session. Complete it or wait 5 minutes.",
     error: "An error occurred. Please try again.",
-    refreshError: "Could not update progress. Reload the page.",
+    refreshError: "Could not update progress. Check the server connection.",
     guideTitle: "📖 HOW TO USE",
     guideSteps: [
       "Press Watch Ad to open an advertisement.",
@@ -393,7 +401,6 @@ const translations = {
     android: "СКАЧАТЬ ANDROID",
     iphone: "СКАЧАТЬ iPHONE",
     beta: "СКАЧАТЬ BETA",
-    maintenance: "ОБСЛУЖИВАНИЕ",
     searching: "Поиск доступной рекламы...",
     noAd: "Сейчас нет доступной рекламы. Попробуйте позже.",
     popup: "Разрешите всплывающие окна.",
@@ -401,9 +408,9 @@ const translations = {
     seconds: "секунд. Завершите её и дождитесь подтверждения.",
     confirmed: "Реклама подтверждена! Можно продолжить.",
     complete: "Все три рекламы завершены! Можно открыть страницу загрузки.",
-    session: "У вас есть незавершённая рекламная сессия.",
+    session: "Рекламная сессия активна. Завершите её или подождите 5 минут.",
     error: "Произошла ошибка. Попробуйте снова.",
-    refreshError: "Не удалось обновить прогресс.",
+    refreshError: "Не удалось обновить прогресс. Проверьте соединение.",
     guideTitle: "📖 КАК ИСПОЛЬЗОВАТЬ",
     guideSteps: [
       "Нажмите кнопку просмотра рекламы.",
@@ -418,6 +425,51 @@ const translations = {
 
 function t(key) {
   return translations[currentLanguage][key];
+}
+
+function clearActiveSession() {
+  localStorage.removeItem(LOCK_KEY);
+
+  if (activePopup && !activePopup.closed) {
+    try {
+      activePopup.close();
+    } catch {}
+  }
+
+  activePopup = null;
+}
+
+function getActiveSession() {
+  try {
+    const raw = localStorage.getItem(LOCK_KEY);
+    if (!raw) return null;
+
+    const session = JSON.parse(raw);
+    const startedAt = Number(session.startedAt);
+
+    if (
+      !session ||
+      !Number.isFinite(startedAt) ||
+      startedAt > Date.now() ||
+      Date.now() - startedAt >= LOCK_DURATION
+    ) {
+      clearActiveSession();
+      return null;
+    }
+
+    return session;
+
+  } catch {
+    clearActiveSession();
+    return null;
+  }
+}
+
+function saveActiveSession(number) {
+  localStorage.setItem(LOCK_KEY, JSON.stringify({
+    stage: number,
+    startedAt: Date.now()
+  }));
 }
 
 function renderGuide() {
@@ -447,55 +499,6 @@ function renderGuide() {
 
   document.getElementById("guideNote").textContent =
     language.guideNote;
-}
-
-function getActiveSession() {
-  try {
-    const raw = localStorage.getItem(LOCK_KEY);
-    if (!raw) return null;
-
-    const session = JSON.parse(raw);
-
-    if (
-      !session ||
-      !Number.isFinite(Number(session.startedAt)) ||
-      Date.now() - Number(session.startedAt) >= LOCK_DURATION
-    ) {
-      localStorage.removeItem(LOCK_KEY);
-      return null;
-    }
-
-    return session;
-  } catch {
-    localStorage.removeItem(LOCK_KEY);
-    return null;
-  }
-}
-
-function saveActiveSession(number) {
-  localStorage.setItem(LOCK_KEY, JSON.stringify({
-    stage: number,
-    startedAt: Date.now()
-  }));
-}
-
-function clearActiveSession() {
-  localStorage.removeItem(LOCK_KEY);
-
-  if (activePopup && !activePopup.closed) {
-    try { activePopup.close(); } catch {}
-  }
-
-  activePopup = null;
-  leftPageForAd = false;
-}
-
-async function handleReturnFromAd() {
-  if (!leftPageForAd) return;
-
-  clearActiveSession();
-  statusBox.textContent = "";
-  await refreshProgress();
 }
 
 function createStages() {
@@ -542,7 +545,10 @@ function changeLanguage(language) {
 }
 
 function updateProgress(value) {
-  progress = Math.max(0, Math.min(REQUIRED, Number(value) || 0));
+  progress = Math.max(
+    0,
+    Math.min(REQUIRED, Number(value) || 0)
+  );
 
   document.getElementById("count").textContent =
     progress + "/" + REQUIRED;
@@ -556,7 +562,8 @@ function updateProgress(value) {
 
     if (!button || !label) continue;
 
-    label.textContent = t("stage") + " " + i + "/" + REQUIRED;
+    label.textContent =
+      t("stage") + " " + i + "/" + REQUIRED;
 
     if (i <= progress) {
       button.textContent = "✓ " + t("completed");
@@ -578,12 +585,10 @@ function updateProgress(value) {
   if (progress >= REQUIRED) {
     download.classList.add("ready");
     download.href = DOWNLOAD_PAGE;
-    download.removeAttribute("target");
     download.setAttribute("aria-disabled", "false");
   } else {
     download.classList.remove("ready");
     download.href = "#";
-    download.removeAttribute("target");
     download.setAttribute("aria-disabled", "true");
   }
 }
@@ -596,13 +601,19 @@ async function refreshProgress() {
       credentials: "same-origin"
     });
 
-    if (!response.ok) throw new Error("Progress request failed");
+    if (!response.ok) {
+      throw new Error("Progress request failed");
+    }
 
     const data = await response.json();
 
+    if (!data || !Number.isFinite(Number(data.progress))) {
+      throw new Error("Invalid progress response");
+    }
+
     const newProgress = Math.max(
       0,
-      Math.min(REQUIRED, Number(data.progress) || 0)
+      Math.min(REQUIRED, Number(data.progress))
     );
 
     const session = getActiveSession();
@@ -658,10 +669,9 @@ async function watchAd(number) {
   }
 
   busy = true;
-  saveActiveSession(number);
   activePopup = popup;
-  leftPageForAd = true;
 
+  saveActiveSession(number);
   statusBox.textContent = t("searching");
 
   try {
@@ -700,7 +710,7 @@ async function watchAd(number) {
       Math.floor(Math.random() * validAds.length)
     ];
 
-    if (!popup || popup.closed) {
+    if (popup.closed) {
       throw new Error(t("popup"));
     }
 
@@ -711,7 +721,8 @@ async function watchAd(number) {
       : "Window";
 
     statusBox.textContent =
-      t("opened") + " " + (ad.title || "PTC Ad") +
+      t("opened") + " " +
+      (ad.title || "PTC Ad") +
       " (" + typeName + ") — " +
       ad.duration + " " + t("seconds");
 
@@ -729,31 +740,30 @@ async function watchAd(number) {
   }
 }
 
+// تنظيف الجلسة المنتهية عند فتح الموقع
+getActiveSession();
+
 createStages();
 changeLanguage("ar");
 refreshProgress();
 
-setInterval(refreshProgress, 3000);
+// تحديث التقدم كل 5 ثوانٍ
+setInterval(refreshProgress, 5000);
 
-window.addEventListener("focus", handleReturnFromAd);
+// فحص التقدم عند الرجوع إلى الموقع
+window.addEventListener("focus", refreshProgress);
 
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
-    handleReturnFromAd();
+    refreshProgress();
   }
 });
 
 window.addEventListener("pageshow", () => {
-  if (leftPageForAd) {
-    handleReturnFromAd();
-  }
-});
-
-window.addEventListener("storage", event => {
-  if (event.key === LOCK_KEY) {
-    updateProgress(progress);
-  }
+  getActiveSession();
+  refreshProgress();
 });
 </script>
+
 </body>
 </html>
