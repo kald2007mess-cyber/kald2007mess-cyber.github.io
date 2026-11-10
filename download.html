@@ -93,16 +93,20 @@ select {
   transform: scale(.98);
 }
 
+/* VIDEO - VERTICAL 9:16 */
 .video-frame {
-  width: 100%;
-  aspect-ratio: 16 / 9;
+  width: min(100%, 320px);
+  aspect-ratio: 9 / 16;
+  margin: 15px auto 0;
   border: 1px solid #176caa;
-  border-radius: 10px;
+  border-radius: 12px;
   background: #000;
   overflow: hidden;
+  box-shadow: 0 0 18px rgba(0,183,255,.15);
 }
 
 .video-frame iframe {
+  display: block;
   width: 100%;
   height: 100%;
   border: 0;
@@ -123,6 +127,13 @@ footer {
   margin-top: 30px;
   color: #879bb2;
   font-size: 12px;
+}
+
+/* SMALL PHONES */
+@media (max-width: 360px) {
+  .video-frame {
+    width: min(100%, 280px);
+  }
 }
 </style>
 </head>
