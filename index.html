@@ -59,39 +59,8 @@ body {
 
 .subtitle { color: #b8c9dd; margin-bottom: 28px; }
 
-.maintenance-box {
-  background: rgba(35, 28, 12, .94);
-  border: 1px solid #d99b28;
-  border-radius: 14px;
-  padding: 18px;
-  margin: 20px 0;
-  color: #ffe2a0;
-  line-height: 1.8;
-  box-shadow: 0 0 18px rgba(217,155,40,.12);
-}
-
-.maintenance-box h3 {
-  color: #ffc34d;
-  margin: 0 0 10px;
-  font-size: 19px;
-}
-
-.maintenance-box p {
-  margin: 0;
-  font-size: 14px;
-}
-
-.maintenance-status {
-  display: inline-block;
-  margin-top: 12px;
-  background: rgba(217,155,40,.18);
-  border: 1px solid #d99b28;
-  border-radius: 20px;
-  padding: 5px 13px;
-  color: #ffd36a;
-  font-size: 12px;
-  font-weight: bold;
-}
+/* رسالة الصيانة مخفية */
+.maintenance-box { display: none; }
 
 .progress-box {
   background: rgba(12,25,48,.85);
@@ -152,12 +121,6 @@ body {
 .stage button.locked {
   background: #344253;
   color: #b6c1ce;
-  cursor: not-allowed;
-}
-
-.stage button.maintenance-button {
-  background: #66502b;
-  color: #ffe2a0;
   cursor: not-allowed;
 }
 
@@ -292,19 +255,6 @@ footer { margin-top: 30px; color: #879bb2; font-size: 12px; }
   <div class="logo">OXIDE HUB</div>
   <div class="subtitle">SURVIVE • EXPLORE • DOMINATE</div>
 
-  <section class="maintenance-box">
-    <h3 id="maintenanceTitle">🔧 تحديث ملف التحميل</h3>
-    <p id="maintenanceText">
-      نقوم حاليًا بتحديث ملف التحميل وتحسينه.
-      تم إيقاف مشاهدة الإعلانات والتحميل مؤقتًا.
-      سنعيد فتح الخدمات فور الانتهاء من التحديث.
-      شكرًا لصبركم وثقتكم بنا ❤️
-    </p>
-    <div class="maintenance-status" id="maintenanceStatus">
-      ⚠️ تحديث الملف جارٍ
-    </div>
-  </section>
-
   <section class="progress-box">
     <div class="progress-text">
       <span id="progressLabel">التقدم:</span>
@@ -339,11 +289,9 @@ footer { margin-top: 30px; color: #879bb2; font-size: 12px; }
   <div id="status" role="status"></div>
 
   <section class="guide-box">
-    <h2 class="guide-title" id="guideTitle">📖 معلومات التحديث</h2>
+    <h2 class="guide-title" id="guideTitle">📖 طريقة الاستخدام</h2>
     <div id="guideSteps"></div>
-    <div class="guide-note" id="guideNote">
-      نعمل على تجهيز ملف التحميل الجديد. ❤️
-    </div>
+    <div class="guide-note" id="guideNote"></div>
   </section>
 
   <footer>
@@ -354,15 +302,12 @@ footer { margin-top: 30px; color: #879bb2; font-size: 12px; }
 </main>
 
 <script>
-// true = إيقاف الإعلانات والتحميل مؤقتًا
-// false = إعادة فتح الإعلانات والتحميل
-const MAINTENANCE_MODE = true;
-
+const MAINTENANCE_MODE = false;
 const REQUIRED = 3;
 const LOCK_DURATION = 2 * 60 * 60 * 1000;
 
-const DRIVE_DOWNLOAD =
-  "https://drive.google.com/uc?export=download&id=1HsDZMwz8_zLSSsHKSd9m4S02hza2GHr5";
+// صفحة التحميل الجديدة بدل رابط اللعبة القديم
+const DOWNLOAD_PAGE = "download.html";
 
 const stages = document.getElementById("stages");
 const statusBox = document.getElementById("status");
@@ -383,34 +328,29 @@ const translations = {
     watch: "شاهد الإعلان",
     completed: "مكتمل",
     locked: "مقفل",
-    maintenance: "🔧 صيانة",
     android: "تحميل ANDROID",
     iphone: "تحميل iPHONE",
     beta: "تحميل BETA",
-    waiting: "أكمل الإعلان السابق أولاً.",
+    maintenance: "صيانة",
     searching: "جاري البحث عن إعلان متاح...",
     noAd: "لا يوجد إعلان متاح حاليًا. حاول لاحقًا.",
     popup: "اسمح بفتح النوافذ المنبثقة للمتابعة.",
-    invalid: "بيانات الإعلان غير صالحة.",
     opened: "تم فتح الإعلان:",
     seconds: "ثانية. أكمله وانتظر تأكيد المكافأة.",
     confirmed: "تم تأكيد إكمال الإعلان! يمكنك الانتقال للمرحلة التالية.",
-    complete: "اكتملت الإعلانات الثلاثة! يمكنك الآن تحميل تطبيق Android.",
+    complete: "اكتملت الإعلانات الثلاثة! يمكنك الآن فتح صفحة التحميل.",
     session: "لديك جلسة إعلان سابقة لم تنتهِ بعد. أكملها أولاً.",
     error: "حدث خطأ. حاول مرة أخرى.",
     refreshError: "تعذر تحديث التقدم. أعد تحميل الصفحة.",
-    maintenanceTitle: "🔧 تحديث ملف التحميل",
-    maintenanceText: "نقوم حاليًا بتحديث ملف التحميل وتحسينه. تم إيقاف مشاهدة الإعلانات والتحميل مؤقتًا. سنعيد فتح الخدمات فور الانتهاء من التحديث. شكرًا لصبركم وثقتكم بنا ❤️",
-    maintenanceStatus: "⚠️ تحديث الملف جارٍ",
-    guideTitle: "📖 معلومات التحديث",
+    guideTitle: "📖 طريقة الاستخدام",
     guideSteps: [
-      "نقوم حاليًا بتجهيز نسخة جديدة من ملف التحميل.",
-      "تم إيقاف مشاهدة الإعلانات مؤقتًا.",
-      "تم إيقاف أزرار التحميل مؤقتًا.",
-      "لن يتم حذف تقدمكم أو مكافآتكم بسبب هذا التحديث.",
-      "سنعلن عن عودة الخدمات عند الانتهاء."
+      "اضغط على زر مشاهدة الإعلان لفتح الإعلان.",
+      "أكمل الإعلان وانتظر تأكيد المكافأة.",
+      "بعد التأكيد ستفتح المرحلة التالية.",
+      "أكمل الإعلانات الثلاثة لفتح زر Android.",
+      "اضغط على Android لفتح صفحة الملفات والفيديو."
     ],
-    guideNote: "شكرًا لانتظاركم وثقتكم في OXIDE HUB ❤️"
+    guideNote: "شكرًا لاستخدامكم OXIDE HUB ❤️"
   },
 
   en: {
@@ -419,34 +359,29 @@ const translations = {
     watch: "WATCH AD",
     completed: "COMPLETED",
     locked: "LOCKED",
-    maintenance: "🔧 MAINTENANCE",
     android: "DOWNLOAD ANDROID",
     iphone: "DOWNLOAD iPHONE",
     beta: "DOWNLOAD BETA",
-    waiting: "Complete the previous ad first.",
+    maintenance: "MAINTENANCE",
     searching: "Searching for an available ad...",
     noAd: "No ad is available right now. Try later.",
     popup: "Allow pop-ups to continue.",
-    invalid: "Invalid advertisement data.",
     opened: "Advertisement opened:",
     seconds: "seconds. Complete it and wait for reward confirmation.",
     confirmed: "Ad completion confirmed! Continue to the next stage.",
-    complete: "All three ads completed! You can now download Android.",
+    complete: "All three ads completed! You can now open the download page.",
     session: "You have an unfinished ad session. Complete it first.",
     error: "An error occurred. Please try again.",
     refreshError: "Could not update progress. Reload the page.",
-    maintenanceTitle: "🔧 DOWNLOAD FILE UPDATE",
-    maintenanceText: "We are currently updating and improving the download file. Ad viewing and downloads are temporarily disabled. Services will reopen as soon as the update is complete. Thank you for your patience and support ❤️",
-    maintenanceStatus: "⚠️ FILE UPDATE IN PROGRESS",
-    guideTitle: "📖 UPDATE INFORMATION",
+    guideTitle: "📖 HOW TO USE",
     guideSteps: [
-      "We are preparing a new version of the download file.",
-      "Advertisement viewing is temporarily disabled.",
-      "Download buttons are temporarily disabled.",
-      "Your progress and rewards will not be deleted because of this update.",
-      "We will announce when services are available again."
+      "Press Watch Ad to open an advertisement.",
+      "Complete the ad and wait for reward confirmation.",
+      "The next stage unlocks after confirmation.",
+      "Complete all three ads to unlock Android.",
+      "Press Android to open the files and video page."
     ],
-    guideNote: "Thank you for waiting and trusting OXIDE HUB ❤️"
+    guideNote: "Thank you for using OXIDE HUB ❤️"
   },
 
   ru: {
@@ -455,34 +390,29 @@ const translations = {
     watch: "СМОТРЕТЬ РЕКЛАМУ",
     completed: "ЗАВЕРШЕНО",
     locked: "ЗАКРЫТО",
-    maintenance: "🔧 ОБСЛУЖИВАНИЕ",
     android: "СКАЧАТЬ ANDROID",
     iphone: "СКАЧАТЬ iPHONE",
     beta: "СКАЧАТЬ BETA",
-    waiting: "Сначала завершите предыдущую рекламу.",
+    maintenance: "ОБСЛУЖИВАНИЕ",
     searching: "Поиск доступной рекламы...",
     noAd: "Сейчас нет доступной рекламы. Попробуйте позже.",
     popup: "Разрешите всплывающие окна.",
-    invalid: "Недействительные данные рекламы.",
     opened: "Реклама открыта:",
     seconds: "секунд. Завершите её и дождитесь подтверждения.",
     confirmed: "Реклама подтверждена! Можно продолжить.",
-    complete: "Все три рекламы завершены! Можно скачать Android.",
+    complete: "Все три рекламы завершены! Можно открыть страницу загрузки.",
     session: "У вас есть незавершённая рекламная сессия.",
     error: "Произошла ошибка. Попробуйте снова.",
     refreshError: "Не удалось обновить прогресс.",
-    maintenanceTitle: "🔧 ОБНОВЛЕНИЕ ФАЙЛА ЗАГРУЗКИ",
-    maintenanceText: "Сейчас мы обновляем и улучшаем файл загрузки. Просмотр рекламы и загрузки временно отключены. Сервисы снова откроются после завершения обновления. Спасибо за терпение и поддержку ❤️",
-    maintenanceStatus: "⚠️ ИДЁТ ОБНОВЛЕНИЕ ФАЙЛА",
-    guideTitle: "📖 ИНФОРМАЦИЯ ОБ ОБНОВЛЕНИИ",
+    guideTitle: "📖 КАК ИСПОЛЬЗОВАТЬ",
     guideSteps: [
-      "Мы готовим новую версию файла загрузки.",
-      "Просмотр рекламы временно отключён.",
-      "Кнопки загрузки временно отключены.",
-      "Ваш прогресс и награды не будут удалены из-за обновления.",
-      "Мы сообщим, когда сервисы снова заработают."
+      "Нажмите кнопку просмотра рекламы.",
+      "Завершите рекламу и дождитесь подтверждения.",
+      "После подтверждения откроется следующий этап.",
+      "Завершите три рекламы, чтобы открыть Android.",
+      "Нажмите Android, чтобы открыть страницу файлов и видео."
     ],
-    guideNote: "Спасибо за ожидание и доверие к OXIDE HUB ❤️"
+    guideNote: "Спасибо за использование OXIDE HUB ❤️"
   }
 };
 
@@ -565,7 +495,6 @@ async function handleReturnFromAd() {
 
   clearActiveSession();
   statusBox.textContent = "";
-
   await refreshProgress();
 }
 
@@ -604,21 +533,10 @@ function changeLanguage(language) {
   document.getElementById("iphoneText").textContent = t("iphone");
   document.getElementById("betaText").textContent = t("beta");
 
-  document.getElementById("maintenanceTitle").textContent =
-    t("maintenanceTitle");
-
-  document.getElementById("maintenanceText").textContent =
-    t("maintenanceText");
-
-  document.getElementById("maintenanceStatus").textContent =
-    t("maintenanceStatus");
-
   renderGuide();
   createStages();
 
-  if (MAINTENANCE_MODE) {
-    statusBox.textContent = "";
-  } else if (progress >= REQUIRED) {
+  if (progress >= REQUIRED) {
     statusBox.textContent = t("complete");
   }
 }
@@ -640,11 +558,7 @@ function updateProgress(value) {
 
     label.textContent = t("stage") + " " + i + "/" + REQUIRED;
 
-    if (MAINTENANCE_MODE) {
-      button.textContent = t("maintenance");
-      button.disabled = true;
-      button.className = "maintenance-button";
-    } else if (i <= progress) {
+    if (i <= progress) {
       button.textContent = "✓ " + t("completed");
       button.disabled = true;
       button.className = "";
@@ -661,16 +575,10 @@ function updateProgress(value) {
 
   const download = document.getElementById("download");
 
-  if (MAINTENANCE_MODE) {
-    download.classList.remove("ready");
-    download.href = "#";
-    download.removeAttribute("target");
-    download.setAttribute("aria-disabled", "true");
-  } else if (progress >= REQUIRED) {
+  if (progress >= REQUIRED) {
     download.classList.add("ready");
-    download.href = DRIVE_DOWNLOAD;
-    download.target = "_blank";
-    download.rel = "noopener noreferrer";
+    download.href = DOWNLOAD_PAGE;
+    download.removeAttribute("target");
     download.setAttribute("aria-disabled", "false");
   } else {
     download.classList.remove("ready");
@@ -697,43 +605,42 @@ async function refreshProgress() {
       Math.min(REQUIRED, Number(data.progress) || 0)
     );
 
-    if (!MAINTENANCE_MODE) {
-      const session = getActiveSession();
+    const session = getActiveSession();
 
-      if (
-        session &&
-        Number(session.stage) <= newProgress
-      ) {
-        clearActiveSession();
+    if (
+      session &&
+      Number(session.stage) <= newProgress
+    ) {
+      clearActiveSession();
 
-        if (newProgress < REQUIRED) {
-          statusBox.textContent = t("confirmed");
-        }
-      } else if (
-        lastProgress !== null &&
-        newProgress > lastProgress
-      ) {
-        clearActiveSession();
+      if (newProgress < REQUIRED) {
+        statusBox.textContent = t("confirmed");
+      }
+    } else if (
+      lastProgress !== null &&
+      newProgress > lastProgress
+    ) {
+      clearActiveSession();
 
-        if (newProgress < REQUIRED) {
-          statusBox.textContent = t("confirmed");
-        }
+      if (newProgress < REQUIRED) {
+        statusBox.textContent = t("confirmed");
       }
     }
 
     lastProgress = newProgress;
     updateProgress(newProgress);
 
-  } catch (error) {
-    if (!MAINTENANCE_MODE) {
-      statusBox.textContent = t("refreshError");
+    if (newProgress >= REQUIRED) {
+      statusBox.textContent = t("complete");
     }
+
+  } catch (error) {
+    statusBox.textContent = t("refreshError");
   }
 }
 
 async function watchAd(number) {
-  if (MAINTENANCE_MODE) return;
-  if (busy) return;
+  if (MAINTENANCE_MODE || busy) return;
   if (number !== progress + 1) return;
 
   const existingSession = getActiveSession();
