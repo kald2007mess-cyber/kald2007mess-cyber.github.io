@@ -17,6 +17,16 @@ async function sendMessage(env, chatId, message) {
   return response.ok;
 }
 
+// Website connection test
+export async function onRequestGet() {
+  return Response.json({
+    status: "online",
+    project: "OXIDE HUB",
+    telegram: "endpoint ready"
+  });
+}
+
+// Telegram commands
 export async function onRequestPost({ request, env }) {
   try {
     if (
@@ -47,7 +57,6 @@ export async function onRequestPost({ request, env }) {
       return new Response("ok");
     }
 
-    // Only allow the administrator
     if (
       String(message.from?.id) !==
       String(env.TELEGRAM_ADMIN_ID)
@@ -67,7 +76,7 @@ export async function onRequestPost({ request, env }) {
         env,
         chatId,
         "🚀 مرحبًا بك في لوحة إدارة OXIDE HUB!\n\n" +
-        "الأوامر المتاحة:\n" +
+        "📊 الأوامر المتاحة:\n" +
         "/stats - إحصائيات الموقع\n" +
         "/visitors - عدد الزوار\n" +
         "/rewards - مجموع المكافآت"
@@ -76,8 +85,7 @@ export async function onRequestPost({ request, env }) {
 
     else if (command === "/stats") {
       const visitors = await env.DB.prepare(`
-        SELECT COUNT(*) AS total
-        FROM visitors
+        SELECT COUNT(*) AS total FROM visitors
       `).first();
 
       const ads = await env.DB.prepare(`
@@ -89,8 +97,7 @@ export async function onRequestPost({ request, env }) {
       const ptc = await env.DB.prepare(`
         SELECT COUNT(*) AS total
         FROM offerwall_events
-        WHERE status = 1
-        AND offer_type = 'ptc'
+        WHERE status = 1 AND offer_type = 'ptc'
       `).first();
 
       const rewards = await env.DB.prepare(`
@@ -99,33 +106,28 @@ export async function onRequestPost({ request, env }) {
         WHERE status = 1
       `).first();
 
-      const todayStart = new Date(
-        Date.now() + 3600000
+      const today = new Date();
+      today.setUTCHours(0, 0, 0, 0);
+      const todayStart = Math.floor(
+        today.getTime() / 1000
       );
-
-      todayStart.setUTCHours(0, 0, 0, 0);
-
-      const todayTimestamp = Math.floor(
-        todayStart.getTime() / 1000
-      ) - 3600;
 
       const todayVisitors = await env.DB.prepare(`
         SELECT COUNT(*) AS total
         FROM visitors
         WHERE created_at >= ?
-      `).bind(todayTimestamp).first();
+      `).bind(todayStart).first();
 
       const todayAds = await env.DB.prepare(`
         SELECT COUNT(*) AS total
         FROM offerwall_events
-        WHERE status = 1
-        AND created_at >= ?
-      `).bind(todayTimestamp).first();
+        WHERE status = 1 AND created_at >= ?
+      `).bind(todayStart).first();
 
       await sendMessage(
         env,
         chatId,
-        "📊 إحصائيات OXIDE HUB\n\n" +
+        "📊 OXIDE HUB STATISTICS\n\n" +
         `👥 إجمالي الزوار: ${visitors.total}\n` +
         `🆕 زوار اليوم: ${todayVisitors.total}\n\n` +
         `📺 الإعلانات المؤكدة: ${ads.total}\n` +
@@ -137,8 +139,7 @@ export async function onRequestPost({ request, env }) {
 
     else if (command === "/visitors") {
       const result = await env.DB.prepare(`
-        SELECT COUNT(*) AS total
-        FROM visitors
+        SELECT COUNT(*) AS total FROM visitors
       `).first();
 
       await sendMessage(
@@ -162,9 +163,7 @@ export async function onRequestPost({ request, env }) {
       );
     }
 
-    return new Response("ok", {
-      status: 200
-    });
+    return new Response("ok", { status: 200 });
 
   } catch (error) {
     return new Response("Server error", {
