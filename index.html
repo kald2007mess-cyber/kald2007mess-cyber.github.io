@@ -339,8 +339,8 @@ const translations = {
     guideTitle: "📖 كيفية إكمال الإعلانات",
     guideSteps: [
       "اضغط على زر «شاهد الإعلان».",
-      "ستظهر لك مهمة إعلانية مدتها من 30 إلى 60 ثانية.",
-      "عند انتهاء الوقت، ارجع إلى الصفحة السابقة.",
+      "ستظهر لك مهمة إعلانية بالمدة المحددة للإعلان.",
+      "عند انتهاء المهمة، ارجع إلى الصفحة السابقة.",
       "اضغط على Claim للمطالبة بالمكافأة.",
       "حل اللغز: اضغط باستمرار ثم اختر الشكل المناسب.",
       "انتظر تأكيد إكمال الإعلان لفتح المرحلة التالية."
@@ -371,8 +371,8 @@ const translations = {
     guideTitle: "📖 HOW TO COMPLETE ADS",
     guideSteps: [
       'Press the "WATCH AD" button.',
-      "An advertising task will appear. It lasts 30 to 60 seconds.",
-      "When the timer ends, return to the previous page.",
+      "An advertising task will appear for its specified duration.",
+      "When the task ends, return to the previous page.",
       "Press Claim to collect your reward.",
       "Solve the puzzle: press and hold, then choose the matching shape.",
       "Wait for completion confirmation to unlock the next stage."
@@ -403,8 +403,8 @@ const translations = {
     guideTitle: "📖 КАК ВЫПОЛНЯТЬ РЕКЛАМНЫЕ ЗАДАНИЯ",
     guideSteps: [
       'Нажмите кнопку «СМОТРЕТЬ РЕКЛАМУ».',
-      "Появится рекламное задание длительностью от 30 до 60 секунд.",
-      "Когда время закончится, вернитесь на предыдущую страницу.",
+      "Появится рекламное задание на указанное время.",
+      "Когда задание закончится, вернитесь на предыдущую страницу.",
       "Нажмите Claim, чтобы получить награду.",
       "Решите головоломку: нажмите и удерживайте, затем выберите подходящую фигуру.",
       "Дождитесь подтверждения выполнения, чтобы открыть следующий этап."
@@ -419,6 +419,7 @@ function t(key) {
 
 function renderGuide() {
   const language = translations[currentLanguage];
+
   document.getElementById("guideTitle").textContent =
     language.guideTitle;
 
@@ -486,7 +487,6 @@ function clearActiveSession() {
   leftPageForAd = false;
 }
 
-/* Reset the previous session when the user returns */
 async function handleReturnFromAd() {
   if (!leftPageForAd) return;
 
@@ -523,7 +523,8 @@ function changeLanguage(language) {
 
   currentLanguage = language;
   document.documentElement.lang = language;
-  document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
+  document.documentElement.dir =
+    language === "ar" ? "rtl" : "ltr";
 
   document.getElementById("progressLabel").textContent = t("progress");
   document.getElementById("androidText").textContent = t("android");
@@ -577,7 +578,6 @@ function updateProgress(value) {
     download.target = "_blank";
     download.rel = "noopener noreferrer";
     download.setAttribute("aria-disabled", "false");
-    statusBox.textContent = t("complete");
   } else {
     download.classList.remove("ready");
     download.href = "#";
@@ -597,6 +597,7 @@ async function refreshProgress() {
     if (!response.ok) throw new Error("Progress request failed");
 
     const data = await response.json();
+
     const newProgress = Math.max(
       0,
       Math.min(REQUIRED, Number(data.progress) || 0)
@@ -640,7 +641,6 @@ async function watchAd(number) {
 
   if (existingSession) {
     statusBox.textContent = t("session");
-    updateProgress(progress);
     return;
   }
 
@@ -656,11 +656,9 @@ async function watchAd(number) {
   activePopup = popup;
   leftPageForAd = true;
 
-  updateProgress(progress);
+  statusBox.textContent = t("searching");
 
   try {
-    statusBox.textContent = t("searching");
-
     const response = await fetch("/api/ptc", {
       method: "GET",
       cache: "no-store",
@@ -675,29 +673,47 @@ async function watchAd(number) {
 
     const ads = Array.isArray(data.ads) ? data.ads : [];
 
-    const ad = ads.length
-      ? ads[(number - 1) % ads.length]
-      : null;
+    const validAds = ads.filter(ad => {
+      const type = Number(ad.type);
+      const duration = Number(ad.duration);
 
-    if (!ad || !ad.url) {
+      return (
+        [0, 1].includes(type) &&
+        Number.isFinite(duration) &&
+        duration > 0 &&
+        typeof ad.url === "string" &&
+        ad.url.startsWith("https://")
+      );
+    });
+
+    if (validAds.length === 0) {
       throw new Error(t("noAd"));
     }
 
-    if (
-      ![30, 60].includes(Number(ad.duration)) ||
-      !ad.url.startsWith("https://")
-    ) {
-      throw new Error(t("invalid"));
+    const ad = validAds[
+      Math.floor(Math.random() * validAds.length)
+    ];
+
+    if (!popup || popup.closed) {
+      throw new Error(t("popup"));
     }
 
+    // Both PTC types use the original URL returned by Offerwall.me.
     popup.location.href = ad.url;
 
+    const typeName = Number(ad.type) === 0
+      ? "iFrame / Video"
+      : "Window";
+
     statusBox.textContent =
-      t("opened") + " " + ad.title +
-      " — " + ad.duration + " " + t("seconds");
+      t("opened") + " " + (ad.title || "PTC Ad") +
+      " (" + typeName + ") — " +
+      ad.duration + " " + t("seconds");
 
   } catch (error) {
-    if (popup && !popup.closed) popup.close();
+    if (popup && !popup.closed) {
+      popup.close();
+    }
 
     clearActiveSession();
     statusBox.textContent = error.message || t("error");
@@ -714,17 +730,14 @@ refreshProgress();
 
 setInterval(refreshProgress, 3000);
 
-/* Return from the advertisement tab */
 window.addEventListener("focus", handleReturnFromAd);
 
-/* Also support returning on mobile browsers */
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
     handleReturnFromAd();
   }
 });
 
-/* Support returning through browser history */
 window.addEventListener("pageshow", () => {
   if (leftPageForAd) {
     handleReturnFromAd();
