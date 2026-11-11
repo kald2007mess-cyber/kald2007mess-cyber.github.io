@@ -154,4 +154,3 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "Could not register referral" }, 500);
   }
 }
-￼Enter
