@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -37,6 +38,50 @@ background-size:350px 250px;animation:starMove 65s linear infinite
 .nav-item:disabled{opacity:.85;cursor:not-allowed}
 #homePage{display:block}
 #rewardsPage{display:none}
+
+/* USER ID - HOME TOP CORNER */
+.user-id-card{
+width:fit-content;
+max-width:100%;
+background:rgba(12,25,48,.94);
+border:1px solid #176caa;
+border-radius:12px;
+padding:10px 12px;
+margin:0 0 15px auto;
+text-align:right;
+box-shadow:0 0 12px rgba(0,145,255,.12);
+}
+.user-id-label{
+color:#b8c9dd;
+font-size:11px;
+margin-bottom:7px;
+}
+.user-id-row{
+display:flex;
+align-items:center;
+justify-content:flex-start;
+gap:8px;
+direction:ltr;
+}
+.user-id-value{
+color:#35ef91;
+font-size:14px;
+font-weight:bold;
+letter-spacing:1px;
+}
+.copy-id-button{
+border:1px solid #00aaff;
+background:#075a9d;
+color:white;
+padding:7px 9px;
+border-radius:7px;
+font-size:11px;
+font-weight:bold;
+cursor:pointer;
+font-family:Arial,sans-serif;
+}
+.copy-id-button:active{transform:scale(.96)}
+
 .progress-box{background:rgba(12,25,48,.85);border:1px solid #176caa;border-radius:14px;padding:15px;margin-bottom:20px}
 .progress-text{font-size:19px;font-weight:bold;margin-bottom:12px}
 .bar{height:10px;background:#25364b;border-radius:20px;overflow:hidden}
@@ -65,45 +110,6 @@ background-size:350px 250px;animation:starMove 65s linear infinite
 .balance-label{color:#b8d9f3;font-size:14px;margin-bottom:8px}
 .balance-number{font-size:32px;font-weight:900;color:#fff;text-shadow:0 0 12px #00aaff}
 .balance-unit{color:#70d5ff;font-size:13px;margin-top:5px}
-
-/* USER ID */
-.user-id-card{
-background:rgba(12,25,48,.94);
-border:1px solid #176caa;
-border-radius:13px;
-padding:15px;
-margin-bottom:20px;
-}
-.user-id-label{
-color:#b8c9dd;
-font-size:13px;
-margin-bottom:10px;
-}
-.user-id-row{
-display:flex;
-align-items:center;
-justify-content:center;
-gap:10px;
-direction:ltr;
-}
-.user-id-value{
-color:#35ef91;
-font-size:17px;
-font-weight:bold;
-letter-spacing:1px;
-}
-.copy-id-button{
-border:1px solid #00aaff;
-background:#075a9d;
-color:white;
-padding:9px 13px;
-border-radius:8px;
-font-weight:bold;
-cursor:pointer;
-font-family:Arial,sans-serif;
-}
-.copy-id-button:active{transform:scale(.96)}
-
 .rewards-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .reward-card{background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:13px;padding:12px 9px;display:flex;flex-direction:column;align-items:center;min-width:0}
 .reward-image{width:100%;height:125px;object-fit:contain;display:block;margin-bottom:8px}
@@ -137,6 +143,8 @@ footer{margin-top:30px;color:#879bb2;font-size:12px}
 .nav-item{min-height:62px}.nav-icon,.nav-icon svg{width:20px;height:20px}
 .nav-label{font-size:9px}.nav-soon{font-size:7px}
 .navigation{gap:1px;padding:3px}.reward-image{height:105px}
+.user-id-card{padding:8px 9px}
+.user-id-value{font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){body,.stars{animation:none}}
 </style>
@@ -184,6 +192,16 @@ footer{margin-top:30px;color:#879bb2;font-size:12px}
 
 <!-- HOME PAGE -->
 <div id="homePage">
+
+<!-- USER ID AT TOP CORNER -->
+<div class="user-id-card">
+<div class="user-id-label" id="userIdLabel">🆔 رقم المستخدم الخاص بك</div>
+<div class="user-id-row">
+<span class="user-id-value" id="userIdValue">Loading...</span>
+<button class="copy-id-button" id="copyIdButton" type="button" onclick="copyUserId()">📋 نسخ</button>
+</div>
+</div>
+
 <section class="progress-box">
 <div class="progress-text"><span id="progressLabel">التقدم:</span> <span id="count">0/3</span></div>
 <div class="bar"><div class="bar-fill" id="bar"></div></div>
@@ -207,7 +225,6 @@ footer{margin-top:30px;color:#879bb2;font-size:12px}
 <section id="rewardsPage">
 <h2 class="rewards-heading" id="rewardsHeading">🎁 المكافآت</h2>
 
-<!-- OXIDE ISLAND -->
 <section class="island-section">
 <h2 class="island-title">🌌 OXIDE ISLAND</h2>
 
@@ -244,14 +261,6 @@ footer{margin-top:30px;color:#879bb2;font-size:12px}
 <div class="balance-unit">OXIDE POINTS</div>
 </div>
 
-<div class="user-id-card">
-<div class="user-id-label" id="userIdLabel">🆔 رقم المستخدم الخاص بك</div>
-<div class="user-id-row">
-<span class="user-id-value" id="userIdValue">Loading...</span>
-<button class="copy-id-button" id="copyIdButton" type="button" onclick="copyUserId()">📋 نسخ</button>
-</div>
-</div>
-
 <div class="rewards-grid" id="rewardsGrid">
 <div style="grid-column:1/-1;color:#b8c9dd;padding:20px">جاري تحميل المكافآت...</div>
 </div>
@@ -263,7 +272,7 @@ footer{margin-top:30px;color:#879bb2;font-size:12px}
 </main>
 
 <script>
-  const MAINTENANCE_MODE=false;
+const MAINTENANCE_MODE=false;
 const REQUIRED=3;
 const LOCK_DURATION=5*60*1000;
 const DOWNLOAD_PAGE="download.html";
@@ -519,7 +528,6 @@ throw new Error("User ID loading failed");
 
 userDisplayId=data.displayId;
 userIdLoaded=true;
-
 document.getElementById("userIdValue").textContent=userDisplayId;
 
 }catch(error){
@@ -532,7 +540,6 @@ async function copyUserId(){
 if(!userDisplayId){
 await loadUserId();
 }
-
 if(!userDisplayId)return;
 
 try{
@@ -555,7 +562,7 @@ document.getElementById("homePage").style.display=home?"block":"none";
 document.getElementById("rewardsPage").style.display=home?"none":"block";
 document.getElementById("homeTab").classList.toggle("active",home);
 document.getElementById("rewardsTab").classList.toggle("active",!home);
-if(!home){loadRewards();loadIsland();loadUserId()}
+if(!home){loadRewards();loadIsland()}
 }
 
 function showIslandTab(tab){
@@ -609,7 +616,7 @@ else if(lastProgress!==null&&newProgress>lastProgress){clearActiveSession();if(n
 lastProgress=newProgress;
 updateProgress(newProgress);
 
-/* Load ID only after progress endpoint sets the visitor cookie */
+/* Load ID after progress endpoint sets visitor cookie */
 if(!userIdLoaded){
 await loadUserId();
 }
