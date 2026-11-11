@@ -9,13 +9,8 @@ function md5(input) {
   const low = bitLength >>> 0;
   const high = Math.floor(bitLength / 4294967296);
 
-  for (let i = 0; i < 4; i++) {
-    data.push((low >>> (i * 8)) & 255);
-  }
-
-  for (let i = 0; i < 4; i++) {
-    data.push((high >>> (i * 8)) & 255);
-  }
+  for (let i = 0; i < 4; i++) data.push((low >>> (i * 8)) & 255);
+  for (let i = 0; i < 4; i++) data.push((high >>> (i * 8)) & 255);
 
   let a0 = 0x67452301;
   let b0 = 0xefcdab89;
@@ -66,9 +61,7 @@ function md5(input) {
       }
 
       const sum = (A + F + K[i] + M[g]) >>> 0;
-      const rotated =
-        (sum << shifts[i]) | (sum >>> (32 - shifts[i]));
-
+      const rotated = (sum << shifts[i]) | (sum >>> (32 - shifts[i]));
       const next = (B + rotated) >>> 0;
 
       A = D;
@@ -86,56 +79,177 @@ function md5(input) {
   return [a0, b0, c0, d0]
     .map(n =>
       [0, 8, 16, 24]
-        .map(s =>
-          ((n >>> s) & 255).toString(16).padStart(2, "0")
-        )
+        .map(s => ((n >>> s) & 255).toString(16).padStart(2, "0"))
         .join("")
     )
     .join("");
 }
 
 async function sendTelegram(env, message) {
-  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_ADMIN_ID) {
-    return;
-  }
+  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_ADMIN_ID) return;
 
   try {
     await fetch(
       `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chat_id: env.TELEGRAM_ADMIN_ID,
           text: message
         })
       }
     );
-  } catch (error) {
-    // Telegram errors must not cancel the ad confirmation
+  } catch {}
+}
+
+async function handleIslandPostback({
+  env,
+  subId,
+  transId,
+  reward,
+  status,
+  offerType,
+  now
+}) {
+  const userId = subId.slice("island_".length);
+
+  if (!userId || offerType !== "ptc") {
+    return new Response("Invalid island identity", { status: 400 });
   }
+
+  const visitor = await env.DB.prepare(`
+    SELECT user_id FROM visitors WHERE user_id = ?
+  `).bind(userId).first();
+
+  if (!visitor) {
+    return new Response("Unknown island user", { status: 400 });
+  }
+
+  if (status === 1) {
+    const inserted = await env.DB.prepare(`
+      INSERT OR IGNORE INTO reward_ad_events
+      (trans_id, user_id, credited_points, created_at, status)
+      VALUES (?, ?, 0, ?, 1)
+    `).bind(transId, userId, now).run();
+
+    if (inserted.meta?.changes !== 1) {
+      return new Response("ok", { status: 200 });
+    }
+
+    await env.DB.prepare(`
+      INSERT OR IGNORE INTO reward_ad_cycles
+      (user_id, completed_ads, cycle_started_at)
+      VALUES (?, 0, ?)
+    `).bind(userId, now).run();
+
+    let cycle = await env.DB.prepare(`
+      SELECT completed_ads, cycle_started_at
+      FROM reward_ad_cycles
+      WHERE user_id = ?
+    `).bind(userId).first();
+
+    let startedAt = Number(cycle?.cycle_started_at || now);
+
+    if (now - startedAt >= 18000) {
+      await env.DB.prepare(`
+        UPDATE reward_ad_cycles
+        SET completed_ads = 0, cycle_started_at = ?
+        WHERE user_id = ?
+      `).bind(now, userId).run();
+
+      startedAt = now;
+    }
+
+    const updated = await env.DB.prepare(`
+      UPDATE reward_ad_cycles
+      SET completed_ads = completed_ads + 1
+      WHERE user_id = ?
+        AND cycle_started_at = ?
+        AND completed_ads < 10
+    `).bind(userId, startedAt).run();
+
+    if (updated.meta?.changes === 1) {
+      await env.DB.prepare(`
+        UPDATE visitors
+        SET points = points + 5
+        WHERE user_id = ?
+      `).bind(userId).run();
+
+      await env.DB.prepare(`
+        UPDATE reward_ad_events
+        SET credited_points = 5, cycle_started_at = ?
+        WHERE trans_id = ? AND user_id = ?
+      `).bind(startedAt, transId, userId).run();
+
+      await sendTelegram(
+        env,
+        "🏝️ OXIDE ISLAND\n\n" +
+        "🎬 Reward ad completed\n" +
+        "👤 User: " + userId + "\n" +
+        "⭐ Points: +5\n" +
+        "🧾 Transaction: " + transId
+      );
+    }
+
+  } else {
+    const existing = await env.DB.prepare(`
+      SELECT status, credited_points, cycle_started_at
+      FROM reward_ad_events
+      WHERE trans_id = ?
+    `).bind(transId).first();
+
+    if (existing && Number(existing.status) === 1) {
+      await env.DB.prepare(`
+        UPDATE reward_ad_events
+        SET status = 2
+        WHERE trans_id = ? AND status = 1
+      `).bind(transId).run();
+
+      const points = Number(existing.credited_points || 0);
+
+      if (points > 0) {
+        await env.DB.prepare(`
+          UPDATE visitors
+          SET points = MAX(0, points - ?)
+          WHERE user_id = ?
+        `).bind(points, userId).run();
+
+        if (existing.cycle_started_at !== null) {
+          await env.DB.prepare(`
+            UPDATE reward_ad_cycles
+            SET completed_ads = MAX(0, completed_ads - 1)
+            WHERE user_id = ?
+              AND cycle_started_at = ?
+          `).bind(userId, Number(existing.cycle_started_at)).run();
+        }
+      }
+
+    } else if (!existing) {
+      await env.DB.prepare(`
+        INSERT OR IGNORE INTO reward_ad_events
+        (trans_id, user_id, credited_points, created_at, status)
+        VALUES (?, ?, 0, ?, 2)
+      `).bind(transId, userId, now).run();
+    }
+  }
+
+  return new Response("ok", { status: 200 });
 }
 
 export async function onRequestPost({ request, env }) {
   try {
     if (!env.DB || !env.OFFERWALL_SECRET) {
-      return new Response("Configuration missing", {
-        status: 500
-      });
+      return new Response("Configuration missing", { status: 500 });
     }
 
-    const contentType =
-      request.headers.get("content-type") || "";
-
+    const contentType = request.headers.get("content-type") || "";
     let params = {};
 
     if (contentType.includes("application/json")) {
       params = await request.json();
     } else {
       const form = await request.formData();
-
       for (const [key, value] of form.entries()) {
         params[key] = String(value);
       }
@@ -146,9 +260,7 @@ export async function onRequestPost({ request, env }) {
     const reward = String(params.reward || "");
     const status = Number(params.status);
     const signature = String(params.signature || "");
-    const offerType = String(
-      params.offer_type || ""
-    ).toLowerCase();
+    const offerType = String(params.offer_type || "").toLowerCase();
 
     if (
       !subId ||
@@ -158,9 +270,7 @@ export async function onRequestPost({ request, env }) {
       ![1, 2].includes(status) ||
       !Number.isFinite(Number(reward))
     ) {
-      return new Response("Invalid data", {
-        status: 400
-      });
+      return new Response("Invalid data", { status: 400 });
     }
 
     const expected = md5(
@@ -168,9 +278,7 @@ export async function onRequestPost({ request, env }) {
     );
 
     if (signature.toLowerCase() !== expected) {
-      return new Response("Invalid signature", {
-        status: 403
-      });
+      return new Response("Invalid signature", { status: 403 });
     }
 
     const isTest =
@@ -182,6 +290,20 @@ export async function onRequestPost({ request, env }) {
     }
 
     const now = Math.floor(Date.now() / 1000);
+
+    if (subId.startsWith("island_")) {
+      return await handleIslandPostback({
+        env,
+        subId,
+        transId,
+        reward,
+        status,
+        offerType,
+        now
+      });
+    }
+
+    // Existing main website PTC handling remains unchanged.
 
     await env.DB.prepare(`
       INSERT OR IGNORE INTO visitors
@@ -209,10 +331,7 @@ export async function onRequestPost({ request, env }) {
         now
       ).run();
 
-      if (
-        result.meta.changes > 0 &&
-        offerType === "ptc"
-      ) {
+      if (result.meta.changes > 0 && offerType === "ptc") {
         await env.DB.prepare(`
           UPDATE visitors
           SET
@@ -229,17 +348,10 @@ export async function onRequestPost({ request, env }) {
               ELSE cycle_started_at
             END
           WHERE user_id = ?
-        `).bind(
-          now,
-          now,
-          now,
-          subId
-        ).run();
+        `).bind(now, now, now, subId).run();
 
         const visitor = await env.DB.prepare(`
-          SELECT progress
-          FROM visitors
-          WHERE user_id = ?
+          SELECT progress FROM visitors WHERE user_id = ?
         `).bind(subId).first();
 
         const stage = Math.min(
@@ -302,8 +414,6 @@ export async function onRequestPost({ request, env }) {
     return new Response("ok", { status: 200 });
 
   } catch (error) {
-    return new Response("Server error", {
-      status: 500
-    });
+    return new Response("Server error", { status: 500 });
   }
 }
