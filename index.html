@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -22,69 +23,64 @@ background-size:350px 250px;animation:starMove 65s linear infinite
 }
 @keyframes starMove{from{transform:translate(0,0)}to{transform:translate(-100px,80px)}}
 .container{max-width:430px;margin:auto;position:relative;z-index:1}
-
-/* TOP BAR */
-.topbar{
-display:flex;align-items:center;justify-content:space-between;
-gap:8px;margin-bottom:12px;direction:ltr
-}
-.topbar-left{display:flex;align-items:center;gap:7px;min-width:0}
-.language-box{display:flex;justify-content:flex-start;margin:0}
-.language-box select{
-background:rgba(12,25,48,.9);color:white;border:1px solid #176caa;
-border-radius:8px;padding:9px 7px;font-size:12px;max-width:145px
-}
+.language-box{display:flex;justify-content:flex-end;margin-bottom:5px}
+.language-box select{background:rgba(12,25,48,.9);color:white;border:1px solid #176caa;border-radius:8px;padding:9px 12px;font-size:14px}
 .language-box option{background:#0c1930;color:white}
-.support-top-button{
-background:linear-gradient(135deg,#087ed0,#0055a0);
-color:white;border:1px solid #00aaff;border-radius:8px;
-padding:9px 10px;font-size:12px;font-weight:bold;
-font-family:Arial,sans-serif;cursor:pointer;white-space:nowrap
-}
-.support-top-button:active{transform:scale(.96)}
-.user-id-card{
-width:fit-content;max-width:55%;
-background:rgba(12,25,48,.94);border:1px solid #176caa;
-border-radius:10px;padding:8px 9px;margin:0;text-align:right;
-box-shadow:0 0 12px rgba(0,145,255,.12);direction:rtl
-}
-.user-id-label{color:#b8c9dd;font-size:10px;margin-bottom:5px}
-.user-id-row{display:flex;align-items:center;justify-content:flex-start;gap:6px;direction:ltr}
-.user-id-value{color:#35ef91;font-size:12px;font-weight:bold;letter-spacing:.5px}
-.copy-id-button{
-border:1px solid #00aaff;background:#075a9d;color:white;
-padding:5px 7px;border-radius:6px;font-size:10px;
-font-weight:bold;cursor:pointer;font-family:Arial,sans-serif
-}
-.copy-id-button:active{transform:scale(.96)}
-
-.logo{font-size:35px;font-weight:900;letter-spacing:3px;color:#fff;text-shadow:0 0 15px #00aaff;margin:20px 0 8px}
+.logo{font-size:35px;font-weight:900;letter-spacing:3px;color:#fff;text-shadow:0 0 15px #00aaff;margin:25px 0 8px}
 .subtitle{color:#b8c9dd;margin-bottom:24px}
-.navigation{
-display:flex;direction:rtl;align-items:stretch;width:100%;gap:3px;
-padding:5px;margin:0 0 20px;background:rgba(5,15,32,.92);
-border:1px solid #176caa;border-radius:13px;
-box-shadow:0 0 12px rgba(0,145,255,.12)
-}
-.nav-item{
-flex:1;min-width:0;min-height:68px;padding:7px 2px;
-border:1px solid transparent;border-radius:9px;background:transparent;
-color:#c6d5e7;display:flex;flex-direction:column;
-align-items:center;justify-content:center;gap:5px;
-font-family:Arial,sans-serif;cursor:pointer
-}
-.nav-item.active{
-color:white;background:linear-gradient(145deg,#075a9d,#06305d);
-border-color:#00aaff;box-shadow:0 0 12px rgba(0,170,255,.45)
-}
+.navigation{display:flex;direction:rtl;align-items:stretch;width:100%;gap:3px;padding:5px;margin:0 0 20px;background:rgba(5,15,32,.92);border:1px solid #176caa;border-radius:13px;box-shadow:0 0 12px rgba(0,145,255,.12)}
+.nav-item{flex:1;min-width:0;min-height:68px;padding:7px 2px;border:1px solid transparent;border-radius:9px;background:transparent;color:#c6d5e7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-family:Arial,sans-serif;cursor:pointer}
+.nav-item.active{color:white;background:linear-gradient(145deg,#075a9d,#06305d);border-color:#00aaff;box-shadow:0 0 12px rgba(0,170,255,.45)}
 .nav-icon{width:23px;height:23px;display:flex;align-items:center;justify-content:center;color:#d6eaff}
 .nav-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .nav-label{font-size:10px;font-weight:bold;white-space:nowrap}
 .nav-soon{font-size:8px;color:#111;background:#ffc52e;border-radius:4px;padding:2px 4px;font-weight:bold;white-space:nowrap}
 .nav-item:disabled{opacity:.85;cursor:not-allowed}
-
 #homePage{display:block}
-#rewardsPage,#supportPage{display:none}
+#rewardsPage{display:none}
+
+/* USER ID - HOME TOP CORNER */
+.user-id-card{
+width:fit-content;
+max-width:100%;
+background:rgba(12,25,48,.94);
+border:1px solid #176caa;
+border-radius:12px;
+padding:10px 12px;
+margin:0 0 15px auto;
+text-align:right;
+box-shadow:0 0 12px rgba(0,145,255,.12);
+}
+.user-id-label{
+color:#b8c9dd;
+font-size:11px;
+margin-bottom:7px;
+}
+.user-id-row{
+display:flex;
+align-items:center;
+justify-content:flex-start;
+gap:8px;
+direction:ltr;
+}
+.user-id-value{
+color:#35ef91;
+font-size:14px;
+font-weight:bold;
+letter-spacing:1px;
+}
+.copy-id-button{
+border:1px solid #00aaff;
+background:#075a9d;
+color:white;
+padding:7px 9px;
+border-radius:7px;
+font-size:11px;
+font-weight:bold;
+cursor:pointer;
+font-family:Arial,sans-serif;
+}
+.copy-id-button:active{transform:scale(.96)}
 
 .progress-box{background:rgba(12,25,48,.85);border:1px solid #176caa;border-radius:14px;padding:15px;margin-bottom:20px}
 .progress-text{font-size:19px;font-weight:bold;margin-bottom:12px}
@@ -142,96 +138,30 @@ border-color:#00aaff;box-shadow:0 0 12px rgba(0,170,255,.45)
 .island-timer{color:#ffd36a;font-size:13px;margin-top:12px}
 .island-message{color:#b8c9dd;font-size:12px;line-height:1.7;min-height:22px;margin-top:10px}
 .island-task-lock{padding:24px 10px;color:#ffc52e;font-weight:bold}
-
-/* TECHNICAL SUPPORT CHAT */
-#supportPage{
-display:none;text-align:right;
-background:rgba(7,20,42,.94);border:1px solid #176caa;
-border-radius:14px;padding:14px;margin-bottom:20px
-}
-.support-heading{color:#00b7ff;font-size:21px;text-align:center;margin:5px 0 8px}
-.support-description{color:#b8c9dd;font-size:12px;text-align:center;line-height:1.7;margin-bottom:14px}
-.support-messages{
-height:360px;overflow-y:auto;display:flex;flex-direction:column;
-gap:10px;padding:10px;background:rgba(3,13,29,.8);
-border:1px solid #244765;border-radius:10px
-}
-.support-empty{color:#9eb2c9;text-align:center;font-size:13px;margin:auto;line-height:1.8}
-.support-message{
-max-width:85%;padding:10px 12px;border-radius:12px;
-font-size:13px;line-height:1.7;white-space:pre-wrap;
-overflow-wrap:anywhere
-}
-.support-message.user{
-align-self:flex-start;background:#075a9d;border:1px solid #168bd0;
-border-bottom-left-radius:3px;text-align:left
-}
-.support-message.admin{
-align-self:flex-end;background:#173b36;border:1px solid #278b68;
-border-bottom-right-radius:3px;text-align:right
-}
-.support-message-time{display:block;color:#b8c9dd;font-size:9px;margin-top:5px}
-.support-compose{display:flex;gap:7px;margin-top:10px;align-items:stretch}
-.support-input{
-flex:1;min-width:0;resize:none;min-height:45px;max-height:110px;
-padding:11px;background:#0c1930;color:white;
-border:1px solid #176caa;border-radius:9px;
-font-family:Arial,sans-serif;font-size:13px;outline:none
-}
-.support-input:focus{border-color:#00b7ff}
-.support-send{
-border:1px solid #00b7ff;border-radius:9px;padding:0 15px;
-background:linear-gradient(135deg,#087ed0,#0055a0);
-color:white;font-weight:bold;cursor:pointer
-}
-.support-send:disabled{opacity:.5;cursor:not-allowed}
-.support-status{min-height:22px;color:#ffd36a;font-size:11px;line-height:1.6;margin-top:7px;text-align:center}
-.support-back{
-width:100%;margin-top:10px;padding:11px;border-radius:9px;
-border:1px solid #40536b;background:#26394f;color:white;
-font-weight:bold;cursor:pointer
-}
-
 footer{margin-top:30px;color:#879bb2;font-size:12px}
 @media(max-width:360px){
 .nav-item{min-height:62px}.nav-icon,.nav-icon svg{width:20px;height:20px}
 .nav-label{font-size:9px}.nav-soon{font-size:7px}
 .navigation{gap:1px;padding:3px}.reward-image{height:105px}
-.user-id-card{padding:7px 6px}
-.user-id-value{font-size:10px}
-.language-box select{font-size:11px;padding:8px 5px}
-.support-top-button{font-size:11px;padding:8px 7px}
-.support-messages{height:320px}
+.user-id-card{padding:8px 9px}
+.user-id-value{font-size:12px}
 }
 @media(prefers-reduced-motion:reduce){body,.stars{animation:none}}
 </style>
 </head>
+
 <body>
 <div class="stars"></div>
 <main class="container">
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="topbar-left">
-    <div class="language-box">
-      <select id="language" onchange="changeLanguage(this.value)">
-        <option value="ar">🇩🇿 العربية</option>
-        <option value="en">🇬🇧 English</option>
-        <option value="ru">🇷🇺 Русский</option>
-        <option value="es">🇪🇸 Español</option>
-        <option value="id">🇮🇩 Indonesia</option>
-      </select>
-    </div>
-    <button class="support-top-button" id="supportTopButton" type="button" onclick="showPage('support')">💬 الدعم الفني</button>
-  </div>
-
-  <div class="user-id-card">
-    <div class="user-id-label" id="userIdLabel">🆔 رقم المستخدم الخاص بك</div>
-    <div class="user-id-row">
-      <span class="user-id-value" id="userIdValue">Loading...</span>
-      <button class="copy-id-button" id="copyIdButton" type="button" onclick="copyUserId()">📋 نسخ</button>
-    </div>
-  </div>
+<div class="language-box">
+<select id="language" onchange="changeLanguage(this.value)">
+<option value="ar">🇩🇿 العربية</option>
+<option value="en">🇬🇧 English</option>
+<option value="ru">🇷🇺 Русский</option>
+<option value="es">🇪🇸 Español</option>
+<option value="id">🇮🇩 Indonesia</option>
+</select>
 </div>
 
 <div class="logo">OXIDE HUB</div>
@@ -242,22 +172,18 @@ footer{margin-top:30px;color:#879bb2;font-size:12px}
 <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9 21v-7h6v7"/></svg></span>
 <span class="nav-label" id="navHome">الرئيسية</span>
 </button>
-
 <button class="nav-item" id="rewardsTab" type="button" onclick="showPage('rewards')">
 <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 7v14"/><path d="M12 7H7.5a2.5 2.5 0 1 1 2.5-2.5C10 6 12 7 12 7Z"/><path d="M12 7h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z"/></svg></span>
 <span class="nav-label" id="navRewards">مكافأة</span>
 </button>
-
 <button class="nav-item" type="button" disabled>
 <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m12 3 2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8L12 3Z"/><path d="M7 21h10"/></svg></span>
 <span class="nav-label">VIP</span><span class="nav-soon" id="soon2">🔒 SOON</span>
 </button>
-
 <button class="nav-item" type="button" disabled>
 <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
 <span class="nav-label" id="navReferral">إحالة</span><span class="nav-soon" id="soon3">🔒 SOON</span>
 </button>
-
 <button class="nav-item" type="button" disabled>
 <span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4"/><path d="M12 2v2"/></svg></span>
 <span class="nav-label" id="navNews">أخبار</span><span class="nav-soon" id="soon4">🔒 SOON</span>
@@ -267,28 +193,31 @@ footer{margin-top:30px;color:#879bb2;font-size:12px}
 <!-- HOME PAGE -->
 <div id="homePage">
 
+<!-- USER ID AT TOP CORNER -->
+<div class="user-id-card">
+<div class="user-id-label" id="userIdLabel">🆔 رقم المستخدم الخاص بك</div>
+<div class="user-id-row">
+<span class="user-id-value" id="userIdValue">Loading...</span>
+<button class="copy-id-button" id="copyIdButton" type="button" onclick="copyUserId()">📋 نسخ</button>
+</div>
+</div>
+
 <section class="progress-box">
 <div class="progress-text"><span id="progressLabel">التقدم:</span> <span id="count">0/3</span></div>
 <div class="bar"><div class="bar-fill" id="bar"></div></div>
 </section>
-
 <div id="stages"></div>
 
 <a id="download" class="platform-button" href="#" aria-disabled="true">
 <svg class="android-icon" viewBox="0 0 24 24"><path d="M6.2 7.2 4.6 4.5a.5.5 0 0 1 .86-.5l1.65 2.8a8.2 8.2 0 0 1 9.78 0l1.65-2.8a.5.5 0 1 1 .86.5l-1.6 2.7A7.2 7.2 0 0 1 21 13H3a7.2 7.2 0 0 1 3.2-5.8ZM7 14h10v5.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 7 19.5V14Zm-3-1h2v6H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 1-2Zm15 0h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1v-6Z"/></svg>
 <span id="androidText">تحميل ANDROID</span>
 </a>
-
 <button class="platform-button" id="iphoneButton" disabled><span class="platform-icon">🍎</span><span id="iphoneText">تحميل iPHONE</span><span class="soon-label" id="iphoneSoon">🔒 SOON</span></button>
-
 <button class="platform-button" id="betaButton" disabled><span class="platform-icon">🧪</span><span id="betaText">تحميل BETA</span><span class="soon-label" id="betaSoon">🔒 SOON</span></button>
-
 <div id="status" role="status"></div>
-
 <section class="guide-box">
 <h2 class="guide-title" id="guideTitle">📖 طريقة الاستخدام</h2>
-<div id="guideSteps"></div>
-<div class="guide-note" id="guideNote"></div>
+<div id="guideSteps"></div><div class="guide-note" id="guideNote"></div>
 </section>
 </div>
 
@@ -305,7 +234,6 @@ footer{margin-top:30px;color:#879bb2;font-size:12px}
 <span class="island-tab-label" id="islandAdsLabel">مشاهدة إعلانات</span>
 <span class="island-counter" id="islandTabCount">0/10</span>
 </button>
-
 <button class="island-tab" id="islandTasksTab" onclick="showIslandTab('tasks')" type="button">
 <svg viewBox="0 0 24 24"><path d="M6 11H3a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h3l3 3h8l3-3h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-3l-3-3H9l-3 3Z"/><path d="M7 14v4M5 16h4M16 15h.01M19 17h.01"/></svg>
 <span class="island-tab-label" id="islandTasksLabel">المهمات</span>
@@ -336,37 +264,13 @@ footer{margin-top:30px;color:#879bb2;font-size:12px}
 <div class="rewards-grid" id="rewardsGrid">
 <div style="grid-column:1/-1;color:#b8c9dd;padding:20px">جاري تحميل المكافآت...</div>
 </div>
-
 <div class="reward-message" id="rewardMessage" role="status"></div>
 <div class="pending-note" id="pendingNote">بعد الاستبدال سيتم تسجيل طلبك بحالة Pending حتى تتم مراجعته.</div>
 </section>
 
-<!-- TECHNICAL SUPPORT PAGE -->
-<section id="supportPage">
-<h2 class="support-heading" id="supportHeading">💬 الدعم الفني</h2>
-<div class="support-description" id="supportDescription">أرسل رسالتك وسيقوم فريق الدعم بالرد عليك هنا.</div>
-
-<div class="support-messages" id="supportMessages">
-<div class="support-empty" id="supportEmpty">جاري تحميل المحادثة...</div>
-</div>
-
-<div class="support-compose">
-<textarea
-class="support-input"
-id="supportInput"
-rows="1"
-maxlength="2000"
-placeholder="اكتب رسالتك هنا..."
-></textarea>
-<button class="support-send" id="supportSendButton" type="button" onclick="sendSupportMessage()">إرسال</button>
-</div>
-
-<div class="support-status" id="supportStatus" role="status"></div>
-
-<button class="support-back" id="supportBackButton" type="button" onclick="showPage('home')">⬅ العودة للرئيسية</button>
-</section>
-
 <footer>OXIDE HUB © 2026<br>Created by SKIMI_17</footer>
+</main>
+
 <script>
 const MAINTENANCE_MODE=false;
 const REQUIRED=3;
@@ -385,21 +289,18 @@ let rewardPoints=0,rewardOffers=[],redeeming=false;
 let islandAds=[],islandCompleted=0,islandRemaining=0;
 let islandCycleEndsAt=0,islandBusy=false;
 let islandTimerInterval=null;
-let userDisplayId="",userIdLoaded=false;
+
+/* USER ID */
+let userDisplayId="";
+let userIdLoaded=false;
 
 const LOCK_KEY="oxide_active_ad_session";
 const rewardImages={
-  1:"oxide_55_coins.png",
-  2:"oxide_145_coins.png",
-  3:"oxide_premium.png",
-  4:"oxide_25_bp_coins.png"
+1:"oxide_55_coins.png",
+2:"oxide_145_coins.png",
+3:"oxide_premium.png",
+4:"oxide_25_bp_coins.png"
 };
-
-/* SUPPORT CHAT STATE */
-let lastSupportMessageId=0;
-let supportSending=false;
-let supportPollingTimer=null;
-let supportLoading=false;
 
 const translations={
 ar:{
@@ -415,18 +316,10 @@ session:"لديك جلسة إعلان نشطة. أكملها أو انتظر ا�
 error:"حدث خطأ. حاول مرة أخرى.",
 refreshError:"تعذر تحديث التقدم. تحقق من اتصال الموقع بالخادم.",
 guideTitle:"📖 طريقة الاستخدام",
-guideSteps:[
-"اضغط على زر مشاهدة الإعلان لفتح الإعلان.",
-"أكمل الإعلان وانتظر تأكيد المكافأة.",
-"بعد التأكيد ستفتح المرحلة التالية.",
-"أكمل الإعلانات الثلاثة لفتح زر Android.",
-"اضغط على Android لفتح صفحة الملفات والفيديو."
-],
-guideNote:"شكرًا لاستخدامكم OXIDE HUB ❤️",
-balance:"رصيدك الحالي",redeem:"استبدال",insufficient:"نقاطك غير كافية",
-pending:"تم تسجيل طلبك بنجاح! حالة الطلب: Pending",
-redeemError:"تعذر تسجيل الطلب. حاول مرة أخرى.",
-loadingRewards:"جاري تحميل المكافآت...",
+guideSteps:["اضغط على زر مشاهدة الإعلان لفتح الإعلان.","أكمل الإعلان وانتظر تأكيد المكافأة.","بعد التأكيد ستفتح المرحلة التالية.","أكمل الإعلانات الثلاثة لفتح زر Android.","اضغط على Android لفتح صفحة الملفات والفيديو."],
+guideNote:"شكرًا لاستخدامكم OXIDE HUB ❤️",balance:"رصيدك الحالي",redeem:"استبدال",
+insufficient:"نقاطك غير كافية",pending:"تم تسجيل طلبك بنجاح! حالة الطلب: Pending",
+redeemError:"تعذر تسجيل الطلب. حاول مرة أخرى.",loadingRewards:"جاري تحميل المكافآت...",
 rewardsError:"تعذر تحميل المكافآت. حاول تحديث الصفحة.",
 pendingNote:"بعد الاستبدال سيتم تسجيل طلبك بحالة Pending حتى تتم مراجعته.",
 confirmRedeem:"هل تريد استبدال هذه المكافأة؟ سيتم خصم النقاط من رصيدك.",
@@ -437,7 +330,7 @@ islandError:"تعذر تحميل بيانات الجزيرة. حاول مجدد�
 islandNoAds:"لا توجد إعلانات متاحة الآن. حاول لاحقًا.",
 islandComplete:"أكملت 10 إعلانات! انتظر انتهاء دورة الخمس ساعات.",
 islandOpened:"تم فتح الإعلان. أكمله وانتظر تأكيد المكافأة.",
-islandWaiting:"أكمل الإعلان وانتظر تأكيد النقاط من الخادم.",
+islandWaiting:"انتظر انتهاء الإعلان وتأكيد النقاط من الخادم.",
 islandTasksSoon:"المهمات ستكون متاحة قريبًا",
 islandTimer:"الوقت المتبقي للدورة:"
 },
@@ -451,34 +344,23 @@ seconds:"seconds. Complete it and wait for reward confirmation.",
 confirmed:"Ad completion confirmed! Continue to the next stage.",
 complete:"All three ads completed! You can now open the download page.",
 session:"You have an active ad session. Complete it or wait 5 minutes.",
-error:"An error occurred. Please try again.",
-refreshError:"Could not update progress. Check the server connection.",
+error:"An error occurred. Please try again.",refreshError:"Could not update progress. Check the server connection.",
 guideTitle:"📖 HOW TO USE",
-guideSteps:[
-"Press Watch Ad to open an advertisement.",
-"Complete the ad and wait for reward confirmation.",
-"The next stage unlocks after confirmation.",
-"Complete all three ads to unlock Android.",
-"Press Android to open the files and video page."
-],
-guideNote:"Thank you for using OXIDE HUB ❤️",
-balance:"Your balance",redeem:"REDEEM",insufficient:"Not enough points",
-pending:"Your request was created! Status: Pending",
-redeemError:"Could not create request. Try again.",
-loadingRewards:"Loading rewards...",
+guideSteps:["Press Watch Ad to open an advertisement.","Complete the ad and wait for reward confirmation.","The next stage unlocks after confirmation.","Complete all three ads to unlock Android.","Press Android to open the files and video page."],
+guideNote:"Thank you for using OXIDE HUB ❤️",balance:"Your balance",redeem:"REDEEM",
+insufficient:"Not enough points",pending:"Your request was created! Status: Pending",
+redeemError:"Could not create request. Try again.",loadingRewards:"Loading rewards...",
 rewardsError:"Could not load rewards. Refresh the page.",
 pendingNote:"Your redemption request will be recorded as Pending for review.",
 confirmRedeem:"Do you want to redeem this reward? Points will be deducted.",
 islandAds:"Watch Ads",islandTasks:"Tasks",islandProgress:"Ads completed:",
 islandReward:"Each completed ad = 5 points",islandWatch:"▶ Watch Advertisement",
-islandLoading:"Loading island data...",
-islandError:"Could not load island data. Try again.",
+islandLoading:"Loading island data...",islandError:"Could not load island data. Try again.",
 islandNoAds:"No ads available right now. Try later.",
 islandComplete:"You completed 10 ads! Wait for the five-hour cycle to end.",
 islandOpened:"Advertisement opened. Complete it and wait for reward confirmation.",
 islandWaiting:"Complete the ad and wait for server reward confirmation.",
-islandTasksSoon:"Tasks will be available soon",
-islandTimer:"Cycle time remaining:"
+islandTasksSoon:"Tasks will be available soon",islandTimer:"Cycle time remaining:"
 },
 ru:{
 progress:"Прогресс:",stage:"Этап",watch:"СМОТРЕТЬ РЕКЛАМУ",completed:"ЗАВЕРШЕНО",locked:"ЗАКРЫТО",
@@ -490,31 +372,18 @@ seconds:"секунд. Завершите её и дождитесь подтв�
 confirmed:"Реклама подтверждена! Можно продолжить.",
 complete:"Все три рекламы завершены! Можно открыть страницу загрузки.",
 session:"Рекламная сессия активна. Завершите её или подождите 5 минут.",
-error:"Произошла ошибка. Попробуйте снова.",
-refreshError:"Не удалось обновить прогресс.",
+error:"Произошла ошибка. Попробуйте снова.",refreshError:"Не удалось обновить прогресс.",
 guideTitle:"📖 КАК ИСПОЛЬЗОВАТЬ",
-guideSteps:[
-"Нажмите кнопку просмотра рекламы.",
-"Завершите рекламу и дождитесь подтверждения.",
-"После подтверждения откроется следующий этап.",
-"Завершите три рекламы, чтобы открыть Android.",
-"Нажмите Android, чтобы открыть страницу файлов и видео."
-],
-guideNote:"Спасибо за использование OXIDE HUB ❤️",
-balance:"Ваш баланс",redeem:"ОБМЕНЯТЬ",insufficient:"Недостаточно баллов",
-pending:"Заявка создана! Статус: Pending",
-redeemError:"Не удалось создать заявку.",
-loadingRewards:"Загрузка наград...",
-rewardsError:"Не удалось загрузить награды.",
-pendingNote:"После обмена заявка получит статус Pending для проверки.",
+guideSteps:["Нажмите кнопку просмотра рекламы.","Завершите рекламу и дождитесь подтверждения.","После подтверждения откроется следующий этап.","Завершите три рекламы, чтобы открыть Android.","Нажмите Android, чтобы открыть страницу файлов и видео."],
+guideNote:"Спасибо за использование OXIDE HUB ❤️",balance:"Ваш баланс",redeem:"ОБМЕНЯТЬ",
+insufficient:"Недостаточно баллов",pending:"Заявка создана! Статус: Pending",
+redeemError:"Не удалось создать заявку.",loadingRewards:"Загрузка наград...",
+rewardsError:"Не удалось загрузить награды.",pendingNote:"После обмена заявка получит статус Pending для проверки.",
 confirmRedeem:"Обменять эту награду? Баллы будут списаны.",
-islandAds:"Просмотр рекламы",islandTasks:"Задания",
-islandProgress:"Завершено:",islandReward:"За каждую рекламу = 5 очков",
-islandWatch:"▶ Смотреть рекламу",
-islandLoading:"Загрузка данных острова...",
-islandError:"Не удалось загрузить данные.",
-islandNoAds:"Сейчас нет рекламы.",
-islandComplete:"Вы завершили 10 реклам! Дождитесь нового цикла.",
+islandAds:"Просмотр рекламы",islandTasks:"Задания",islandProgress:"Завершено:",
+islandReward:"За каждую рекламу = 5 очков",islandWatch:"▶ Смотреть рекламу",
+islandLoading:"Загрузка данных острова...",islandError:"Не удалось загрузить данные.",
+islandNoAds:"Сейчас нет рекламы.",islandComplete:"Вы завершили 10 реклам! Дождитесь нового цикла.",
 islandOpened:"Реклама открыта. Завершите её и дождитесь подтверждения.",
 islandWaiting:"Завершите рекламу и дождитесь подтверждения сервера.",
 islandTasksSoon:"Задания скоро появятся",islandTimer:"Осталось времени:"
@@ -527,36 +396,22 @@ searching:"Buscando un anuncio disponible...",noAd:"No hay anuncios disponibles.
 popup:"Permite las ventanas emergentes.",opened:"Anuncio abierto:",
 seconds:"segundos. Complétalo y espera la confirmación.",
 confirmed:"¡Anuncio confirmado! Puedes continuar.",
-complete:"¡Los tres anuncios están completos!",
-session:"Tienes una sesión activa. Espera 5 minutos.",
+complete:"¡Los tres anuncios están completos!",session:"Tienes una sesión activa. Espera 5 minutos.",
 error:"Ha ocurrido un error.",refreshError:"No se pudo actualizar el progreso.",
 guideTitle:"📖 CÓMO USAR",
-guideSteps:[
-"Pulsa Ver anuncio para abrir un anuncio.",
-"Completa el anuncio y espera la confirmación.",
-"La siguiente etapa se desbloqueará después.",
-"Completa los tres anuncios para desbloquear Android.",
-"Pulsa Android para abrir los archivos y el vídeo."
-],
-guideNote:"Gracias por usar OXIDE HUB ❤️",
-balance:"Tu saldo",redeem:"CANJEAR",insufficient:"Puntos insuficientes",
-pending:"¡Solicitud creada! Estado: Pending",
-redeemError:"No se pudo crear la solicitud.",
-loadingRewards:"Cargando premios...",
-rewardsError:"No se pudieron cargar los premios.",
-pendingNote:"Tu solicitud quedará como Pending para revisión.",
+guideSteps:["Pulsa Ver anuncio para abrir un anuncio.","Completa el anuncio y espera la confirmación.","La siguiente etapa se desbloqueará después.","Completa los tres anuncios para desbloquear Android.","Pulsa Android para abrir los archivos y el vídeo."],
+guideNote:"Gracias por usar OXIDE HUB ❤️",balance:"Tu saldo",redeem:"CANJEAR",
+insufficient:"Puntos insuficientes",pending:"¡Solicitud creada! Estado: Pending",
+redeemError:"No se pudo crear la solicitud.",loadingRewards:"Cargando premios...",
+rewardsError:"No se pudieron cargar los premios.",pendingNote:"Tu solicitud quedará como Pending para revisión.",
 confirmRedeem:"¿Quieres canjear esta recompensa? Se descontarán los puntos.",
-islandAds:"Ver anuncios",islandTasks:"Tareas",
-islandProgress:"Anuncios completados:",
-islandReward:"Cada anuncio completado = 5 puntos",
-islandWatch:"▶ Ver anuncio",islandLoading:"Cargando isla...",
-islandError:"No se pudo cargar la isla.",
-islandNoAds:"No hay anuncios disponibles.",
-islandComplete:"Completaste 10 anuncios. Espera el nuevo ciclo.",
+islandAds:"Ver anuncios",islandTasks:"Tareas",islandProgress:"Anuncios completados:",
+islandReward:"Cada anuncio completado = 5 puntos",islandWatch:"▶ Ver anuncio",
+islandLoading:"Cargando isla...",islandError:"No se pudo cargar la isla.",
+islandNoAds:"No hay anuncios disponibles.",islandComplete:"Completaste 10 anuncios. Espera el nuevo ciclo.",
 islandOpened:"Anuncio abierto. Complétalo y espera la confirmación.",
 islandWaiting:"Completa el anuncio y espera la confirmación del servidor.",
-islandTasksSoon:"Las tareas estarán disponibles pronto",
-islandTimer:"Tiempo restante:"
+islandTasksSoon:"Las tareas estarán disponibles pronto",islandTimer:"Tiempo restante:"
 },
 id:{
 progress:"Progres:",stage:"Tahap",watch:"TONTON IKLAN",completed:"SELESAI",locked:"TERKUNCI",
@@ -566,119 +421,52 @@ searching:"Mencari iklan yang tersedia...",noAd:"Belum ada iklan tersedia.",
 popup:"Izinkan pop-up untuk melanjutkan.",opened:"Iklan dibuka:",
 seconds:"detik. Selesaikan dan tunggu konfirmasi hadiah.",
 confirmed:"Iklan berhasil dikonfirmasi!",complete:"Ketiga iklan selesai!",
-session:"Anda memiliki sesi aktif. Tunggu 5 menit.",
-error:"Terjadi kesalahan.",refreshError:"Gagal memperbarui progres.",
-guideTitle:"📖 CARA MENGGUNAKAN",
-guideSteps:[
-"Tekan Tonton Iklan untuk membuka iklan.",
-"Selesaikan iklan dan tunggu konfirmasi.",
-"Tahap berikutnya terbuka setelah konfirmasi.",
-"Selesaikan tiga iklan untuk membuka Android.",
-"Tekan Android untuk membuka halaman file dan video."
-],
-guideNote:"Terima kasih telah menggunakan OXIDE HUB ❤️",
-balance:"Saldo Anda",redeem:"TUKAR",insufficient:"Poin tidak cukup",
-pending:"Permintaan berhasil dibuat! Status: Pending",
-redeemError:"Gagal membuat permintaan.",
-loadingRewards:"Memuat hadiah...",
-rewardsError:"Gagal memuat hadiah.",
-pendingNote:"Permintaan penukaran berstatus Pending untuk ditinjau.",
+session:"Anda memiliki sesi aktif. Tunggu 5 menit.",error:"Terjadi kesalahan.",
+refreshError:"Gagal memperbarui progres.",guideTitle:"📖 CARA MENGGUNAKAN",
+guideSteps:["Tekan Tonton Iklan untuk membuka iklan.","Selesaikan iklan dan tunggu konfirmasi.","Tahap berikutnya terbuka setelah konfirmasi.","Selesaikan tiga iklan untuk membuka Android.","Tekan Android untuk membuka halaman file dan video."],
+guideNote:"Terima kasih telah menggunakan OXIDE HUB ❤️",balance:"Saldo Anda",redeem:"TUKAR",
+insufficient:"Poin tidak cukup",pending:"Permintaan berhasil dibuat! Status: Pending",
+redeemError:"Gagal membuat permintaan.",loadingRewards:"Memuat hadiah...",
+rewardsError:"Gagal memuat hadiah.",pendingNote:"Permintaan penukaran berstatus Pending untuk ditinjau.",
 confirmRedeem:"Tukar hadiah ini? Poin akan dikurangi.",
-islandAds:"Tonton Iklan",islandTasks:"Tugas",
-islandProgress:"Iklan selesai:",islandReward:"Setiap iklan selesai = 5 poin",
-islandWatch:"▶ Tonton Iklan",islandLoading:"Memuat data pulau...",
-islandError:"Gagal memuat data pulau.",
-islandNoAds:"Tidak ada iklan tersedia.",
-islandComplete:"10 iklan selesai! Tunggu siklus baru.",
+islandAds:"Tonton Iklan",islandTasks:"Tugas",islandProgress:"Iklan selesai:",
+islandReward:"Setiap iklan selesai = 5 poin",islandWatch:"▶ Tonton Iklan",
+islandLoading:"Memuat data pulau...",islandError:"Gagal memuat data pulau.",
+islandNoAds:"Tidak ada iklan tersedia.",islandComplete:"10 iklan selesai! Tunggu siklus baru.",
 islandOpened:"Iklan dibuka. Selesaikan dan tunggu konfirmasi.",
 islandWaiting:"Selesaikan iklan dan tunggu konfirmasi server.",
-islandTasksSoon:"Tugas segera tersedia",
-islandTimer:"Sisa waktu siklus:"
+islandTasksSoon:"Tugas segera tersedia",islandTimer:"Sisa waktu siklus:"
 }
 };
 
-function t(key){
-return translations[currentLanguage]?.[key]||translations.ar[key]||key;
-}
-
-function supportText(key){
-const ar={
-title:"💬 الدعم الفني",
-description:"أرسل رسالتك وسيرد عليك فريق OXIDE HUB هنا.",
-placeholder:"اكتب رسالتك هنا...",
-send:"إرسال",back:"رجوع",
-you:"أنت",admin:"دعم OXIDE HUB",
-empty:"لا توجد رسائل بعد. اكتب رسالتك لبدء المحادثة.",
-loading:"جاري تحميل المحادثة...",
-sending:"جاري إرسال الرسالة...",
-sent:"تم إرسال رسالتك.",
-failed:"تعذر إرسال الرسالة. حاول مجددًا.",
-loadFailed:"تعذر تحميل المحادثة. أعد تحميل الصفحة."
-};
-const en={
-title:"💬 Support",
-description:"Send a message and the OXIDE HUB team will reply here.",
-placeholder:"Write your message...",
-send:"Send",back:"Back",
-you:"You",admin:"OXIDE HUB Support",
-empty:"No messages yet. Send a message to start.",
-loading:"Loading conversation...",
-sending:"Sending message...",
-sent:"Your message was sent.",
-failed:"Could not send the message. Try again.",
-loadFailed:"Could not load the conversation. Reload the page."
-};
-return (currentLanguage==="ar"?ar:en)[key]||ar[key]||key;
-}
+function t(key){return translations[currentLanguage][key]||translations.ar[key]||key}
 
 function clearActiveSession(){
 localStorage.removeItem(LOCK_KEY);
-if(activePopup&&!activePopup.closed){
-try{activePopup.close()}catch(error){}
-}
+if(activePopup&&!activePopup.closed){try{activePopup.close()}catch{}}
 activePopup=null;
 }
-
 function getActiveSession(){
 try{
-const raw=localStorage.getItem(LOCK_KEY);
-if(!raw)return null;
-const session=JSON.parse(raw);
-const startedAt=Number(session.startedAt);
-if(!session||!Number.isFinite(startedAt)||startedAt>Date.now()||Date.now()-startedAt>=LOCK_DURATION){
-clearActiveSession();
-return null;
-}
+const raw=localStorage.getItem(LOCK_KEY);if(!raw)return null;
+const session=JSON.parse(raw);const startedAt=Number(session.startedAt);
+if(!session||!Number.isFinite(startedAt)||startedAt>Date.now()||Date.now()-startedAt>=LOCK_DURATION){clearActiveSession();return null}
 return session;
-}catch(error){
-clearActiveSession();
-return null;
+}catch{clearActiveSession();return null}
 }
-}
-
 function saveActiveSession(number){
-localStorage.setItem(LOCK_KEY,JSON.stringify({
-stage:number,
-startedAt:Date.now()
-}));
+localStorage.setItem(LOCK_KEY,JSON.stringify({stage:number,startedAt:Date.now()}))
 }
 
 function renderGuide(){
 const language=translations[currentLanguage];
 document.getElementById("guideTitle").textContent=language.guideTitle;
-const container=document.getElementById("guideSteps");
-container.innerHTML="";
+const container=document.getElementById("guideSteps");container.innerHTML="";
 language.guideSteps.forEach((step,index)=>{
-const row=document.createElement("div");
-row.className="guide-step";
-const number=document.createElement("span");
-number.className="step-number";
-number.textContent=index+1;
-const text=document.createElement("span");
-text.textContent=step;
-row.appendChild(number);
-row.appendChild(text);
-container.appendChild(row);
+const row=document.createElement("div");row.className="guide-step";
+const number=document.createElement("span");number.className="step-number";number.textContent=index+1;
+const text=document.createElement("span");text.textContent=step;
+row.appendChild(number);row.appendChild(text);container.appendChild(row);
 });
 document.getElementById("guideNote").textContent=language.guideNote;
 }
@@ -686,16 +474,10 @@ document.getElementById("guideNote").textContent=language.guideNote;
 function createStages(){
 stages.innerHTML="";
 for(let i=1;i<=REQUIRED;i++){
-const item=document.createElement("div");
-item.className="stage";
-const label=document.createElement("span");
-label.id="label"+i;
-const button=document.createElement("button");
-button.id="btn"+i;
-button.onclick=()=>watchAd(i);
-item.appendChild(label);
-item.appendChild(button);
-stages.appendChild(item);
+const item=document.createElement("div");item.className="stage";
+const label=document.createElement("span");label.id="label"+i;
+const button=document.createElement("button");button.id="btn"+i;button.onclick=()=>watchAd(i);
+item.appendChild(label);item.appendChild(button);stages.appendChild(item);
 }
 updateProgress(progress);
 }
@@ -705,8 +487,6 @@ if(!translations[language])return;
 currentLanguage=language;
 document.documentElement.lang=language;
 document.documentElement.dir=language==="ar"?"rtl":"ltr";
-
-document.getElementById("language").value=language;
 document.getElementById("progressLabel").textContent=t("progress");
 document.getElementById("androidText").textContent=t("android");
 document.getElementById("iphoneText").textContent=t("iphone");
@@ -715,12 +495,7 @@ document.getElementById("navHome").textContent=t("home");
 document.getElementById("navRewards").textContent=t("rewards");
 document.getElementById("navReferral").textContent=t("referral");
 document.getElementById("navNews").textContent=t("news");
-
-["soon2","soon3","soon4","iphoneSoon","betaSoon"].forEach(id=>{
-const element=document.getElementById(id);
-if(element)element.textContent=t("soon");
-});
-
+["soon2","soon3","soon4","iphoneSoon","betaSoon"].forEach(id=>document.getElementById(id).textContent=t("soon"));
 document.getElementById("balanceLabel").textContent=t("balance");
 document.getElementById("pendingNote").textContent=t("pendingNote");
 document.getElementById("rewardsHeading").textContent="🎁 "+t("rewards");
@@ -728,567 +503,316 @@ document.getElementById("islandAdsLabel").textContent=t("islandAds");
 document.getElementById("islandTasksLabel").textContent=t("islandTasks");
 document.getElementById("islandRewardText").textContent=t("islandReward");
 document.getElementById("islandWatchButton").textContent=t("islandWatch");
-
-document.getElementById("userIdLabel").textContent=
-language==="ar"?"🆔 رقم المستخدم الخاص بك":"🆔 Your User ID";
-document.getElementById("copyIdButton").textContent=
-language==="ar"?"📋 نسخ":"📋 Copy";
-
-document.getElementById("supportHeading").textContent=supportText("title");
-document.getElementById("supportDescription").textContent=supportText("description");
-document.getElementById("supportInput").placeholder=supportText("placeholder");
-document.getElementById("supportSendButton").textContent=supportText("send");
-document.getElementById("supportBackButton").textContent=supportText("back");
-
-renderGuide();
-createStages();
-renderRewards();
-updateIslandDisplay();
-renderSupportLanguage();
-
+document.getElementById("userIdLabel").textContent=language==="ar"?"🆔 رقم المستخدم الخاص بك":"🆔 Your User ID";
+document.getElementById("copyIdButton").textContent=language==="ar"?"📋 نسخ":"📋 Copy";
+renderGuide();createStages();renderRewards();updateIslandDisplay();
 if(progress>=REQUIRED)statusBox.textContent=t("complete");
 }
+
+/* LOAD PERMANENT USER ID */
 async function loadUserId(){
-  if(userIdLoaded)return;
-  try{
-    const response=await fetch("/api/me",{cache:"no-store",credentials:"same-origin"});
-    const data=await response.json();
-    if(!response.ok||!data.success||!data.displayId)throw new Error();
-    userDisplayId=data.displayId;
-    userIdLoaded=true;
-    document.getElementById("userIdValue").textContent=userDisplayId;
-  }catch(error){
-    document.getElementById("userIdValue").textContent="Unavailable";
-  }
+if(userIdLoaded)return;
+
+try{
+const response=await fetch("/api/me",{
+method:"GET",
+cache:"no-store",
+credentials:"same-origin"
+});
+
+const data=await response.json();
+
+if(!response.ok||!data.success||!data.displayId){
+throw new Error("User ID loading failed");
 }
 
+userDisplayId=data.displayId;
+userIdLoaded=true;
+document.getElementById("userIdValue").textContent=userDisplayId;
+
+}catch(error){
+document.getElementById("userIdValue").textContent="Unavailable";
+}
+}
+
+/* COPY USER ID */
 async function copyUserId(){
-  if(!userDisplayId)await loadUserId();
-  if(!userDisplayId)return;
-  try{
-    await navigator.clipboard.writeText(userDisplayId);
-    const button=document.getElementById("copyIdButton");
-    button.textContent=currentLanguage==="ar"?"✓ تم النسخ":"✓ Copied";
-    setTimeout(()=>button.textContent=currentLanguage==="ar"?"📋 نسخ":"📋 Copy",1800);
-  }catch(error){}
+if(!userDisplayId){
+await loadUserId();
+}
+if(!userDisplayId)return;
+
+try{
+await navigator.clipboard.writeText(userDisplayId);
+const button=document.getElementById("copyIdButton");
+button.textContent=currentLanguage==="ar"?"✓ تم النسخ":"✓ Copied";
+
+setTimeout(()=>{
+button.textContent=currentLanguage==="ar"?"📋 نسخ":"📋 Copy";
+},1800);
+
+}catch(error){
+document.getElementById("userIdValue").textContent=userDisplayId;
+}
 }
 
 function showPage(page){
-  const home=page==="home";
-  const rewards=page==="rewards";
-  const support=page==="support";
-
-  document.getElementById("homePage").style.display=home?"block":"none";
-  document.getElementById("rewardsPage").style.display=rewards?"block":"none";
-  document.getElementById("supportPage").style.display=support?"block":"none";
-
-  document.getElementById("homeTab").classList.toggle("active",home);
-  document.getElementById("rewardsTab").classList.toggle("active",rewards);
-
-  if(rewards){
-    loadRewards();
-    loadIsland();
-  }
-
-  if(support){
-    lastSupportMessageId=0;
-    document.getElementById("supportMessages").innerHTML="";
-    loadUserId().finally(()=>loadSupportMessages(true));
-    startSupportPolling();
-  }else{
-    stopSupportPolling();
-  }
+const home=page==="home";
+document.getElementById("homePage").style.display=home?"block":"none";
+document.getElementById("rewardsPage").style.display=home?"none":"block";
+document.getElementById("homeTab").classList.toggle("active",home);
+document.getElementById("rewardsTab").classList.toggle("active",!home);
+if(!home){loadRewards();loadIsland()}
 }
 
 function showIslandTab(tab){
-  const ads=tab==="ads";
-  document.getElementById("islandAdsPanel").style.display=ads?"block":"none";
-  document.getElementById("islandTasksPanel").style.display=ads?"none":"block";
-  document.getElementById("islandAdsTab").classList.toggle("active",ads);
-  document.getElementById("islandTasksTab").classList.toggle("active",!ads);
+const ads=tab==="ads";
+document.getElementById("islandAdsPanel").style.display=ads?"block":"none";
+document.getElementById("islandTasksPanel").style.display=ads?"none":"block";
+document.getElementById("islandAdsTab").classList.toggle("active",ads);
+document.getElementById("islandTasksTab").classList.toggle("active",!ads);
 }
 
 function updatePlatforms(){
-  const ready=progress>=REQUIRED;
-  const download=document.getElementById("download");
-  download.classList.toggle("available",ready);
-  download.href=ready?DOWNLOAD_PAGE:"#";
-  download.setAttribute("aria-disabled",String(!ready));
-  document.getElementById("iphoneButton").disabled=!PLATFORM_AVAILABILITY.iphone;
-  document.getElementById("betaButton").disabled=!PLATFORM_AVAILABILITY.beta;
+const download=document.getElementById("download");
+const iphone=document.getElementById("iphoneButton");
+const beta=document.getElementById("betaButton");
+const androidReady=progress>=REQUIRED;
+download.classList.toggle("available",androidReady);
+download.href=androidReady?DOWNLOAD_PAGE:"#";
+download.setAttribute("aria-disabled",String(!androidReady));
+iphone.disabled=!PLATFORM_AVAILABILITY.iphone;
+iphone.classList.toggle("available",PLATFORM_AVAILABILITY.iphone);
+beta.disabled=!PLATFORM_AVAILABILITY.beta;
+beta.classList.toggle("available",PLATFORM_AVAILABILITY.beta);
 }
 
 function updateProgress(value){
-  progress=Math.max(0,Math.min(REQUIRED,Number(value)||0));
-  document.getElementById("count").textContent=progress+"/"+REQUIRED;
-  document.getElementById("bar").style.width=(progress/REQUIRED*100)+"%";
-
-  for(let i=1;i<=REQUIRED;i++){
-    const button=document.getElementById("btn"+i);
-    const label=document.getElementById("label"+i);
-    if(!button||!label)continue;
-
-    label.textContent=t("stage")+" "+i+"/"+REQUIRED;
-
-    if(i<=progress){
-      button.textContent="✓ "+t("completed");
-      button.disabled=true;
-      button.className="";
-    }else if(i===progress+1){
-      button.textContent=t("watch");
-      button.disabled=false;
-      button.className="";
-    }else{
-      button.textContent="🔒 "+t("locked");
-      button.disabled=true;
-      button.className="locked";
-    }
-  }
-  updatePlatforms();
+progress=Math.max(0,Math.min(REQUIRED,Number(value)||0));
+document.getElementById("count").textContent=progress+"/"+REQUIRED;
+document.getElementById("bar").style.width=(progress/REQUIRED*100)+"%";
+for(let i=1;i<=REQUIRED;i++){
+const button=document.getElementById("btn"+i);
+const label=document.getElementById("label"+i);
+if(!button||!label)continue;
+label.textContent=t("stage")+" "+i+"/"+REQUIRED;
+if(i<=progress){button.textContent="✓ "+t("completed");button.disabled=true;button.className=""}
+else if(i===progress+1){button.textContent=t("watch");button.disabled=false;button.className=""}
+else{button.textContent="🔒 "+t("locked");button.disabled=true;button.className="locked"}
+}
+updatePlatforms();
 }
 
 async function refreshProgress(){
-  try{
-    const response=await fetch("/api/progress",{cache:"no-store",credentials:"same-origin"});
-    if(!response.ok)throw new Error();
-    const data=await response.json();
-    if(!Number.isFinite(Number(data.progress)))throw new Error();
+try{
+const response=await fetch("/api/progress",{method:"GET",cache:"no-store",credentials:"same-origin"});
+if(!response.ok)throw new Error("Progress request failed");
+const data=await response.json();
+if(!data||!Number.isFinite(Number(data.progress)))throw new Error("Invalid progress response");
+const newProgress=Math.max(0,Math.min(REQUIRED,Number(data.progress)));
+const session=getActiveSession();
+if(session&&Number(session.stage)<=newProgress){clearActiveSession();if(newProgress<REQUIRED)statusBox.textContent=t("confirmed")}
+else if(lastProgress!==null&&newProgress>lastProgress){clearActiveSession();if(newProgress<REQUIRED)statusBox.textContent=t("confirmed")}
+lastProgress=newProgress;
+updateProgress(newProgress);
 
-    const newProgress=Math.max(0,Math.min(REQUIRED,Number(data.progress)));
-    const session=getActiveSession();
+/* Load ID after progress endpoint sets visitor cookie */
+if(!userIdLoaded){
+await loadUserId();
+}
 
-    if(session&&Number(session.stage)<=newProgress){
-      clearActiveSession();
-      if(newProgress<REQUIRED)statusBox.textContent=t("confirmed");
-    }else if(lastProgress!==null&&newProgress>lastProgress){
-      clearActiveSession();
-      if(newProgress<REQUIRED)statusBox.textContent=t("confirmed");
-    }
-
-    lastProgress=newProgress;
-    updateProgress(newProgress);
-    if(!userIdLoaded)await loadUserId();
-
-    if(newProgress>=REQUIRED)statusBox.textContent=t("complete");
-  }catch(error){
-    statusBox.textContent=t("refreshError");
-  }
+if(newProgress>=REQUIRED)statusBox.textContent=t("complete");
+}catch(error){statusBox.textContent=t("refreshError")}
 }
 
 async function watchAd(number){
-  if(MAINTENANCE_MODE||busy||number!==progress+1)return;
-
-  if(getActiveSession()){
-    statusBox.textContent=t("session");
-    return;
-  }
-
-  const popup=window.open("about:blank","_blank");
-  if(!popup){
-    statusBox.textContent=t("popup");
-    return;
-  }
-
-  busy=true;
-  activePopup=popup;
-  saveActiveSession(number);
-  statusBox.textContent=t("searching");
-
-  try{
-    const response=await fetch("/api/ptc",{cache:"no-store",credentials:"same-origin"});
-    const data=await response.json();
-    if(!response.ok||!data.success)throw new Error(data.error||t("error"));
-
-    const ads=Array.isArray(data.ads)?data.ads:[];
-    const validAds=ads.filter(ad=>
-      [0,1].includes(Number(ad.type))&&
-      Number(ad.duration)>0&&
-      typeof ad.url==="string"&&
-      ad.url.startsWith("https://")
-    );
-
-    if(!validAds.length)throw new Error(t("noAd"));
-
-    const ad=validAds[Math.floor(Math.random()*validAds.length)];
-    if(popup.closed)throw new Error(t("popup"));
-
-    popup.location.href=ad.url;
-    statusBox.textContent=t("opened")+" "+(ad.title||"PTC Ad")+" — "+ad.duration+" "+t("seconds");
-  }catch(error){
-    if(popup&&!popup.closed)popup.close();
-    clearActiveSession();
-    statusBox.textContent=error.message||t("error");
-  }finally{
-    busy=false;
-    await refreshProgress();
-  }
+if(MAINTENANCE_MODE||busy)return;
+if(number!==progress+1)return;
+if(getActiveSession()){statusBox.textContent=t("session");return}
+const popup=window.open("about:blank","_blank");
+if(!popup){statusBox.textContent=t("popup");return}
+busy=true;activePopup=popup;saveActiveSession(number);statusBox.textContent=t("searching");
+try{
+const response=await fetch("/api/ptc",{method:"GET",cache:"no-store",credentials:"same-origin"});
+const data=await response.json();
+if(!response.ok||!data.success)throw new Error(data.error||t("error"));
+const ads=Array.isArray(data.ads)?data.ads:[];
+const validAds=ads.filter(ad=>[0,1].includes(Number(ad.type))&&Number(ad.duration)>0&&typeof ad.url==="string"&&ad.url.startsWith("https://"));
+if(!validAds.length)throw new Error(t("noAd"));
+const ad=validAds[Math.floor(Math.random()*validAds.length)];
+if(popup.closed)throw new Error(t("popup"));
+popup.location.href=ad.url;
+const typeName=Number(ad.type)===0?"iFrame / Video":"Window";
+statusBox.textContent=t("opened")+" "+(ad.title||"PTC Ad")+" ("+typeName+") — "+ad.duration+" "+t("seconds");
+}catch(error){
+if(popup&&!popup.closed)popup.close();
+clearActiveSession();statusBox.textContent=error.message||t("error");
+}finally{busy=false;await refreshProgress()}
 }
 
+/* OXIDE ISLAND */
 function updateIslandDisplay(){
-  const count=Math.max(0,Math.min(ISLAND_REQUIRED,Number(islandCompleted)||0));
-  document.getElementById("islandTabCount").textContent=count+"/"+ISLAND_REQUIRED;
-  document.getElementById("islandProgressText").textContent=t("islandProgress")+" "+count+" / "+ISLAND_REQUIRED;
-  document.getElementById("islandProgressFill").style.width=(count/ISLAND_REQUIRED*100)+"%";
-
-  const button=document.getElementById("islandWatchButton");
-  button.disabled=islandBusy||count>=ISLAND_REQUIRED||islandRemaining<=0||!islandAds.length;
-  button.textContent=count>=ISLAND_REQUIRED?t("islandComplete"):t("islandWatch");
+const count=Math.max(0,Math.min(ISLAND_REQUIRED,Number(islandCompleted)||0));
+document.getElementById("islandTabCount").textContent=count+"/"+ISLAND_REQUIRED;
+document.getElementById("islandProgressText").textContent=t("islandProgress")+" "+count+" / "+ISLAND_REQUIRED;
+document.getElementById("islandProgressFill").style.width=(count/ISLAND_REQUIRED*100)+"%";
+const button=document.getElementById("islandWatchButton");
+button.disabled=islandBusy||count>=ISLAND_REQUIRED||islandRemaining<=0||!islandAds.length;
+button.textContent=count>=ISLAND_REQUIRED?t("islandComplete"):t("islandWatch");
 }
 
 function formatIslandTimer(){
-  if(!islandCycleEndsAt)return;
-
-  const seconds=Math.max(0,Math.floor((islandCycleEndsAt-Date.now())/1000));
-  const hours=Math.floor(seconds/3600);
-  const minutes=Math.floor((seconds%3600)/60);
-  const secs=seconds%60;
-
-  document.getElementById("islandTimer").textContent=
-    t("islandTimer")+" "+
-    String(hours).padStart(2,"0")+":"+
-    String(minutes).padStart(2,"0")+":"+
-    String(secs).padStart(2,"0");
-
-  if(seconds<=0){
-    document.getElementById("islandTimer").textContent=t("islandLoading");
-    loadIsland();
-  }
+if(!islandCycleEndsAt)return;
+const seconds=Math.max(0,Math.floor((islandCycleEndsAt-Date.now())/1000));
+const hours=Math.floor(seconds/3600);
+const minutes=Math.floor((seconds%3600)/60);
+const secs=seconds%60;
+document.getElementById("islandTimer").textContent=
+t("islandTimer")+" "+String(hours).padStart(2,"0")+":"+String(minutes).padStart(2,"0")+":"+String(secs).padStart(2,"0");
+if(seconds<=0){
+document.getElementById("islandTimer").textContent=t("islandLoading");
+loadIsland();
+}
 }
 
 async function loadIsland(){
-  const message=document.getElementById("islandMessage");
-  message.textContent=t("islandLoading");
-
-  try{
-    const response=await fetch("/api/reward-ptc",{cache:"no-store",credentials:"same-origin"});
-    const data=await response.json();
-    if(!response.ok||!data.success)throw new Error();
-
-    islandAds=Array.isArray(data.ads)?data.ads.filter(ad=>
-      typeof ad.url==="string"&&ad.url.startsWith("https://")&&Number(ad.duration)>0
-    ):[ ];
-
-    islandCompleted=Math.max(0,Math.min(ISLAND_REQUIRED,Number(data.completedAds)||0));
-    islandRemaining=Math.max(0,Number(data.remainingAds)||0);
-    islandCycleEndsAt=Date.now()+Math.max(0,Number(data.remainingSeconds)||0)*1000;
-
-    updateIslandDisplay();
-    message.textContent=islandCompleted>=ISLAND_REQUIRED?t("islandComplete"):"";
-    formatIslandTimer();
-
-    if(!islandTimerInterval)islandTimerInterval=setInterval(formatIslandTimer,1000);
-  }catch(error){
-    message.textContent=t("islandError");
-    document.getElementById("islandWatchButton").disabled=true;
-  }
+const message=document.getElementById("islandMessage");
+message.textContent=t("islandLoading");
+try{
+const response=await fetch("/api/reward-ptc",{method:"GET",cache:"no-store",credentials:"same-origin"});
+const data=await response.json();
+if(!response.ok||!data.success)throw new Error(data.error||"Island request failed");
+islandAds=Array.isArray(data.ads)?data.ads.filter(ad=>typeof ad.url==="string"&&ad.url.startsWith("https://")&&Number(ad.duration)>0):[];
+islandCompleted=Math.max(0,Math.min(ISLAND_REQUIRED,Number(data.completedAds)||0));
+islandRemaining=Math.max(0,Number(data.remainingAds)||0);
+const remainingSeconds=Math.max(0,Number(data.remainingSeconds)||0);
+islandCycleEndsAt=Date.now()+remainingSeconds*1000;
+updateIslandDisplay();
+message.textContent=islandCompleted>=ISLAND_REQUIRED?t("islandComplete"):"";
+formatIslandTimer();
+if(!islandTimerInterval)islandTimerInterval=setInterval(formatIslandTimer,1000);
+}catch(error){
+message.textContent=t("islandError");
+document.getElementById("islandWatchButton").disabled=true;
+}
 }
 
 async function watchIslandAd(){
-  if(islandBusy)return;
-
-  if(islandCompleted>=ISLAND_REQUIRED){
-    document.getElementById("islandMessage").textContent=t("islandComplete");
-    return;
-  }
-
-  if(!islandAds.length){
-    await loadIsland();
-    if(!islandAds.length){
-      document.getElementById("islandMessage").textContent=t("islandNoAds");
-      return;
-    }
-  }
-
-  const popup=window.open("about:blank","_blank");
-  if(!popup){
-    document.getElementById("islandMessage").textContent=t("popup");
-    return;
-  }
-
-  islandBusy=true;
-  updateIslandDisplay();
-
-  try{
-    const ad=islandAds[Math.floor(Math.random()*islandAds.length)];
-    popup.location.href=ad.url;
-    document.getElementById("islandMessage").textContent=t("islandOpened");
-  }catch(error){
-    if(!popup.closed)popup.close();
-    document.getElementById("islandMessage").textContent=t("islandError");
-  }finally{
-    islandBusy=false;
-    updateIslandDisplay();
-  }
+if(islandBusy)return;
+if(islandCompleted>=ISLAND_REQUIRED){document.getElementById("islandMessage").textContent=t("islandComplete");return}
+if(!islandAds.length){await loadIsland();if(!islandAds.length){document.getElementById("islandMessage").textContent=t("islandNoAds");return}}
+const popup=window.open("about:blank","_blank");
+if(!popup){document.getElementById("islandMessage").textContent=t("popup");return}
+islandBusy=true;updateIslandDisplay();
+try{
+const available=islandAds.filter(ad=>typeof ad.url==="string"&&ad.url.startsWith("https://"));
+if(!available.length)throw new Error(t("islandNoAds"));
+const ad=available[Math.floor(Math.random()*available.length)];
+popup.location.href=ad.url;
+document.getElementById("islandMessage").textContent=t("islandOpened")+" "+(ad.title||"PTC Ad");
+}catch(error){
+if(!popup.closed)popup.close();
+document.getElementById("islandMessage").textContent=error.message||t("islandError");
+}finally{
+islandBusy=false;
+updateIslandDisplay();
+}
 }
 
 async function refreshIslandAfterReturn(){
-  if(document.getElementById("rewardsPage").style.display!=="none"){
-    await loadIsland();
-    await loadRewards();
-  }
+if(document.getElementById("rewardsPage").style.display!=="none"){
+await loadIsland();
+await loadRewards();
+}
 }
 
+/* REWARDS */
 async function loadRewards(){
-  const grid=document.getElementById("rewardsGrid");
-  grid.textContent=t("loadingRewards");
-
-  try{
-    const response=await fetch("/api/rewards",{cache:"no-store",credentials:"same-origin"});
-    const data=await response.json();
-    if(!response.ok||!data.success)throw new Error();
-
-    rewardPoints=Number(data.points)||0;
-    rewardOffers=Array.isArray(data.offers)?data.offers:[];
-    document.getElementById("pointsBalance").textContent=rewardPoints.toLocaleString();
-    renderRewards();
-  }catch(error){
-    grid.textContent=t("rewardsError");
-  }
+const grid=document.getElementById("rewardsGrid");
+grid.innerHTML='<div style="grid-column:1/-1;color:#b8c9dd;padding:20px">'+t("loadingRewards")+"</div>";
+try{
+const response=await fetch("/api/rewards",{method:"GET",cache:"no-store",credentials:"same-origin"});
+const data=await response.json();
+if(!response.ok||!data.success)throw new Error("Rewards request failed");
+rewardPoints=Number(data.points)||0;
+rewardOffers=Array.isArray(data.offers)?data.offers:[];
+document.getElementById("pointsBalance").textContent=rewardPoints.toLocaleString();
+renderRewards();
+}catch(error){
+grid.innerHTML='<div style="grid-column:1/-1;color:#ff9c9c;padding:20px">'+t("rewardsError")+"</div>";
+}
 }
 
 function renderRewards(){
-  const grid=document.getElementById("rewardsGrid");
-  if(!grid||!rewardOffers.length)return;
-
-  grid.innerHTML="";
-
-  rewardOffers.forEach(offer=>{
-    const card=document.createElement("div");
-    card.className="reward-card";
-
-    const image=document.createElement("img");
-    image.className="reward-image";
-    image.src=rewardImages[offer.id]||"";
-    image.alt=offer.name||"Reward";
-    image.loading="lazy";
-
-    const name=document.createElement("div");
-    name.className="reward-name";
-    name.textContent=offer.name;
-
-    const price=document.createElement("div");
-    price.className="reward-price";
-    price.textContent=Number(offer.points).toLocaleString()+" POINTS";
-
-    const button=document.createElement("button");
-    button.className="reward-button";
-    button.textContent=rewardPoints>=Number(offer.points)?t("redeem"):t("insufficient");
-    button.disabled=redeeming||rewardPoints<Number(offer.points);
-    button.onclick=()=>redeemReward(offer.id);
-
-    card.append(image,name,price,button);
-    grid.appendChild(card);
-  });
+const grid=document.getElementById("rewardsGrid");
+if(!grid||!rewardOffers.length)return;
+grid.innerHTML="";
+rewardOffers.forEach(offer=>{
+const card=document.createElement("div");card.className="reward-card";
+const image=document.createElement("img");image.className="reward-image";
+image.src=rewardImages[offer.id]||"";image.alt=offer.name||"Reward";image.loading="lazy";
+const name=document.createElement("div");name.className="reward-name";name.textContent=offer.name;
+const price=document.createElement("div");price.className="reward-price";
+price.textContent=Number(offer.points).toLocaleString()+" POINTS";
+const button=document.createElement("button");button.className="reward-button";
+button.textContent=rewardPoints>=Number(offer.points)?t("redeem"):t("insufficient");
+button.disabled=redeeming||rewardPoints<Number(offer.points);
+button.onclick=()=>redeemReward(offer.id);
+card.appendChild(image);card.appendChild(name);card.appendChild(price);card.appendChild(button);
+grid.appendChild(card);
+});
 }
 
 async function redeemReward(offerId){
-  if(redeeming)return;
-
-  const offer=rewardOffers.find(item=>Number(item.id)===Number(offerId));
-  if(!offer)return;
-
-  if(rewardPoints<Number(offer.points)){
-    document.getElementById("rewardMessage").textContent=t("insufficient");
-    return;
-  }
-
-  if(!confirm(t("confirmRedeem")))return;
-
-  redeeming=true;
-  document.getElementById("rewardMessage").textContent=t("loadingRewards");
-  renderRewards();
-
-  try{
-    const response=await fetch("/api/rewards",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      credentials:"same-origin",
-      body:JSON.stringify({offerId:Number(offerId)})
-    });
-
-    const data=await response.json();
-    if(!response.ok||!data.success)throw new Error(data.error||t("redeemError"));
-
-    rewardPoints=Number(data.points)||0;
-    document.getElementById("pointsBalance").textContent=rewardPoints.toLocaleString();
-    document.getElementById("rewardMessage").textContent=t("pending");
-  }catch(error){
-    document.getElementById("rewardMessage").textContent=error.message||t("redeemError");
-  }finally{
-    redeeming=false;
-    renderRewards();
-  }
+if(redeeming)return;
+const offer=rewardOffers.find(item=>Number(item.id)===Number(offerId));
+if(!offer)return;
+if(rewardPoints<Number(offer.points)){document.getElementById("rewardMessage").textContent=t("insufficient");return}
+if(!confirm(t("confirmRedeem")))return;
+redeeming=true;document.getElementById("rewardMessage").textContent=t("loadingRewards");
+renderRewards();
+try{
+const response=await fetch("/api/rewards",{
+method:"POST",headers:{"Content-Type":"application/json"},
+credentials:"same-origin",body:JSON.stringify({offerId:Number(offerId)})
+});
+const data=await response.json();
+if(!response.ok||!data.success){
+if(data.error==="INSUFFICIENT_POINTS"){await loadRewards();throw new Error(t("insufficient"))}
+throw new Error(data.error||t("redeemError"));
+}
+rewardPoints=Number(data.points)||0;
+document.getElementById("pointsBalance").textContent=rewardPoints.toLocaleString();
+document.getElementById("rewardMessage").textContent=t("pending");
+}catch(error){
+document.getElementById("rewardMessage").textContent=error.message||t("redeemError");
+}finally{redeeming=false;renderRewards()}
 }
 
-/* SUPPORT CHAT */
-function renderSupportLanguage(){
-  const empty=document.getElementById("supportEmpty");
-  if(empty)empty.textContent=supportText("empty");
-}
-
-function appendSupportMessage(message){
-  const container=document.getElementById("supportMessages");
-  const empty=container.querySelector(".support-empty");
-  if(empty)empty.remove();
-
-  const bubble=document.createElement("div");
-  const senderValue=String(message.sender||message.role||message.from||"").toLowerCase();
-  const isAdmin=["admin","support","staff"].includes(senderValue);
-
-  bubble.className="support-message "+(isAdmin?"admin":"user");
-
-  const sender=document.createElement("span");
-  sender.className="support-sender";
-  sender.textContent=isAdmin?supportText("admin"):supportText("you");
-
-  const body=document.createElement("div");
-  body.textContent=String(
-    message.message||message.text||message.content||message.message_text||""
-  );
-
-  bubble.append(sender,body);
-  container.appendChild(bubble);
-}
-
-async function loadSupportMessages(initial=false){
-  if(supportLoading)return;
-  supportLoading=true;
-
-  try{
-    const response=await fetch(
-      "/api/support/messages?after="+(initial?0:lastSupportMessageId),
-      {cache:"no-store",credentials:"same-origin"}
-    );
-
-    const data=await response.json();
-    if(!response.ok||data.success===false)throw new Error();
-
-    const messages=Array.isArray(data)?data:
-      Array.isArray(data.messages)?data.messages:
-      Array.isArray(data.data)?data.data:
-      Array.isArray(data.items)?data.items:[];
-
-    if(initial&&messages.length===0&&lastSupportMessageId===0){
-      const container=document.getElementById("supportMessages");
-      container.innerHTML="";
-      const empty=document.createElement("div");
-      empty.className="support-empty";
-      empty.textContent=supportText("empty");
-      container.appendChild(empty);
-    }
-
-    messages.forEach(message=>{
-      const id=Number(message.id)||0;
-      if(id>lastSupportMessageId){
-        appendSupportMessage(message);
-        lastSupportMessageId=id;
-      }
-    });
-
-    if(messages.length){
-      const container=document.getElementById("supportMessages");
-      container.scrollTop=container.scrollHeight;
-    }
-
-    document.getElementById("supportStatus").textContent="";
-  }catch(error){
-    document.getElementById("supportStatus").textContent=supportText("loadFailed");
-  }finally{
-    supportLoading=false;
-  }
-}
-
-async function sendSupportMessage(event){
-  event.preventDefault();
-  if(supportSending)return;
-
-  const input=document.getElementById("supportInput");
-  const button=document.getElementById("supportSendButton");
-  const message=input.value.trim();
-
-  if(!message)return;
-
-  supportSending=true;
-  button.disabled=true;
-  document.getElementById("supportStatus").textContent=supportText("sending");
-
-  try{
-    await loadUserId();
-
-    const response=await fetch("/api/support/send",{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      credentials:"same-origin",
-      body:JSON.stringify({message})
-    });
-
-    const data=await response.json();
-    if(!response.ok||!data.success)throw new Error();
-
-    input.value="";
-    document.getElementById("supportStatus").textContent=supportText("sent");
-    await loadSupportMessages(false);
-  }catch(error){
-    document.getElementById("supportStatus").textContent=supportText("failed");
-  }finally{
-    supportSending=false;
-    button.disabled=false;
-  }
-}
-
-function startSupportPolling(){
-  if(supportPollingTimer)return;
-  supportPollingTimer=setInterval(()=>{
-    if(!document.hidden&&document.getElementById("supportPage").style.display!=="none"){
-      loadSupportMessages(false);
-    }
-  },5000);
-}
-
-function stopSupportPolling(){
-  if(supportPollingTimer){
-    clearInterval(supportPollingTimer);
-    supportPollingTimer=null;
-  }
-}
-
-document.getElementById("supportForm").addEventListener("submit",sendSupportMessage);
-
+/* INITIALIZATION */
 getActiveSession();
 createStages();
 changeLanguage("ar");
-loadUserId();
 refreshProgress();
 loadRewards();
 loadIsland();
 
 setInterval(refreshProgress,5000);
-
 window.addEventListener("focus",()=>{
-  refreshProgress();
-  refreshIslandAfterReturn();
-  if(document.getElementById("supportPage").style.display!=="none"){
-    loadSupportMessages(false);
-  }
+refreshProgress();
+refreshIslandAfterReturn();
 });
-
 document.addEventListener("visibilitychange",()=>{
-  if(!document.hidden){
-    refreshProgress();
-    refreshIslandAfterReturn();
-    if(document.getElementById("supportPage").style.display!=="none"){
-      loadSupportMessages(false);
-    }
-  }
+if(!document.hidden){
+refreshProgress();
+refreshIslandAfterReturn();
+}
 });
-
 window.addEventListener("pageshow",()=>{
-  getActiveSession();
-  refreshProgress();
-  refreshIslandAfterReturn();
+getActiveSession();
+refreshProgress();
+refreshIslandAfterReturn();
 });
-
 </script>
 </body>
-</html>
-
+</html>￼Enter
