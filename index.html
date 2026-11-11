@@ -1,56 +1,987 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#080b16">
-<title>OXIDE HUB — SKIMI_17</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OXIDE HUB</title>
 <style>
-:root{--cyan:#80d9ff;--violet:#9a7cff;--orange:#ff8a42}
-*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:#080b16;color:#f4f7ff;font-family:Arial,Helvetica,sans-serif}
-body{overflow-x:hidden}
-.hero{min-height:100svh;position:relative;display:grid;place-items:center;padding:34px 18px;background:
-linear-gradient(180deg,rgba(4,7,17,.22),rgba(4,7,17,.72) 52%,#080b16 100%),
-url("background.png") center 42%/cover no-repeat,#10172a;isolation:isolate}
-.hero:before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at 50% 35%,transparent 10%,rgba(2,5,14,.42) 78%)}
-.stars,.stars:before,.stars:after{position:absolute;inset:0;content:"";pointer-events:none;background-image:radial-gradient(2px 2px at 15% 22%,#fff 50%,transparent 60%),radial-gradient(1px 1px at 72% 18%,#b7dcff 50%,transparent 60%),radial-gradient(1.5px 1.5px at 85% 64%,#fff 50%,transparent 60%),radial-gradient(1px 1px at 32% 73%,#d8caff 50%,transparent 60%),radial-gradient(1px 1px at 56% 48%,#fff 50%,transparent 60%);background-size:420px 360px;opacity:.6;animation:drift 90s linear infinite}
-.stars:before{transform:translateY(-20px) scale(1.3);opacity:.45;animation-duration:130s}
-.stars:after{transform:translateY(15px) scale(.8);opacity:.35;animation-duration:170s}
-@keyframes drift{to{transform:translate3d(-30px,35px,0)}}
-.content{width:min(100%,620px);text-align:center;position:relative;padding:32px 24px;border:1px solid rgba(160,196,255,.22);border-radius:22px;background:rgba(6,10,23,.54);backdrop-filter:blur(8px);box-shadow:0 18px 70px #0008}
-.kicker{font-size:11px;letter-spacing:.32em;color:#b5c9e8;text-transform:uppercase}
-h1{font-size:clamp(38px,10vw,68px);letter-spacing:.08em;margin:13px 0 4px;text-shadow:0 0 25px #76caff66}
-h1 span{color:var(--cyan)}.tag{color:#d3dced;font-size:14px;letter-spacing:.12em}
-.fire{font-size:25px;margin:18px 0 4px;filter:drop-shadow(0 0 12px #ff762c)}
-p{color:#c1cbe0;line-height:1.6;font-size:14px}
-.panel{margin:26px auto 0;padding:18px;border-radius:15px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);max-width:420px}
-.progress{height:7px;background:#252d43;border-radius:20px;overflow:hidden;margin:12px 0}
-.progress i{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--violet),var(--cyan));border-radius:20px}
-button{width:100%;border:0;border-radius:10px;padding:15px 18px;font-weight:700;letter-spacing:.08em;color:#06101b;background:linear-gradient(100deg,#8adfff,#b4a0ff);cursor:pointer}
-button:disabled{opacity:.55;cursor:not-allowed}
-.note{font-size:11px;color:#8997b3;margin-top:15px}
-footer{margin-top:25px;font-size:11px;letter-spacing:.16em;color:#8290aa}
-@media(prefers-reduced-motion:reduce){.stars,.stars:before,.stars:after{animation:none}}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:Arial,sans-serif;color:white;text-align:center;background:linear-gradient(rgba(3,8,22,.68),rgba(3,8,22,.88)),url("background.png") center/cover fixed;background-size:auto,105% 105%;padding:25px 12px;animation:backgroundDrift 35s ease-in-out infinite alternate;isolation:isolate}
+@keyframes backgroundDrift{from{background-position:center,48% 48%}to{background-position:center,52% 52%}}
+.stars{position:fixed;inset:-100px;z-index:-1;pointer-events:none;opacity:.25;background-image:radial-gradient(2px 2px at 30px 40px,#fff,transparent),radial-gradient(1px 1px at 100px 130px,#fff,transparent),radial-gradient(2px 2px at 190px 80px,#54caff,transparent),radial-gradient(1px 1px at 250px 190px,#fff,transparent),radial-gradient(2px 2px at 320px 40px,#fff,transparent);background-size:350px 250px;animation:starMove 65s linear infinite}
+@keyframes starMove{from{transform:translate(0,0)}to{transform:translate(-100px,80px)}}
+.container{max-width:430px;margin:auto;position:relative;z-index:1}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:15px;direction:rtl}
+.top-actions{display:flex;align-items:flex-start;gap:7px;direction:ltr;flex-shrink:0}
+.language-box{display:flex;justify-content:flex-start;margin:0}
+.language-box select{background:rgba(12,25,48,.9);color:white;border:1px solid #176caa;border-radius:8px;padding:9px 12px;font-size:14px}
+.language-box option{background:#0c1930;color:white}
+.support-top-button{border:1px solid #00b7ff;border-radius:8px;padding:9px 10px;background:linear-gradient(135deg,#087ed0,#0055a0);color:#fff;font-size:13px;font-weight:bold;white-space:nowrap;cursor:pointer;font-family:Arial,sans-serif}
+.support-top-button:active{transform:scale(.97)}
+.topbar .user-id-card{margin:0;max-width:65%}
+.user-id-card{width:fit-content;max-width:100%;background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:12px;padding:10px 12px;margin:0 0 15px auto;text-align:right;box-shadow:0 0 12px rgba(0,145,255,.12)}
+.user-id-label{color:#b8c9dd;font-size:11px;margin-bottom:7px}
+.user-id-row{display:flex;align-items:center;justify-content:flex-start;gap:8px;direction:ltr}
+.user-id-value{color:#35ef91;font-size:14px;font-weight:bold;letter-spacing:1px}
+.copy-id-button{border:1px solid #00aaff;background:#075a9d;color:white;padding:7px 9px;border-radius:7px;font-size:11px;font-weight:bold;cursor:pointer;font-family:Arial,sans-serif}
+.copy-id-button:active{transform:scale(.96)}
+.logo{font-size:35px;font-weight:900;letter-spacing:3px;color:#fff;text-shadow:0 0 15px #00aaff;margin:25px 0 8px}
+.subtitle{color:#b8c9dd;margin-bottom:24px}
+.navigation{display:flex;direction:rtl;align-items:stretch;width:100%;gap:3px;padding:5px;margin:0 0 20px;background:rgba(5,15,32,.92);border:1px solid #176caa;border-radius:13px;box-shadow:0 0 12px rgba(0,145,255,.12)}
+.nav-item{flex:1;min-width:0;min-height:68px;padding:7px 2px;border:1px solid transparent;border-radius:9px;background:transparent;color:#c6d5e7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-family:Arial,sans-serif;cursor:pointer}
+.nav-item.active{color:white;background:linear-gradient(145deg,#075a9d,#06305d);border-color:#00aaff;box-shadow:0 0 12px rgba(0,170,255,.45)}
+.nav-icon{width:23px;height:23px;display:flex;align-items:center;justify-content:center;color:#d6eaff}
+.nav-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-label{font-size:10px;font-weight:bold;white-space:nowrap}
+.nav-soon{font-size:8px;color:#111;background:#ffc52e;border-radius:4px;padding:2px 4px;font-weight:bold;white-space:nowrap}
+.nav-item:disabled{opacity:.85;cursor:not-allowed}
+#homePage{display:block}#rewardsPage{display:none}
+.progress-box{background:rgba(12,25,48,.85);border:1px solid #176caa;border-radius:14px;padding:15px;margin-bottom:20px}
+.progress-text{font-size:19px;font-weight:bold;margin-bottom:12px}
+.bar{height:10px;background:#25364b;border-radius:20px;overflow:hidden}
+.bar-fill{height:100%;width:0%;background:#00b7ff;transition:width .3s;box-shadow:0 0 10px #00b7ff}
+.stage{display:flex;justify-content:space-between;align-items:center;background:rgba(13,29,52,.88);border:1px solid #244765;padding:16px;margin:12px 0;border-radius:13px;gap:8px}
+.stage button{border:0;padding:11px 14px;border-radius:8px;color:white;background:#087ed0;font-weight:bold;cursor:pointer;white-space:nowrap}
+.stage button:disabled{background:#28634c;cursor:default}.stage button.locked{background:#344253;color:#b6c1ce;cursor:not-allowed}
+.platform-button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:13px;padding:16px;border-radius:12px;color:white;background:#26394f;font-size:17px;font-weight:bold;text-decoration:none;border:1px solid #40536b;opacity:.55;cursor:not-allowed;font-family:Arial,sans-serif;transition:.3s}
+.platform-button.available{opacity:1;cursor:pointer;background:linear-gradient(135deg,#087ed0,#0055a0);border-color:#00b7ff;box-shadow:0 0 17px rgba(0,183,255,.45)}
+.platform-button.available:active{transform:scale(.98)}.platform-button:disabled{opacity:.55;cursor:not-allowed}
+.android-icon{width:29px;height:29px;fill:#3ddc84;flex-shrink:0}.platform-icon{font-size:25px;line-height:1}
+.soon-label{font-size:11px;background:rgba(0,0,0,.3);padding:5px 8px;border-radius:6px}
+#status{min-height:25px;color:#ffd36a;margin-top:15px;line-height:1.6}
+.guide-box{background:rgba(12,25,48,.88);border:1px solid #176caa;border-radius:14px;padding:18px;margin-top:28px;text-align:start}
+.guide-title{color:#00b7ff;font-size:19px;font-weight:bold;text-align:center;margin:0 0 18px}
+.guide-step{display:flex;align-items:flex-start;gap:12px;margin:14px 0;color:#d8e5f3;font-size:14px;line-height:1.7}
+.step-number{display:flex;align-items:center;justify-content:center;min-width:27px;height:27px;border-radius:50%;background:#087ed0;color:white;font-weight:bold;font-size:13px}
+.guide-note{color:#35ef91;text-align:center;font-weight:bold;font-size:14px;line-height:1.7;margin-top:18px}
+/* SUPPORT CHAT */
+.support-box{background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:14px;padding:15px;margin-top:20px;text-align:start;box-shadow:0 0 12px rgba(0,145,255,.12)}
+.support-title{color:#00b7ff;text-align:center;font-size:19px;margin:0 0 8px}
+.support-description{color:#b8c9dd;text-align:center;font-size:12px;line-height:1.6;margin:0 0 12px}
+.support-messages{height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:9px;padding:10px;background:rgba(3,13,29,.72);border:1px solid #244765;border-radius:10px}
+.support-empty{color:#9fb2c8;text-align:center;font-size:12px;margin:auto;line-height:1.7}
+.support-message{max-width:88%;padding:9px 11px;border-radius:10px;font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.support-message.user{align-self:flex-end;background:#075a9d;border:1px solid #168bd0}
+.support-message.admin{align-self:flex-start;background:#26394f;border:1px solid #40536b}
+.support-sender{display:block;font-size:10px;color:#a9dfff;margin-bottom:3px;font-weight:bold}
+.support-form{display:flex;gap:7px;margin-top:10px;align-items:stretch}
+.support-input{flex:1;min-width:0;resize:vertical;min-height:44px;max-height:110px;padding:10px;border:1px solid #176caa;border-radius:9px;background:#07172c;color:#fff;font-family:Arial,sans-serif;font-size:13px;outline:none}
+.support-input:focus{border-color:#00b7ff}
+.support-send{border:1px solid #00b7ff;border-radius:9px;padding:0 15px;background:linear-gradient(135deg,#087ed0,#0055a0);color:white;font-weight:bold;font-family:Arial,sans-serif;cursor:pointer}
+.support-send:disabled{opacity:.55;cursor:not-allowed}
+.support-status{min-height:20px;margin-top:8px;text-align:center;color:#ffd36a;font-size:11px;line-height:1.5}
+.support-media-note{color:#8ea6bf;font-size:10px;text-align:center;margin-top:5px}
+.rewards-heading{color:#00b7ff;font-size:23px;margin:8px 0 18px;text-shadow:0 0 12px rgba(0,183,255,.4)}
+.balance-card{background:linear-gradient(145deg,rgba(8,65,112,.95),rgba(8,25,50,.95));border:1px solid #168bd0;border-radius:15px;padding:20px;margin-bottom:20px;box-shadow:0 0 17px rgba(0,145,255,.15)}
+.balance-label{color:#b8d9f3;font-size:14px;margin-bottom:8px}.balance-number{font-size:32px;font-weight:900;color:#fff;text-shadow:0 0 12px #00aaff}.balance-unit{color:#70d5ff;font-size:13px;margin-top:5px}
+.rewards-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.reward-card{background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:13px;padding:12px 9px;display:flex;flex-direction:column;align-items:center;min-width:0}
+.reward-image{width:100%;height:125px;object-fit:contain;display:block;margin-bottom:8px}
+.reward-name{font-size:14px;font-weight:bold;color:#fff;min-height:34px;display:flex;align-items:center;justify-content:center}
+.reward-price{color:#68d3ff;font-size:13px;font-weight:bold;margin:7px 0 12px}
+.reward-button{width:100%;border:0;border-radius:8px;padding:11px 5px;color:white;background:linear-gradient(135deg,#087ed0,#0055a0);font-weight:bold;font-size:12px;cursor:pointer}
+.reward-button:disabled{background:#344253;color:#aab7c6;cursor:not-allowed}
+.reward-message{min-height:26px;margin-top:17px;font-size:13px;line-height:1.6;color:#ffd36a}
+.pending-note{color:#b8c9dd;font-size:12px;line-height:1.7;background:rgba(12,25,48,.85);border:1px solid #244765;border-radius:10px;padding:12px;margin-top:15px}
+.island-section{background:rgba(7,20,42,.94);border:1px solid #168bd0;border-radius:15px;padding:16px 12px;margin-bottom:20px;box-shadow:0 0 18px rgba(0,145,255,.13)}
+.island-title{color:#00b7ff;font-size:24px;font-weight:900;letter-spacing:2px;margin:3px 0 16px;text-shadow:0 0 12px #007fc7}
+.island-tabs{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.island-tab{min-width:0;min-height:83px;padding:12px 5px;border-radius:11px;border:1px solid #176caa;background:rgba(15,38,67,.95);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;font-family:Arial,sans-serif;font-weight:bold}
+.island-tab.active{background:linear-gradient(145deg,#075a9d,#06305d);border-color:#00b7ff;box-shadow:0 0 12px rgba(0,183,255,.3)}
+.island-tab svg{width:25px;height:25px;fill:none;stroke:#70d5ff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.island-tab-label{font-size:12px}.island-counter{color:#35ef91;font-size:13px}.island-soon{color:#ffc52e;font-size:11px}
+.island-panel{margin-top:15px;padding:14px 10px;background:rgba(3,13,29,.8);border:1px solid #244765;border-radius:11px}
+.island-progress{height:9px;background:#25364b;border-radius:20px;overflow:hidden;margin:12px 0}
+.island-progress-fill{width:0%;height:100%;background:linear-gradient(90deg,#087ed0,#35ef91);transition:width .3s}
+.island-watch-button{width:100%;padding:14px;margin-top:10px;border:1px solid #00b7ff;border-radius:9px;background:linear-gradient(135deg,#087ed0,#0055a0);color:white;font-size:15px;font-weight:bold;cursor:pointer}
+.island-watch-button:disabled{background:#344253;border-color:#46576b;color:#aab7c6;cursor:not-allowed}
+.island-timer{color:#ffd36a;font-size:13px;margin-top:12px}
+.island-message{color:#b8c9dd;font-size:12px;line-height:1.7;min-height:22px;margin-top:10px}
+.island-task-lock{padding:24px 10px;color:#ffc52e;font-weight:bold}
+footer{margin-top:30px;color:#879bb2;font-size:12px}
+@media(max-width:360px){
+.nav-item{min-height:62px}.nav-icon,.nav-icon svg{width:20px;height:20px}.nav-label{font-size:9px}.nav-soon{font-size:7px}
+.navigation{gap:1px;padding:3px}.reward-image{height:105px}
+.topbar .user-id-card{padding:7px;max-width:55%}.topbar .user-id-value{font-size:11px}
+.topbar .language-box select{padding:8px 5px;font-size:12px}
+.support-top-button{padding:8px 7px;font-size:11px}
+.support-form{gap:5px}.support-send{padding:0 10px;font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){body,.stars{animation:none}}
 </style>
 </head>
 <body>
-<main class="hero">
-  <div class="stars"></div>
-  <section class="content">
-    <div class="kicker">Survival • Space • Community</div>
-    <h1>OXIDE <span>HUB</span></h1>
-    <div class="tag">SPACE SURVIVAL ACCESS</div>
-    <div class="fire">🔥</div>
-    <p>A community access page by <strong>SKIMI_17</strong>.</p>
-    <div class="panel">
-      <div><strong>DOWNLOAD ACCESS</strong></div>
-      <p>Rewarded access will be enabled after an approved ad provider is connected.</p>
-      <div class="progress"><i></i></div>
-      <button disabled>DOWNLOAD — COMING SOON</button>
-      <div class="note">No ads are being simulated. Download unlocks only after real provider verification.</div>
+<div class="stars"></div>
+<main class="container">
+
+<div class="topbar">
+  <div class="user-id-card">
+    <div class="user-id-label" id="userIdLabel">🆔 رقم المستخدم الخاص بك</div>
+    <div class="user-id-row">
+      <span class="user-id-value" id="userIdValue">Loading...</span>
+      <button class="copy-id-button" id="copyIdButton" type="button" onclick="copyUserId()">📋 نسخ</button>
     </div>
-    <footer>PAGE BY SKIMI_17 · OXIDE HUB</footer>
-  </section>
+  </div>
+  <div class="top-actions">
+    <div class="language-box">
+      <select id="language" onchange="changeLanguage(this.value)">
+        <option value="ar">🇩🇿 العربية</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="ru">🇷🇺 Русский</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="id">🇮🇩 Indonesia</option>
+      </select>
+    </div>
+    <button class="support-top-button" id="supportTopButton" type="button" onclick="openSupport()">💬 الدعم</button>
+  </div>
+</div>
+
+<div class="logo">OXIDE HUB</div>
+<div class="subtitle">SURVIVE • EXPLORE • DOMINATE</div>
+<nav class="navigation" aria-label="Main navigation">
+<button class="nav-item active" id="homeTab" type="button" onclick="showPage('home')">
+<span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9 21v-7h6v7"/></svg></span><span class="nav-label" id="navHome">الرئيسية</span></button>
+<button class="nav-item" id="rewardsTab" type="button" onclick="showPage('rewards')">
+<span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 7v14"/><path d="M12 7H7.5a2.5 2.5 0 1 1 2.5-2.5C10 6 12 7 12 7Z"/><path d="M12 7h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z"/></svg></span><span class="nav-label" id="navRewards">مكافأة</span></button>
+<button class="nav-item" type="button" disabled><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m12 3 2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8L12 3Z"/><path d="M7 21h10"/></svg></span><span class="nav-label">VIP</span><span class="nav-soon" id="soon2">🔒 SOON</span></button>
+<button class="nav-item" type="button" disabled><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span><span class="nav-label" id="navReferral">إحالة</span><span class="nav-soon" id="soon3">🔒 SOON</span></button>
+<button class="nav-item" type="button" disabled><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9Z"/><path d="M10 21h4"/><path d="M12 2v2"/></svg></span><span class="nav-label" id="navNews">أخبار</span><span class="nav-soon" id="soon4">🔒 SOON</span></button>
+</nav>
+
+<div id="homePage">
+<section class="progress-box"><div class="progress-text"><span id="progressLabel">التقدم:</span> <span id="count">0/3</span></div><div class="bar"><div class="bar-fill" id="bar"></div></div></section>
+<div id="stages"></div>
+<a id="download" class="platform-button" href="#" aria-disabled="true">
+<svg class="android-icon" viewBox="0 0 24 24"><path d="M6.2 7.2 4.6 4.5a.5.5 0 0 1 .86-.5l1.65 2.8a8.2 8.2 0 0 1 9.78 0l1.65-2.8a.5.5 0 1 1 .86.5l-1.6 2.7A7.2 7.2 0 0 1 21 13H3a7.2 7.2 0 0 1 3.2-5.8ZM7 14h10v5.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 7 19.5V14Zm-3-1h2v6H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 1-2Zm15 0h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1v-6Z"/></svg>
+<span id="androidText">تحميل ANDROID</span></a>
+<button class="platform-button" id="iphoneButton" disabled><span class="platform-icon">🍎</span><span id="iphoneText">تحميل iPHONE</span><span class="soon-label" id="iphoneSoon">🔒 SOON</span></button>
+<button class="platform-button" id="betaButton" disabled><span class="platform-icon">🧪</span><span id="betaText">تحميل BETA</span><span class="soon-label" id="betaSoon">🔒 SOON</span></button>
+<div id="status" role="status"></div>
+<section class="guide-box"><h2 class="guide-title" id="guideTitle">📖 طريقة الاستخدام</h2><div id="guideSteps"></div><div class="guide-note" id="guideNote"></div></section>
+
+<section class="support-box" id="supportBox">
+  <h2 class="support-title" id="supportTitle">💬 الدعم الفني</h2>
+  <p class="support-description" id="supportDescription">أرسل رسالتك وسيرد عليك فريق OXIDE HUB هنا.</p>
+  <div class="support-messages" id="supportMessages" aria-live="polite">
+    <div class="support-empty" id="supportEmpty">جاري تحميل المحادثة...</div>
+  </div>
+  <form class="support-form" id="supportForm">
+    <textarea class="support-input" id="supportInput" maxlength="2000" rows="2" placeholder="اكتب رسالتك هنا..." required></textarea>
+    <button class="support-send" id="supportSend" type="submit">إرسال</button>
+  </form>
+  <div class="support-status" id="supportStatus" role="status"></div>
+  <div class="support-media-note" id="supportMediaNote">هذه النسخة تدعم الرسائل النصية. دعم الصور والفيديو يحتاج إضافة تقنية منفصلة.</div>
+</section>
+</div>
+
+<section id="rewardsPage">
+<h2 class="rewards-heading" id="rewardsHeading">🎁 المكافآت</h2>
+<section class="island-section">
+<h2 class="island-title">🌌 OXIDE ISLAND</h2>
+<div class="island-tabs">
+<button class="island-tab active" id="islandAdsTab" onclick="showIslandTab('ads')" type="button">
+<svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+<span class="island-tab-label" id="islandAdsLabel">مشاهدة إعلانات</span><span class="island-counter" id="islandTabCount">0/10</span></button>
+<button class="island-tab" id="islandTasksTab" onclick="showIslandTab('tasks')" type="button">
+<svg viewBox="0 0 24 24"><path d="M9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+<span class="island-tab-label" id="islandTasksLabel">المهام</span><span class="island-soon">SOON</span></button>
+</div>
+<div class="island-panel" id="islandAdsPanel">
+<h3 id="islandPanelTitle">📺 شاهد الإعلان واربح النقاط</h3>
+<p id="islandPanelDescription" style="color:#b8c9dd;font-size:12px;line-height:1.7">أكمل مشاهدة الإعلان لتحصل على مكافأتك.</p>
+<div class="island-progress"><div class="island-progress-fill" id="islandProgressFill"></div></div>
+<div class="island-counter" id="islandProgressText">0 / 10</div>
+<button class="island-watch-button" id="islandWatchButton" type="button" onclick="watchPTC()">▶ مشاهدة الإعلان</button>
+<div class="island-timer" id="islandTimer"></div>
+<div class="island-message" id="islandMessage"></div>
+</div>
+<div class="island-panel" id="islandTasksPanel" style="display:none">
+<div class="island-task-lock">🔒 <span id="tasksComingSoon">المهام قريبًا</span></div>
+</div>
+</section>
+
+<section class="balance-card">
+<div class="balance-label" id="balanceLabel">رصيدك الحالي</div>
+<div class="balance-number" id="balanceNumber">0</div>
+<div class="balance-unit" id="balanceUnit">OXIDE POINTS</div>
+</section>
+<div class="rewards-grid" id="rewardsGrid"></div>
+<div class="reward-message" id="rewardMessage"></div>
+<div class="pending-note" id="pendingNote">تخضع طلبات السحب للمراجعة قبل تنفيذها.</div>
+</section>
+<footer>© 2026 OXIDE HUB • ALL RIGHTS RESERVED</footer>
 </main>
+
+<script>
+const API={
+me:"/api/me",
+progress:"/api/progress",
+ptc:"/api/ptc",
+rewardPtc:"/api/reward-ptc",
+rewards:"/api/rewards",
+supportSend:"/api/support/send",
+supportMessages:"/api/support/messages"
+};
+
+let userData=null;
+let progressData=null;
+let rewardData=[];
+let islandData={completed:0,total:10};
+let ptcBusy=false;
+let supportAfter=0;
+let supportBusy=false;
+let supportTimer=null;
+let currentLanguage="ar";
+
+const translations={
+ar:{
+home:"الرئيسية",rewards:"مكافأة",referral:"إحالة",news:"أخبار",
+progress:"التقدم:",guide:"📖 طريقة الاستخدام",
+guideSteps:[
+"أكمل المراحل المطلوبة لفتح التحميل.",
+"اضغط على الزر واتبع التعليمات الظاهرة.",
+"بعد إكمال جميع المراحل سيصبح زر التحميل متاحًا."
+],
+guideNote:"🔥 أكمل المراحل واستمتع بتجربة OXIDE HUB",
+android:"تحميل ANDROID",iphone:"تحميل iPHONE",beta:"تحميل BETA",soon:"🔒 SOON",
+support:"💬 الدعم",supportTitle:"💬 الدعم الفني",
+supportDescription:"أرسل رسالتك وسيرد عليك فريق OXIDE HUB هنا.",
+supportPlaceholder:"اكتب رسالتك هنا...",send:"إرسال",
+supportEmpty:"لا توجد رسائل بعد. ابدأ المحادثة الآن.",
+supportLoading:"جاري تحميل المحادثة...",supportError:"تعذر تحميل الرسائل.",
+supportSent:"تم إرسال رسالتك.",supportFailed:"تعذر إرسال الرسالة. حاول مجددًا.",
+supportWait:"انتظر قليلًا...",you:"أنت",admin:"الدعم",
+islandAds:"مشاهدة إعلانات",tasks:"المهام",
+islandTitle:"📺 شاهد الإعلان واربح النقاط",
+islandDescription:"أكمل مشاهدة الإعلان لتحصل على مكافأتك.",
+watch:"▶ مشاهدة الإعلان",watching:"جاري فتح الإعلان...",
+adError:"تعذر فتح الإعلان. حاول لاحقًا.",
+balance:"رصيدك الحالي",points:"OXIDE POINTS",
+pending:"تخضع طلبات السحب للمراجعة قبل تنفيذها.",
+rewardError:"تعذر تحميل المكافآت.",redeem:"استبدال",
+redeeming:"جاري تنفيذ الطلب...",redeemSuccess:"تم إرسال طلبك للمراجعة.",
+redeemError:"تعذر تنفيذ الطلب.",notEnough:"رصيدك غير كافٍ.",
+tasksSoon:"المهام قريبًا",copy:"📋 نسخ",copied:"تم النسخ",
+loading:"جاري التحميل...",stage:"المرحلة",complete:"مكتملة",
+locked:"مقفل",open:"متاح",downloadReady:"التحميل متاح الآن",
+downloadLocked:"أكمل المراحل أولًا"
+},
+en:{
+home:"Home",rewards:"Rewards",referral:"Referral",news:"News",
+progress:"Progress:",guide:"📖 How to use",
+guideSteps:["Complete the required stages to unlock the download.","Press the button and follow the instructions.","After completing all stages, the download button will become available."],
+guideNote:"🔥 Complete the stages and enjoy OXIDE HUB",
+android:"Download ANDROID",iphone:"Download iPHONE",beta:"Download BETA",soon:"🔒 SOON",
+support:"💬 Support",supportTitle:"💬 Technical Support",
+supportDescription:"Send your message and the OXIDE HUB team will reply here.",
+supportPlaceholder:"Write your message...",send:"Send",
+supportEmpty:"No messages yet. Start the conversation.",
+supportLoading:"Loading conversation...",supportError:"Could not load messages.",
+supportSent:"Your message has been sent.",supportFailed:"Could not send message. Try again.",
+supportWait:"Please wait...",you:"You",admin:"Support",
+islandAds:"Watch Ads",tasks:"Tasks",
+islandTitle:"📺 Watch ads and earn points",
+islandDescription:"Complete the ad to receive your reward.",
+watch:"▶ Watch Ad",watching:"Opening ad...",
+adError:"Could not open the ad. Try again later.",
+balance:"Your balance",points:"OXIDE POINTS",
+pending:"Withdrawal requests are reviewed before processing.",
+rewardError:"Could not load rewards.",redeem:"Redeem",
+redeeming:"Processing...",redeemSuccess:"Your request has been submitted.",
+redeemError:"Could not process your request.",notEnough:"Insufficient balance.",
+tasksSoon:"Tasks coming soon",copy:"📋 Copy",copied:"Copied",
+loading:"Loading...",stage:"Stage",complete:"Completed",
+locked:"Locked",open:"Available",downloadReady:"Download available",
+downloadLocked:"Complete the stages first"
+},
+ru:{
+home:"Главная",rewards:"Награды",referral:"Реферал",news:"Новости",
+progress:"Прогресс:",guide:"📖 Как пользоваться",
+guideSteps:["Выполните необходимые этапы для разблокировки загрузки.","Нажмите кнопку и следуйте инструкциям.","После завершения всех этапов загрузка станет доступна."],
+guideNote:"🔥 Завершите этапы и наслаждайтесь OXIDE HUB",
+android:"Скачать ANDROID",iphone:"Скачать iPHONE",beta:"Скачать BETA",soon:"🔒 СКОРО",
+support:"💬 Поддержка",supportTitle:"💬 Техническая поддержка",
+supportDescription:"Отправьте сообщение, и команда OXIDE HUB ответит здесь.",
+supportPlaceholder:"Введите сообщение...",send:"Отправить",
+supportEmpty:"Сообщений пока нет.",supportLoading:"Загрузка сообщений...",
+supportError:"Не удалось загрузить сообщения.",supportSent:"Сообщение отправлено.",
+supportFailed:"Не удалось отправить сообщение.",supportWait:"Подождите...",
+you:"Вы",admin:"Поддержка",islandAds:"Смотреть рекламу",tasks:"Задания",
+islandTitle:"📺 Смотрите рекламу и получайте очки",
+islandDescription:"Завершите просмотр рекламы, чтобы получить награду.",
+watch:"▶ Смотреть рекламу",watching:"Открытие рекламы...",
+adError:"Не удалось открыть рекламу.",balance:"Ваш баланс",
+points:"OXIDE POINTS",pending:"Запросы на вывод проверяются перед обработкой.",
+rewardError:"Не удалось загрузить награды.",redeem:"Обменять",
+redeeming:"Обработка...",redeemSuccess:"Запрос отправлен.",
+redeemError:"Не удалось выполнить запрос.",notEnough:"Недостаточно средств.",
+tasksSoon:"Скоро",copy:"📋 Копировать",copied:"Скопировано",
+loading:"Загрузка...",stage:"Этап",complete:"Завершено",
+locked:"Закрыто",open:"Доступно",downloadReady:"Загрузка доступна",
+downloadLocked:"Сначала завершите этапы"
+},
+es:{
+home:"Inicio",rewards:"Premios",referral:"Referidos",news:"Noticias",
+progress:"Progreso:",guide:"📖 Cómo usar",
+guideSteps:["Completa las etapas necesarias para desbloquear la descarga.","Pulsa el botón y sigue las instrucciones.","Al completar todas las etapas, la descarga estará disponible."],
+guideNote:"🔥 Completa las etapas y disfruta de OXIDE HUB",
+android:"Descargar ANDROID",iphone:"Descargar iPHONE",beta:"Descargar BETA",soon:"🔒 PRONTO",
+support:"💬 Soporte",supportTitle:"💬 Soporte técnico",
+supportDescription:"Envía tu mensaje y el equipo de OXIDE HUB responderá aquí.",
+supportPlaceholder:"Escribe tu mensaje...",send:"Enviar",
+supportEmpty:"Aún no hay mensajes.",supportLoading:"Cargando conversación...",
+supportError:"No se pudieron cargar los mensajes.",supportSent:"Mensaje enviado.",
+supportFailed:"No se pudo enviar el mensaje.",supportWait:"Espera...",
+you:"Tú",admin:"Soporte",islandAds:"Ver anuncios",tasks:"Tareas",
+islandTitle:"📺 Mira anuncios y gana puntos",
+islandDescription:"Completa el anuncio para recibir tu recompensa.",
+watch:"▶ Ver anuncio",watching:"Abriendo anuncio...",
+adError:"No se pudo abrir el anuncio.",balance:"Tu saldo",
+points:"OXIDE POINTS",pending:"Las solicitudes de retiro se revisan antes de procesarse.",
+rewardError:"No se pudieron cargar los premios.",redeem:"Canjear",
+redeeming:"Procesando...",redeemSuccess:"Solicitud enviada.",
+redeemError:"No se pudo procesar.",notEnough:"Saldo insuficiente.",
+tasksSoon:"Próximamente",copy:"📋 Copiar",copied:"Copiado",
+loading:"Cargando...",stage:"Etapa",complete:"Completada",
+locked:"Bloqueado",open:"Disponible",downloadReady:"Descarga disponible",
+downloadLocked:"Completa las etapas primero"
+},
+id:{
+home:"Beranda",rewards:"Hadiah",referral:"Rujukan",news:"Berita",
+progress:"Progres:",guide:"📖 Cara menggunakan",
+guideSteps:["Selesaikan tahapan yang diperlukan untuk membuka unduhan.","Tekan tombol dan ikuti petunjuk.","Setelah semua tahapan selesai, unduhan akan tersedia."],
+guideNote:"🔥 Selesaikan tahapan dan nikmati OXIDE HUB",
+android:"Unduh ANDROID",iphone:"Unduh iPHONE",beta:"Unduh BETA",soon:"🔒 SEGERA",
+support:"💬 Dukungan",supportTitle:"💬 Dukungan teknis",
+supportDescription:"Kirim pesan dan tim OXIDE HUB akan membalas di sini.",
+supportPlaceholder:"Tulis pesan...",send:"Kirim",
+supportEmpty:"Belum ada pesan.",supportLoading:"Memuat percakapan...",
+supportError:"Gagal memuat pesan.",supportSent:"Pesan terkirim.",
+supportFailed:"Pesan gagal dikirim.",supportWait:"Tunggu...",
+you:"Anda",admin:"Dukungan",islandAds:"Tonton Iklan",tasks:"Tugas",
+islandTitle:"📺 Tonton iklan dan dapatkan poin",
+islandDescription:"Selesaikan iklan untuk menerima hadiah.",
+watch:"▶ Tonton Iklan",watching:"Membuka iklan...",
+adError:"Gagal membuka iklan.",balance:"Saldo Anda",
+points:"OXIDE POINTS",pending:"Permintaan penarikan ditinjau sebelum diproses.",
+rewardError:"Gagal memuat hadiah.",redeem:"Tukar",
+redeeming:"Memproses...",redeemSuccess:"Permintaan berhasil dikirim.",
+redeemError:"Gagal memproses permintaan.",notEnough:"Saldo tidak cukup.",
+tasksSoon:"Segera hadir",copy:"📋 Salin",copied:"Tersalin",
+loading:"Memuat...",stage:"Tahap",complete:"Selesai",
+locked:"Terkunci",open:"Tersedia",downloadReady:"Unduhan tersedia",
+downloadLocked:"Selesaikan tahapan terlebih dahulu"
+}
+};
+
+function tr(key){
+return (translations[currentLanguage]||translations.ar)[key]||translations.ar[key]||key;
+}
+
+function setText(id,value){
+const el=document.getElementById(id);
+if(el)el.textContent=value;
+}
+
+function changeLanguage(language){
+if(!translations[language])return;
+currentLanguage=language;
+document.documentElement.lang=language;
+document.documentElement.dir=language==="ar"?"rtl":"ltr";
+const t=translations[language];
+setText("navHome",t.home);
+setText("navRewards",t.rewards);
+setText("navReferral",t.referral);
+setText("navNews",t.news);
+setText("progressLabel",t.progress);
+setText("guideTitle",t.guide);
+setText("androidText",t.android);
+setText("iphoneText",t.iphone);
+setText("betaText",t.beta);
+setText("iphoneSoon",t.soon);
+setText("betaSoon",t.soon);
+setText("supportTopButton",t.support);
+setText("supportTitle",t.supportTitle);
+setText("supportDescription",t.supportDescription);
+setText("supportSend",t.send);
+setText("supportEmpty",t.supportEmpty);
+setText("supportMediaNote",t.supportMediaNote||"");
+const input=document.getElementById("supportInput");
+if(input)input.placeholder=t.supportPlaceholder;
+setText("islandAdsLabel",t.islandAds);
+setText("islandTasksLabel",t.tasks);
+setText("islandPanelTitle",t.islandTitle);
+setText("islandPanelDescription",t.islandDescription);
+setText("islandWatchButton",t.watch);
+setText("balanceLabel",t.balance);
+setText("balanceUnit",t.points);
+setText("pendingNote",t.pending);
+setText("tasksComingSoon",t.tasksSoon);
+setText("rewardsHeading","🎁 "+t.rewards);
+setText("userIdLabel",language==="ar"?"🆔 رقم المستخدم الخاص بك":"🆔 User ID");
+setText("copyIdButton",t.copy);
+const steps=document.getElementById("guideSteps");
+if(steps)steps.innerHTML=t.guideSteps.map((s,i)=>`<div class="guide-step"><span class="step-number">${i+1}</span><span>${s}</span></div>`).join("");
+setText("guideNote",t.guideNote);
+renderStages();
+renderRewards();
+}
+
+function showPage(page){
+const home=page==="home";
+document.getElementById("homePage").style.display=home?"block":"none";
+document.getElementById("rewardsPage").style.display=home?"none":"block";
+document.getElementById("homeTab").classList.toggle("active",home);
+document.getElementById("rewardsTab").classList.toggle("active",!home);
+if(!home)loadRewards();
+}
+
+function openSupport(){
+showPage("home");
+const box=document.getElementById("supportBox");
+if(box){
+box.scrollIntoView({behavior:"smooth",block:"start"});
+const input=document.getElementById("supportInput");
+if(input)setTimeout(()=>input.focus(),450);
+}
+loadSupportMessages();
+}
+
+function getNumber(value,fallback=0){
+const n=Number(value);
+return Number.isFinite(n)?n:fallback;
+}
+
+async function apiFetch(url,options={}){
+const response=await fetch(url,{
+credentials:"include",
+cache:"no-store",
+...options,
+headers:{
+...(options.body?{"Content-Type":"application/json"}:{}),
+...(options.headers||{})
+}
+});
+let data={};
+try{data=await response.json()}catch(e){}
+if(!response.ok)throw new Error(data.error||data.message||"Request failed");
+return data;
+}
+
+async function loadMe(){
+try{
+const data=await apiFetch(API.me);
+userData=data;
+const display=data.displayId||data.userId||data.id||"";
+setText("userIdValue",display||"Unavailable");
+setText("balanceNumber",getNumber(data.points??data.balance,0).toLocaleString());
+}catch(error){
+setText("userIdValue","Unavailable");
+}
+}
+
+async function copyUserId(){
+const value=document.getElementById("userIdValue").textContent.trim();
+if(!value||value==="Loading..."||value==="Unavailable")return;
+try{
+await navigator.clipboard.writeText(value);
+setText("copyIdButton",tr("copied"));
+setTimeout(()=>setText("copyIdButton",tr("copy")),1500);
+}catch(e){
+const temp=document.createElement("textarea");
+temp.value=value;document.body.appendChild(temp);
+temp.select();
+try{document.execCommand("copy");setText("copyIdButton",tr("copied"))}catch(err){}
+temp.remove();
+setTimeout(()=>setText("copyIdButton",tr("copy")),1500);
+}
+}
+
+function renderStages(){
+const root=document.getElementById("stages");
+if(!root)return;
+const total=3;
+let completed=getNumber(progressData?.completed??progressData?.progress??0);
+completed=Math.max(0,Math.min(total,completed));
+setText("count",completed+"/"+total);
+document.getElementById("bar").style.width=(completed/total*100)+"%";
+root.innerHTML="";
+for(let i=1;i<=total;i++){
+const done=i<=completed;
+const row=document.createElement("div");
+row.className="stage";
+const label=document.createElement("span");
+label.textContent=tr("stage")+" "+i+" "+(done?"✓":"");
+const button=document.createElement("button");
+button.type="button";
+button.textContent=done?tr("complete"):tr("locked");
+button.disabled=true;
+if(!done)button.className="locked";
+row.append(label,button);
+root.appendChild(row);
+}
+const download=document.getElementById("download");
+if(completed>=total){
+download.classList.add("available");
+download.href=progressData?.downloadUrl||"#";
+download.setAttribute("aria-disabled","false");
+setText("androidText",tr("downloadReady"));
+}else{
+download.classList.remove("available");
+download.href="#";
+download.setAttribute("aria-disabled","true");
+setText("androidText",tr("downloadLocked"));
+}
+}
+
+async function loadProgress(){
+try{
+progressData=await apiFetch(API.progress);
+renderStages();
+}catch(error){
+setText("status",tr("loading"));
+}
+}
+
+document.getElementById("download").addEventListener("click",function(e){
+if(this.getAttribute("aria-disabled")==="true"){
+e.preventDefault();
+setText("status",tr("downloadLocked"));
+}
+});
+  // ===============================
+// OXIDE HUB - REWARDS
+// ===============================
+
+function showIslandTab(tab){
+  const adsPanel=document.getElementById("islandAdsPanel");
+  const tasksPanel=document.getElementById("islandTasksPanel");
+  const adsTab=document.getElementById("islandAdsTab");
+  const tasksTab=document.getElementById("islandTasksTab");
+
+  if(adsPanel) adsPanel.style.display=tab==="ads"?"block":"none";
+  if(tasksPanel) tasksPanel.style.display=tab==="tasks"?"block":"none";
+  if(adsTab) adsTab.classList.toggle("active",tab==="ads");
+  if(tasksTab) tasksTab.classList.toggle("active",tab==="tasks");
+}
+
+function updateBalance(value){
+  const balance=document.getElementById("balanceNumber");
+  if(!balance) return;
+
+  const number=Number(value);
+  if(Number.isFinite(number)){
+    balance.textContent=number.toLocaleString();
+  }
+}
+
+function getArray(data){
+  if(Array.isArray(data)) return data;
+  if(Array.isArray(data?.rewards)) return data.rewards;
+  if(Array.isArray(data?.items)) return data.items;
+  if(Array.isArray(data?.data)) return data.data;
+  if(Array.isArray(data?.offers)) return data.offers;
+  if(Array.isArray(data?.tasks)) return data.tasks;
+  return [];
+}
+
+function showMessage(message){
+  let box=document.getElementById("oxideMessage");
+
+  if(!box){
+    box=document.createElement("div");
+    box.id="oxideMessage";
+    box.style.cssText=
+      "position:fixed;bottom:25px;left:50%;transform:translateX(-50%);"+
+      "z-index:99999;background:#171b2a;color:white;padding:13px 20px;"+
+      "border:1px solid #5865f2;border-radius:12px;font-size:14px;"+
+      "max-width:90%;text-align:center;box-shadow:0 5px 25px #0008";
+    document.body.appendChild(box);
+  }
+
+  box.textContent=message;
+  box.style.display="block";
+
+  clearTimeout(box.hideTimer);
+  box.hideTimer=setTimeout(()=>{
+    box.style.display="none";
+  },3500);
+}
+
+// ===============================
+// LOAD REWARDS
+// ===============================
+
+async function loadRewards(){
+  const grid=document.getElementById("rewardsGrid");
+  if(!grid) return;
+
+  try{
+    const result=await apiFetch(API.rewards);
+    const items=getArray(result);
+
+    rewardData=items;
+
+    if(result?.balance!==undefined){
+      updateBalance(result.balance);
+    }else if(result?.points!==undefined){
+      updateBalance(result.points);
+    }
+
+    if(!items.length){
+      grid.innerHTML=
+        '<div class="empty-message">لا توجد مكافآت متاحة حاليًا</div>';
+      return;
+    }
+
+    grid.innerHTML="";
+
+    items.forEach((item,index)=>{
+      const title=item.title||item.name||item.label||("مكافأة "+(index+1));
+      const description=item.description||item.details||"أكمل المهمة للحصول على النقاط";
+      const points=item.points??item.reward??item.amount??0;
+
+      const card=document.createElement("div");
+      card.className="reward-card";
+
+      const heading=document.createElement("h3");
+      heading.textContent=title;
+
+      const desc=document.createElement("p");
+      desc.textContent=description;
+
+      const amount=document.createElement("div");
+      amount.className="reward-points";
+      amount.textContent="+"+points+" POINTS";
+
+      card.append(heading,desc,amount);
+      grid.appendChild(card);
+    });
+
+  }catch(error){
+    console.error("Rewards error:",error);
+    grid.innerHTML=
+      '<div class="empty-message">تعذر تحميل المكافآت. حاول لاحقًا.</div>';
+  }
+}
+
+// ===============================
+// PTC ADS
+// ===============================
+
+async function loadIslandStatus(){
+  try{
+    const result=await apiFetch(API.ptc);
+
+    const items=getArray(result);
+    const completed=Number(
+      result?.completed??result?.watched??result?.count??0
+    );
+
+    const total=Number(
+      result?.total??result?.limit??10
+    );
+
+    islandData={
+      completed:Number.isFinite(completed)?completed:0,
+      total:Number.isFinite(total)?total:10
+    };
+
+    const counter=document.getElementById("islandTabCount");
+    if(counter){
+      counter.textContent=islandData.completed+"/"+islandData.total;
+    }
+
+    renderPtcAds(items);
+
+  }catch(error){
+    console.error("PTC status error:",error);
+
+    const panel=document.getElementById("islandAdsPanel");
+    if(panel){
+      panel.innerHTML=
+        '<p class="empty-message">تعذر تحميل الإعلانات حاليًا.</p>';
+    }
+  }
+}
+
+function renderPtcAds(items){
+  const panel=document.getElementById("islandAdsPanel");
+  if(!panel) return;
+
+  panel.innerHTML="";
+
+  if(!items.length){
+    panel.innerHTML=
+      '<div class="empty-message">لا توجد إعلانات متاحة الآن. حاول لاحقًا.</div>';
+    return;
+  }
+
+  items.forEach((ad,index)=>{
+    const card=document.createElement("div");
+    card.className="island-ad-card";
+
+    const title=document.createElement("h3");
+    title.textContent=ad.title||ad.name||"إعلان رقم "+(index+1);
+
+    const description=document.createElement("p");
+    description.textContent=ad.description||"شاهد الإعلان للحصول على المكافأة";
+
+    const reward=document.createElement("p");
+    reward.textContent="المكافأة: "+(ad.reward??ad.points??ad.amount??0)+" نقطة";
+
+    const button=document.createElement("button");
+    button.type="button";
+    button.className="island-watch-button";
+    button.textContent="مشاهدة الإعلان";
+
+    button.addEventListener("click",async()=>{
+      if(ptcBusy) return;
+
+      const url=ad.url||ad.link||ad.ad_url;
+
+      if(!url){
+        showMessage("رابط الإعلان غير متوفر.");
+        return;
+      }
+
+      ptcBusy=true;
+      button.disabled=true;
+      button.textContent="جاري فتح الإعلان...";
+
+      try{
+        window.open(url,"_blank","noopener,noreferrer");
+
+        button.textContent="تحقق من الإعلان";
+
+        showMessage("أكمل مشاهدة الإعلان ثم اضغط تحقق.");
+
+        button.onclick=null;
+        button.addEventListener("click",async()=>{
+          await claimPtcReward(ad,button);
+        },{once:true});
+
+      }catch(error){
+        showMessage("تعذر فتح الإعلان.");
+      }finally{
+        ptcBusy=false;
+        button.disabled=false;
+      }
+    });
+
+    card.append(title,description,reward,button);
+    panel.appendChild(card);
+  });
+}
+
+async function claimPtcReward(ad,button){
+  if(ptcBusy) return;
+
+  ptcBusy=true;
+  button.disabled=true;
+  button.textContent="جاري التحقق...";
+
+  try{
+    const result=await apiFetch(API.rewardPtc,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        id:ad.id??ad.ad_id??ad.offer_id,
+        adId:ad.id??ad.ad_id??ad.offer_id
+      })
+    });
+
+    if(result?.success||result?.ok||result?.status==="success"){
+      showMessage("تم استلام المكافأة بنجاح!");
+      if(result.balance!==undefined) updateBalance(result.balance);
+      await loadIslandStatus();
+      await loadProgress();
+    }else{
+      showMessage(result?.message||"لم يتم تأكيد مشاهدة الإعلان.");
+      button.textContent="إعادة التحقق";
+    }
+
+  }catch(error){
+    console.error("PTC reward error:",error);
+    showMessage("تعذر التحقق من الإعلان. حاول مرة أخرى.");
+    button.textContent="إعادة التحقق";
+  }finally{
+    ptcBusy=false;
+    button.disabled=false;
+  }
+}
+
+// ===============================
+// ISLAND TASKS
+// ===============================
+
+function renderIslandTasks(){
+  const panel=document.getElementById("islandTasksPanel");
+  if(!panel) return;
+
+  panel.innerHTML=
+    '<div class="empty-message">ستظهر المهام هنا عندما يوفرها الخادم.</div>';
+}
+
+// ===============================
+// SUPPORT CHAT
+// ===============================
+
+function addSupportMessage(message){
+  const container=document.getElementById("supportMessages");
+  if(!container) return;
+
+  const textValue=message.message||message.text||message.content||"";
+  if(!textValue) return;
+
+  const sender=String(
+    message.sender||message.role||message.from||"user"
+  ).toLowerCase();
+
+  const isAdmin=
+    sender.includes("admin")||
+    sender.includes("support")||
+    sender.includes("staff");
+
+  const item=document.createElement("div");
+  item.className=isAdmin?"support-message admin":"support-message user";
+
+  const content=document.createElement("div");
+  content.textContent=textValue;
+
+  item.appendChild(content);
+  container.appendChild(item);
+  container.scrollTop=container.scrollHeight;
+}
+
+async function loadSupportMessages(){
+  if(supportBusy) return;
+
+  const container=document.getElementById("supportMessages");
+  if(!container) return;
+
+  supportBusy=true;
+
+  try{
+    const result=await apiFetch(
+      API.supportMessages+"?after="+encodeURIComponent(supportAfter)
+    );
+
+    const messages=getArray(result);
+
+    messages.forEach(message=>{
+      const id=Number(message.id??message.message_id??0);
+
+      if(id>supportAfter){
+        addSupportMessage(message);
+        supportAfter=id;
+      }else if(!id){
+        addSupportMessage(message);
+      }
+    });
+
+  }catch(error){
+    console.error("Support messages error:",error);
+  }finally{
+    supportBusy=false;
+  }
+}
+
+async function sendSupportMessage(event){
+  if(event) event.preventDefault();
+
+  const input=document.getElementById("supportInput");
+  const button=document.getElementById("supportSend");
+
+  if(!input) return;
+
+  const message=input.value.trim();
+
+  if(!message){
+    showMessage("اكتب رسالتك أولًا.");
+    return;
+  }
+
+  if(supportBusy) return;
+
+  supportBusy=true;
+  if(button){
+    button.disabled=true;
+    button.textContent="إرسال...";
+  }
+
+  try{
+    await apiFetch(API.supportSend,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({message})
+    });
+
+    input.value="";
+    await loadSupportMessages();
+    showMessage("تم إرسال رسالتك.");
+
+  }catch(error){
+    console.error("Support send error:",error);
+    showMessage("تعذر إرسال الرسالة. حاول مرة أخرى.");
+  }finally{
+    supportBusy=false;
+    if(button){
+      button.disabled=false;
+      button.textContent="إرسال";
+    }
+  }
+}
+
+// ===============================
+// PAGE INITIALIZATION
+// ===============================
+
+const supportForm=document.getElementById("supportForm");
+
+if(supportForm){
+  supportForm.addEventListener("submit",sendSupportMessage);
+}
+
+const supportInput=document.getElementById("supportInput");
+
+if(supportInput){
+  supportInput.addEventListener("keydown",event=>{
+    if(event.key==="Enter"&&!event.shiftKey){
+      event.preventDefault();
+      sendSupportMessage(event);
+    }
+  });
+}
+
+renderIslandTasks();
+
+try{
+  const languageSelect=document.getElementById("language");
+  if(languageSelect){
+    languageSelect.value=currentLanguage;
+  }
+
+  changeLanguage(currentLanguage);
+
+  loadMe();
+  loadProgress();
+  loadRewards();
+  loadIslandStatus();
+  loadSupportMessages();
+
+  supportTimer=setInterval(loadSupportMessages,5000);
+
+}catch(error){
+  console.error("OXIDE HUB initialization error:",error);
+}
+
+window.addEventListener("beforeunload",()=>{
+  if(supportTimer){
+    clearInterval(supportTimer);
+  }
+});
+
+</script>
 </body>
 </html>
