@@ -2,21 +2,36 @@
 function page(content) {
   return new Response(`<!doctype html>
 <html lang="ar" dir="rtl">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>OXIDE HUB - Webhook Setup</title>
+</head>
 <body style="font-family:Arial;max-width:600px;margin:40px auto;padding:20px;background:#111;color:white">
 <h2>OXIDE HUB - ربط البوت</h2>
 ${content}
-</body></html>`, {
-    headers: { "Content-Type": "text/html; charset=utf-8" }
+</body>
+</html>`, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store"
+    }
   });
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 export async function onRequest({ request, env }) {
   if (request.method === "GET") {
     return page(`
-      <p>أدخل سر Webhook الذي حفظته في Cloudflare.</p>
+      <p>أدخل سر Webhook المحفوظ في Cloudflare.</p>
       <form method="POST">
         <input type="password" name="key" required
           placeholder="Webhook Secret"
@@ -38,6 +53,7 @@ export async function onRequest({ request, env }) {
   const action = form.get("action");
 
   if (
+    typeof key !== "string" ||
     !env.TELEGRAM_WEBHOOK_SECRET ||
     key !== env.TELEGRAM_WEBHOOK_SECRET
   ) {
@@ -50,7 +66,8 @@ export async function onRequest({ request, env }) {
     });
   }
 
-  const api = `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}`;
+  const api =
+    `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}`;
 
   if (action === "check") {
     const response = await fetch(`${api}/getWebhookInfo`);
@@ -61,17 +78,19 @@ export async function onRequest({ request, env }) {
     }
 
     const info = result.result;
-    const currentUrl = String(info.url || "لا يوجد Webhook حاليًا")
-      .replace(/&/g, "&amp;").replace(/</g, "&lt;");
+    const currentUrl = escapeHtml(
+      info.url || "لا يوجد Webhook حاليًا"
+    );
 
     return page(`
       <h3>نتيجة الفحص</h3>
       <p>العنوان الحالي:</p>
       <p style="direction:ltr;word-break:break-all">${currentUrl}</p>
-      <p>الرسائل المعلقة: ${info.pending_update_count || 0}</p>
+      <p>الرسائل المعلقة: ${Number(info.pending_update_count || 0)}</p>
       <p>لم نغيّر أي إعداد حتى الآن.</p>
+
       <form method="POST">
-        <input type="hidden" name="key" value="${String(key).replace(/&/g, "&amp;").replace(/"/g, "&quot;")}">
+        <input type="hidden" name="key" value="${escapeHtml(key)}">
         <button name="action" value="set"
           style="padding:12px;background:#16834a;color:white">
           تأكيد ربط بوت OXIDE HUB
@@ -81,8 +100,10 @@ export async function onRequest({ request, env }) {
   }
 
   if (action === "set") {
-    const webhookUrl =
-      new URL("/api/support/telegram-webhook", request.url).toString();
+    const webhookUrl = new URL(
+      "/api/support/telegram-webhook",
+      request.url
+    ).toString();
 
     const response = await fetch(`${api}/setWebhook`, {
       method: "POST",
@@ -90,14 +111,14 @@ export async function onRequest({ request, env }) {
       body: JSON.stringify({
         url: webhookUrl,
         secret_token: env.TELEGRAM_WEBHOOK_SECRET,
-        allowed_updates: ["message"]
+        allowed_updates: ["message", "callback_query"]
       })
     });
 
     const result = await response.json();
 
     return page(result.ok
-      ? "<h3>تم إرسال طلب الربط بنجاح.</h3><p>يمكنك الآن إغلاق الصفحة.</p>"
+      ? "<h3>تم إرسال طلب الربط بنجاح.</h3><p>تم تفعيل استقبال الرسائل وأزرار الموافقة والرفض.</p>"
       : "<h3>فشل الربط.</h3><p>راجع إعدادات البوت والمتغيرات في Cloudflare.</p>"
     );
   }
