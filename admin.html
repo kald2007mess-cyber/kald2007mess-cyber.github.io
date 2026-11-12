@@ -14,10 +14,14 @@ header{text-align:center;padding:25px 10px}
 h1{color:#35d7ff;letter-spacing:2px}
 .subtitle{color:#8fa5bd}
 .card{background:#111d30;border:1px solid #233b56;border-radius:16px;padding:18px;margin:14px 0}
-button{width:100%;padding:14px;border:0;border-radius:10px;background:#087eaa;color:white;font-size:16px;font-weight:bold;margin-top:10px}
-button:disabled{opacity:.5}
-.status{color:#35d7ff;text-align:center;white-space:pre-wrap}
+button{width:100%;padding:14px;border:0;border-radius:10px;background:#087eaa;color:white;font-size:16px;font-weight:bold;margin-top:10px;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+.status{color:#35d7ff;text-align:center;white-space:pre-wrap;line-height:1.7}
 .hidden{display:none}
+.maintenance-state{padding:12px;border-radius:10px;text-align:center;margin:12px 0;font-weight:bold}
+.state-on{background:#492326;color:#ff9b9b;border:1px solid #a74747}
+.state-off{background:#123d30;color:#73f0b4;border:1px solid #23875e}
+.note{color:#9eb2c9;font-size:13px;line-height:1.7;text-align:center}
 </style>
 </head>
 <body>
@@ -32,10 +36,25 @@ button:disabled{opacity:.5}
 </div>
 
 <div id="panel" class="hidden">
+
 <div class="card">
 <h3>🛠️ إدارة الموقع</h3>
-<button onclick="action('maintenance')">حالة الصيانة</button>
-<button onclick="action('message')">رسالة الصيانة</button>
+
+<div id="maintenanceState" class="maintenance-state">
+جارٍ تحميل حالة الصيانة...
+</div>
+
+<button id="maintenanceButton" onclick="toggleMaintenance()" disabled>
+حالة الصيانة
+</button>
+
+<button id="messageButton" onclick="editMaintenanceMessage()" disabled>
+رسالة الصيانة
+</button>
+
+<p class="note" id="maintenanceInfo">
+يتم حفظ إعدادات الصيانة لجميع زوار الموقع.
+</p>
 </div>
 
 <div class="card">
@@ -59,12 +78,162 @@ button:disabled{opacity:.5}
 <h3>🔐 الأمان</h3>
 <p class="status">لوحة الإدارة محمية بحساب المدير.</p>
 </div>
+
 </div>
 </div>
 
 <script>
 const tg = window.Telegram?.WebApp;
 const statusBox = document.getElementById("status");
+
+let maintenanceEnabled = false;
+let maintenanceMessage = "";
+let maintenanceReady = false;
+let maintenanceBusy = false;
+
+async function apiMaintenance(data) {
+  const response = await fetch("/api/admin/maintenance", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    credentials: "same-origin",
+    cache: "no-store",
+    body: JSON.stringify({
+      ...data,
+      initData: tg.initData
+    })
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.error || "MAINTENANCE_ERROR");
+  }
+
+  return result;
+}
+
+function renderMaintenance() {
+  const state = document.getElementById("maintenanceState");
+  const button = document.getElementById("maintenanceButton");
+
+  if (maintenanceEnabled) {
+    state.textContent = "🔴 الصيانة مفعّلة";
+    state.className = "maintenance-state state-on";
+    button.textContent = "إيقاف الصيانة";
+  } else {
+    state.textContent = "🟢 الموقع يعمل بشكل طبيعي";
+    state.className = "maintenance-state state-off";
+    button.textContent = "تشغيل الصيانة";
+  }
+
+  document.getElementById("messageButton").disabled = false;
+  button.disabled = false;
+  maintenanceReady = true;
+}
+
+async function loadMaintenance() {
+  try {
+    const result = await apiMaintenance({action:"get"});
+
+    maintenanceEnabled = result.maintenance === true;
+    maintenanceMessage = String(result.message || "");
+
+    renderMaintenance();
+  } catch (error) {
+    document.getElementById("maintenanceState").textContent =
+      "تعذر تحميل إعدادات الصيانة. أعد تحميل اللوحة.";
+    document.getElementById("maintenanceState").className =
+      "maintenance-state state-on";
+
+    document.getElementById("maintenanceInfo").textContent =
+      "خطأ: " + error.message;
+  }
+}
+
+async function toggleMaintenance() {
+  if (!maintenanceReady || maintenanceBusy) return;
+
+  const nextState = !maintenanceEnabled;
+  const question = nextState
+    ? "هل تريد تشغيل الصيانة؟ سيتم تفعيل وضع الصيانة."
+    : "هل تريد إيقاف الصيانة وإعادة الموقع للعمل؟";
+
+  if (!confirm(question)) return;
+
+  maintenanceBusy = true;
+  document.getElementById("maintenanceButton").disabled = true;
+  document.getElementById("messageButton").disabled = true;
+
+  try {
+    const result = await apiMaintenance({
+      action: "save",
+      maintenance: nextState,
+      message: maintenanceMessage
+    });
+
+    maintenanceEnabled = result.maintenance;
+    maintenanceMessage = result.message;
+
+    renderMaintenance();
+
+    alert(maintenanceEnabled
+      ? "تم تشغيل الصيانة وحفظ الإعدادات."
+      : "تم إيقاف الصيانة وإعادة الحالة إلى العمل.");
+  } catch (error) {
+    alert("تعذر حفظ حالة الصيانة: " + error.message);
+  } finally {
+    maintenanceBusy = false;
+    document.getElementById("maintenanceButton").disabled = false;
+    document.getElementById("messageButton").disabled = false;
+  }
+}
+
+async function editMaintenanceMessage() {
+  if (!maintenanceReady || maintenanceBusy) return;
+
+  const entered = prompt(
+    "اكتب رسالة الصيانة الجديدة:",
+    maintenanceMessage
+  );
+
+  if (entered === null) return;
+
+  const newMessage = entered.trim();
+
+  if (!newMessage) {
+    alert("الرسالة لا يمكن أن تكون فارغة.");
+    return;
+  }
+
+  if (newMessage.length > 1000) {
+    alert("الحد الأقصى للرسالة هو 1000 حرف.");
+    return;
+  }
+
+  maintenanceBusy = true;
+  document.getElementById("maintenanceButton").disabled = true;
+  document.getElementById("messageButton").disabled = true;
+
+  try {
+    const result = await apiMaintenance({
+      action: "save",
+      maintenance: maintenanceEnabled,
+      message: newMessage
+    });
+
+    maintenanceEnabled = result.maintenance;
+    maintenanceMessage = result.message;
+
+    renderMaintenance();
+    alert("تم حفظ رسالة الصيانة بنجاح.");
+  } catch (error) {
+    alert("تعذر حفظ الرسالة: " + error.message);
+  } finally {
+    maintenanceBusy = false;
+    document.getElementById("maintenanceButton").disabled = false;
+    document.getElementById("messageButton").disabled = false;
+  }
+}
 
 async function start() {
   if (!tg || !tg.initData) {
@@ -80,6 +249,7 @@ async function start() {
     const response = await fetch("/api/admin/auth", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
+      credentials: "same-origin",
       body: JSON.stringify({initData:tg.initData})
     });
 
@@ -93,6 +263,8 @@ async function start() {
     document.getElementById("loading").classList.add("hidden");
     document.getElementById("panel").classList.remove("hidden");
 
+    await loadMaintenance();
+
   } catch {
     statusBox.textContent = "تعذر الاتصال بالخادم. حاول مجدداً.";
   }
@@ -100,8 +272,6 @@ async function start() {
 
 function action(name) {
   const messages = {
-    maintenance:"إدارة الصيانة",
-    message:"رسالة الصيانة",
     android:"إدارة Android APK",
     ios:"إدارة iOS",
     beta:"إدارة BETA",
@@ -109,7 +279,7 @@ function action(name) {
     news:"إدارة الأخبار والإعلانات"
   };
 
-  alert(messages[name] + "\nسيتم ربط هذه الوظيفة بالخادم في الخطوات القادمة.");
+  alert(messages[name] + "\nهذه الوظيفة لم يتم ربطها بعد.");
 }
 
 start();
