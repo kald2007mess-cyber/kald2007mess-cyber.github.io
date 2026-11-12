@@ -14,6 +14,13 @@ async function telegram(env, method, data) {
   return await response.json();
 }
 
+async function adminMessage(env, chatId, text) {
+  return telegram(env, "sendMessage", {
+    chat_id: chatId,
+    text
+  });
+}
+
 // مراجعة المهام من أزرار تيليغرام
 async function handleMissionCallback(callback, env) {
   const message = callback.message;
@@ -126,13 +133,151 @@ async function handleMissionCallback(callback, env) {
   });
 }
 
+// نشر الأخبار: المسؤول فقط
+async function handleNewsMessage(message, env) {
+  if (!message) return false;
+
+  if (
+    String(message.chat?.id) !== String(env.TELEGRAM_ADMIN_ID)
+  ) {
+    return false;
+  }
+
+  const chatId = message.chat.id;
+  const text = String(message.text || "").trim();
+
+  // بدء نشر خبر جديد
+  if (/^\/news(?:@\w+)?(?:\s|$)/i.test(text)) {
+    await env.DB.prepare(`
+      INSERT INTO news_drafts (admin_id, stage, title, created_at)
+      VALUES (?, 'title', NULL, ?)
+      ON CONFLICT(admin_id) DO UPDATE SET
+        stage = 'title',
+        title = NULL,
+        created_at = excluded.created_at
+    `).bind(
+      String(chatId),
+      Math.floor(Date.now() / 1000)
+    ).run();
+
+    await adminMessage(
+      env,
+      chatId,
+      "📰 نشر خبر جديد\n\nأرسل عنوان الخبر الآن."
+    );
+
+    return true;
+  }
+
+  // إلغاء عملية النشر
+  if (/^\/cancel(?:@\w+)?$/i.test(text)) {
+    await env.DB.prepare(`
+      DELETE FROM news_drafts WHERE admin_id = ?
+    `).bind(String(chatId)).run();
+
+    await adminMessage(env, chatId, "تم إلغاء نشر الخبر.");
+    return true;
+  }
+
+  const draft = await env.DB.prepare(`
+    SELECT admin_id, stage, title
+    FROM news_drafts
+    WHERE admin_id = ?
+  `).bind(String(chatId)).first();
+
+  if (!draft) return false;
+
+  // استقبال عنوان الخبر
+  if (draft.stage === "title") {
+    if (!text || text.startsWith("/")) {
+      await adminMessage(
+        env,
+        chatId,
+        "⚠️ أرسل عنوان الخبر كنص، أو استخدم /cancel للإلغاء."
+      );
+      return true;
+    }
+
+    if (text.length > 250) {
+      await adminMessage(
+        env,
+        chatId,
+        "⚠️ العنوان طويل. الحد الأقصى 250 حرفاً."
+      );
+      return true;
+    }
+
+    await env.DB.prepare(`
+      UPDATE news_drafts
+      SET title = ?, stage = 'media'
+      WHERE admin_id = ?
+    `).bind(text, String(chatId)).run();
+
+    await adminMessage(
+      env,
+      chatId,
+      "✅ تم حفظ العنوان.\n\nأرسل صورة أو فيديو لنشر الخبر."
+    );
+
+    return true;
+  }
+
+  // استقبال الصورة أو الفيديو
+  if (draft.stage === "media") {
+    const photo = message.photo?.length
+      ? message.photo[message.photo.length - 1].file_id
+      : null;
+
+    const video = message.video?.file_id || null;
+
+    if (!photo && !video) {
+      await adminMessage(
+        env,
+        chatId,
+        "⚠️ أرسل صورة أو فيديو فقط، أو استخدم /cancel للإلغاء."
+      );
+      return true;
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+
+    await env.DB.prepare(`
+      INSERT INTO news_posts
+      (title, media_type, media_file_id, created_at)
+      VALUES (?, ?, ?, ?)
+    `).bind(
+      draft.title,
+      photo ? "photo" : "video",
+      photo || video,
+      now
+    ).run();
+
+    await env.DB.prepare(`
+      DELETE FROM news_drafts
+      WHERE admin_id = ?
+    `).bind(String(chatId)).run();
+
+    await adminMessage(
+      env,
+      chatId,
+      "🎉 تم نشر الخبر بنجاح!\n\n📰 " + draft.title
+    );
+
+    return true;
+  }
+
+  return false;
+}
+
 // استقبال ردود الدعم من المسؤول
 async function handleSupportReply(message, env) {
   if (!message || !message.reply_to_message) {
     return;
   }
 
-  if (String(message.chat?.id) !== String(env.TELEGRAM_ADMIN_ID)) {
+  if (
+    String(message.chat?.id) !== String(env.TELEGRAM_ADMIN_ID)
+  ) {
     return;
   }
 
@@ -238,9 +383,18 @@ export async function onRequestPost({ request, env }) {
       return json({ success: true });
     }
 
-    // ردود الدعم
     if (update.message) {
-      await handleSupportReply(update.message, env);
+      // معالجة نشر الأخبار أولاً
+      const handled = await handleNewsMessage(
+        update.message,
+        env
+      );
+
+      // إذا لم تكن رسالة نشر، نحافظ على نظام الدعم
+      if (!handled) {
+        await handleSupportReply(update.message, env);
+      }
+
       return json({ success: true });
     }
 
