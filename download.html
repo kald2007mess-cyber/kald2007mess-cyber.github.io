@@ -1,0 +1,391 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OXIDE HUB - Downloads</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 25px 15px;
+  font-family: Arial, sans-serif;
+  color: white;
+  text-align: center;
+  background:
+    linear-gradient(rgba(3,8,22,.72), rgba(3,8,22,.92)),
+    url("background.png") center/cover fixed;
+}
+
+.container {
+  max-width: 430px;
+  margin: auto;
+}
+
+.language-box {
+  display: flex;
+  justify-content: flex-end;
+}
+
+select {
+  background: #0c1930;
+  color: white;
+  border: 1px solid #176caa;
+  border-radius: 8px;
+  padding: 9px;
+}
+
+.logo {
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 3px;
+  color: white;
+  text-shadow: 0 0 15px #00aaff;
+  margin: 25px 0 8px;
+}
+
+.subtitle {
+  color: #b8c9dd;
+  margin-bottom: 25px;
+}
+
+.section {
+  background: rgba(12,25,48,.9);
+  border: 1px solid #176caa;
+  border-radius: 14px;
+  padding: 18px;
+  margin: 16px 0;
+}
+
+.section h2 {
+  color: #00b7ff;
+  font-size: 19px;
+  margin-top: 0;
+}
+
+.file-info {
+  color: #c5d5e8;
+  font-size: 13px;
+  margin: 12px 0;
+  line-height: 1.7;
+}
+
+.download-btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: #087ed0;
+  color: white;
+  text-decoration: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  margin-top: 12px;
+}
+
+.download-btn:active {
+  transform: scale(.98);
+}
+
+/* VIDEO - VERTICAL 9:16 */
+.video-frame {
+  width: min(100%, 320px);
+  aspect-ratio: 9 / 16;
+  margin: 15px auto 0;
+  border: 1px solid #176caa;
+  border-radius: 12px;
+  background: #000;
+  overflow: hidden;
+  box-shadow: 0 0 18px rgba(0,183,255,.15);
+}
+
+.video-frame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.back-btn {
+  display: block;
+  padding: 14px;
+  margin-top: 22px;
+  border: 1px solid #176caa;
+  border-radius: 10px;
+  color: white;
+  text-decoration: none;
+  background: rgba(12,25,48,.9);
+}
+
+footer {
+  margin-top: 30px;
+  color: #879bb2;
+  font-size: 12px;
+}
+
+/* SMALL PHONES */
+@media (max-width: 360px) {
+  .video-frame {
+    width: min(100%, 280px);
+  }
+}
+
+.progress-box {
+  display: none;
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(3,12,28,.75);
+  border: 1px solid #176caa;
+  border-radius: 10px;
+}
+.progress-track {
+  width: 100%;
+  height: 12px;
+  overflow: hidden;
+  background: #071326;
+  border-radius: 20px;
+  border: 1px solid rgba(0,183,255,.35);
+}
+.progress-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #087ed0, #00d4ff);
+  border-radius: 20px;
+  transition: width .15s linear;
+}
+.progress-label {
+  display: block;
+  margin-top: 8px;
+  color: #c5d5e8;
+  font-size: 13px;
+}
+
+</style>
+</head>
+
+<body>
+
+<main class="container">
+
+  <div class="language-box">
+    <select id="language" onchange="changeLanguage(this.value)">
+      <option value="ar">🇩🇿 العربية</option>
+      <option value="en">🇬🇧 English</option>
+      <option value="ru">🇷🇺 Русский</option>
+    </select>
+  </div>
+
+  <div class="logo">OXIDE HUB</div>
+  <div class="subtitle">SURVIVE • EXPLORE • DOMINATE</div>
+
+  <section class="section">
+    <h2 id="file1Title">📦 الملف الأول</h2>
+
+    <div class="file-info" id="file1Info">
+      Lulu.BoxSuper 2.1.2
+    </div>
+
+    <a class="download-btn" id="file1Download"
+       href="https://pub-052cdf3a8da44cd2bb81e3b138ebcb45.r2.dev/LuluBoxSuper_2.1.2%20%281%29%20%281%29%20%281%29.apk">
+      ⬇️ <span id="file1Button">تحميل الملف الأول</span>
+    </a>
+    <div class="progress-box" id="file1ProgressBox">
+      <div class="progress-track"><div class="progress-fill" id="file1ProgressFill"></div></div>
+      <span class="progress-label" id="file1ProgressLabel">0%</span>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 id="file2Title">📦 الملف الثاني</h2>
+
+    <div class="file-info" id="file2Info">
+      Phantom.zip
+    </div>
+
+    <a class="download-btn" id="file2Download"
+       href="https://pub-052cdf3a8da44cd2bb81e3b138ebcb45.r2.dev/crack%20phantom%20by%20%40crackbyranalda%20%281%29.apk">
+      ⬇️ <span id="file2Button">تحميل الملف الثاني</span>
+    </a>
+    <div class="progress-box" id="file2ProgressBox">
+      <div class="progress-track"><div class="progress-fill" id="file2ProgressFill"></div></div>
+      <span class="progress-label" id="file2ProgressLabel">0%</span>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2 id="videoTitle">🎬 فيديو الشرح</h2>
+
+    <div class="file-info" id="videoInfo">
+      شاهد الشرح هنا دون مغادرة الموقع.
+    </div>
+
+    <div class="video-frame">
+      <iframe
+        src="https://drive.google.com/file/d/1hIs5kuMntiXeB7IRx__83viLZHLn7lwB/preview"
+        allow="autoplay; encrypted-media; picture-in-picture"
+        allowfullscreen>
+      </iframe>
+    </div>
+  </section>
+
+  <a href="index.html" class="back-btn" id="backButton">
+    ↩ العودة إلى OXIDE HUB
+  </a>
+
+  <footer>
+    OXIDE HUB © 2026<br>
+    Created by SKIMI_17
+  </footer>
+
+</main>
+
+<script>
+const translations = {
+  ar: {
+    file1Title: "📦 الملف الأول",
+    file1Info: "Lulu.BoxSuper 2.1.2",
+    file1Button: "تحميل الملف الأول",
+    file2Title: "📦 الملف الثاني",
+    file2Info: "Phantom.zip",
+    file2Button: "تحميل الملف الثاني",
+    downloading: "جارٍ تحميل الملف...",
+    completed: "اكتمل التنزيل 100% — جارٍ حفظ الملف",
+    failed: "تعذر التنزيل. تحقق من الاتصال أو إعدادات CORS.",
+    videoTitle: "🎬 فيديو الشرح",
+    videoInfo: "شاهد الشرح هنا دون مغادرة الموقع.",
+    backButton: "↩ العودة إلى OXIDE HUB"
+  },
+
+  en: {
+    file1Title: "📦 FILE 1",
+    file1Info: "Lulu.BoxSuper 2.1.2",
+    file1Button: "DOWNLOAD FILE 1",
+    file2Title: "📦 FILE 2",
+    file2Info: "Phantom.zip",
+    file2Button: "DOWNLOAD FILE 2",
+    downloading: "Downloading file...",
+    completed: "Download received 100% — saving file",
+    failed: "Download failed. Check connection or CORS settings.",
+    videoTitle: "🎬 VIDEO TUTORIAL",
+    videoInfo: "Watch the tutorial here without leaving the website.",
+    backButton: "↩ BACK TO OXIDE HUB"
+  },
+
+  ru: {
+    file1Title: "📦 ФАЙЛ 1",
+    file1Info: "Lulu.BoxSuper 2.1.2",
+    file1Button: "СКАЧАТЬ ФАЙЛ 1",
+    file2Title: "📦 ФАЙЛ 2",
+    file2Info: "Phantom.zip",
+    file2Button: "СКАЧАТЬ ФАЙЛ 2",
+    downloading: "Загрузка файла...",
+    completed: "Загрузка получена на 100% — сохранение файла",
+    failed: "Не удалось загрузить. Проверьте соединение или CORS.",
+    videoTitle: "🎬 ВИДЕОИНСТРУКЦИЯ",
+    videoInfo: "Смотрите инструкцию здесь, не покидая сайт.",
+    backButton: "↩ НАЗАД В OXIDE HUB"
+  }
+};
+
+function changeLanguage(language) {
+  const selected = translations[language];
+  if (!selected) return;
+
+  document.documentElement.lang = language;
+  document.documentElement.dir =
+    language === "ar" ? "rtl" : "ltr";
+
+  Object.keys(selected).forEach(key => {
+    const element = document.getElementById(key);
+    if (element) element.textContent = selected[key];
+  });
+}
+
+
+async function startDownload(fileNumber) {
+  const link = document.getElementById(`file${fileNumber}Download`);
+  const box = document.getElementById(`file${fileNumber}ProgressBox`);
+  const fill = document.getElementById(`file${fileNumber}ProgressFill`);
+  const label = document.getElementById(`file${fileNumber}ProgressLabel`);
+
+  if (!link || link.dataset.downloading === "true") return;
+
+  const url = link.href;
+  const filename = fileNumber === 1
+    ? "LuluBoxSuper_2.1.2.apk"
+    : "crack-phantom.apk";
+
+  link.dataset.downloading = "true";
+  link.style.display = "none";
+  box.style.display = "block";
+  fill.style.width = "0%";
+  label.textContent = "0%";
+
+  try {
+    const response = await fetch(url, { method: "GET", mode: "cors" });
+    if (!response.ok) throw new Error("HTTP " + response.status);
+
+    const total = Number(response.headers.get("Content-Length")) || 0;
+    if (!response.body) throw new Error("Streaming not supported");
+
+    const reader = response.body.getReader();
+    const chunks = [];
+    let received = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      received += value.length;
+
+      if (total > 0) {
+        const percent = Math.min(100, Math.round((received / total) * 100));
+        fill.style.width = percent + "%";
+        label.textContent = percent + "%";
+      } else {
+        label.textContent = (received / (1024 * 1024)).toFixed(1) + " MB";
+      }
+    }
+
+    fill.style.width = "100%";
+    label.textContent = translations[document.getElementById("language").value].completed;
+
+    const blob = new Blob(chunks, {
+      type: response.headers.get("Content-Type") || "application/octet-stream"
+    });
+    const objectUrl = URL.createObjectURL(blob);
+    const saveLink = document.createElement("a");
+    saveLink.href = objectUrl;
+    saveLink.download = filename;
+    document.body.appendChild(saveLink);
+    saveLink.click();
+    saveLink.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+  } catch (error) {
+    console.error("Download error:", error);
+    label.textContent = translations[document.getElementById("language").value].failed;
+    link.dataset.downloading = "false";
+    link.style.display = "block";
+  }
+}
+
+document.getElementById("file1Download").addEventListener("click", event => {
+  event.preventDefault();
+  startDownload(1);
+});
+document.getElementById("file2Download").addEventListener("click", event => {
+  event.preventDefault();
+  startDownload(2);
+});
+
+changeLanguage("ar");
+</script>
+
+</body>
+</html>
