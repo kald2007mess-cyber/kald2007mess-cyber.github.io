@@ -6,9 +6,7 @@ const DEFAULT_MESSAGE =
   "نعتذر عن الإزعاج، الموقع تحت الصيانة حالياً. سنعود قريباً.";
 
 function hex(bytes) {
-  return [...bytes]
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
+  return [...bytes].map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
 async function verifyTelegram(initData, botToken, adminId) {
@@ -16,15 +14,11 @@ async function verifyTelegram(initData, botToken, adminId) {
     const params = new URLSearchParams(initData);
     const receivedHash = params.get("hash");
 
-    if (!receivedHash || !/^[a-f0-9]{64}$/i.test(receivedHash)) {
-      return false;
-    }
+    if (!receivedHash || !/^[a-f0-9]{64}$/i.test(receivedHash)) return false;
 
     const authDate = Number(params.get("auth_date"));
     if (!Number.isFinite(authDate) ||
-        Math.abs(Date.now() / 1000 - authDate) > 300) {
-      return false;
-    }
+        Math.abs(Date.now() / 1000 - authDate) > 300) return false;
 
     params.delete("hash");
 
@@ -41,13 +35,11 @@ async function verifyTelegram(initData, botToken, adminId) {
       ["sign"]
     );
 
-    const secret = new Uint8Array(
-      await crypto.subtle.sign(
-        "HMAC",
-        secretKey,
-        encoder.encode(botToken)
-      )
-    );
+    const secret = new Uint8Array(await crypto.subtle.sign(
+      "HMAC",
+      secretKey,
+      encoder.encode(botToken)
+    ));
 
     const hmacKey = await crypto.subtle.importKey(
       "raw",
@@ -57,15 +49,11 @@ async function verifyTelegram(initData, botToken, adminId) {
       ["sign"]
     );
 
-    const calculated = hex(
-      new Uint8Array(
-        await crypto.subtle.sign(
-          "HMAC",
-          hmacKey,
-          encoder.encode(dataCheckString)
-        )
-      )
-    );
+    const calculated = hex(new Uint8Array(await crypto.subtle.sign(
+      "HMAC",
+      hmacKey,
+      encoder.encode(dataCheckString)
+    )));
 
     if (calculated !== receivedHash.toLowerCase()) return false;
 
@@ -74,23 +62,6 @@ async function verifyTelegram(initData, botToken, adminId) {
   } catch {
     return false;
   }
-}
-
-async function isAdmin(request, env) {
-  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_ADMIN_ID) {
-    return false;
-  }
-
-  const body = await request.clone().json().catch(() => ({}));
-  const initData = String(body.initData || "");
-
-  if (!initData || initData.length > 10000) return false;
-
-  return verifyTelegram(
-    initData,
-    env.TELEGRAM_BOT_TOKEN,
-    env.TELEGRAM_ADMIN_ID
-  );
 }
 
 async function readSettings(env) {
@@ -109,41 +80,42 @@ async function readSettings(env) {
   };
 }
 
-export async function onRequestGet({ request, env }) {
-  try {
-    if (!env.DB) {
-      return json({ success: false, error: "DATABASE_ERROR" }, 500);
-    }
-
-    if (!(await isAdmin(request, env))) {
-      return json({ success: false, error: "UNAUTHORIZED" }, 403);
-    }
-
-    const settings = await readSettings(env);
-    return json({ success: true, ...settings });
-  } catch (error) {
-    console.error("Admin maintenance GET:", error);
-    return json({ success: false, error: "LOAD_FAILED" }, 500);
-  }
-}
-
 export async function onRequestPost({ request, env }) {
   try {
-    if (!env.DB) {
-      return json({ success: false, error: "DATABASE_ERROR" }, 500);
+    if (!env.DB || !env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_ADMIN_ID) {
+      return json({ success: false, error: "SERVER_CONFIG" }, 500);
     }
 
     const body = await request.json();
+    const initData = String(body.initData || "");
 
-    if (!(await isAdmin(request, env))) {
+    if (!initData || initData.length > 10000) {
+      return json({ success: false, error: "INVALID_DATA" }, 400);
+    }
+
+    const authorized = await verifyTelegram(
+      initData,
+      env.TELEGRAM_BOT_TOKEN,
+      env.TELEGRAM_ADMIN_ID
+    );
+
+    if (!authorized) {
       return json({ success: false, error: "UNAUTHORIZED" }, 403);
+    }
+
+    if (body.action === "get") {
+      return json({ success: true, ...(await readSettings(env)) });
+    }
+
+    if (body.action !== "save") {
+      return json({ success: false, error: "INVALID_ACTION" }, 400);
     }
 
     if (typeof body.maintenance !== "boolean") {
       return json({ success: false, error: "INVALID_STATUS" }, 400);
     }
 
-    const message = String(body.message || DEFAULT_MESSAGE).trim();
+    const message = String(body.message || "").trim();
 
     if (!message || message.length > 1000) {
       return json({ success: false, error: "INVALID_MESSAGE" }, 400);
@@ -153,12 +125,20 @@ export async function onRequestPost({ request, env }) {
 
     await env.DB.batch([
       env.DB.prepare(
-        "UPDATE site_settings SET setting_value = ?, updated_at = ? WHERE setting_key = ?"
-      ).bind(body.maintenance ? "1" : "0", now, "maintenance_enabled"),
+        `INSERT INTO site_settings (setting_key, setting_value, updated_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(setting_key) DO UPDATE SET
+         setting_value = excluded.setting_value,
+         updated_at = excluded.updated_at`
+      ).bind("maintenance_enabled", body.maintenance ? "1" : "0", now),
 
       env.DB.prepare(
-        "UPDATE site_settings SET setting_value = ?, updated_at = ? WHERE setting_key = ?"
-      ).bind(message, now, "maintenance_message")
+        `INSERT INTO site_settings (setting_key, setting_value, updated_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(setting_key) DO UPDATE SET
+         setting_value = excluded.setting_value,
+         updated_at = excluded.updated_at`
+      ).bind("maintenance_message", message, now)
     ]);
 
     return json({
@@ -167,7 +147,7 @@ export async function onRequestPost({ request, env }) {
       message
     });
   } catch (error) {
-    console.error("Admin maintenance POST:", error);
-    return json({ success: false, error: "SAVE_FAILED" }, 500);
+    console.error("Admin maintenance error:", error);
+    return json({ success: false, error: "MAINTENANCE_FAILED" }, 500);
   }
 }
