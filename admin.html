@@ -1,0 +1,118 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OXIDE HUB | ADMIN</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080d18;color:#fff;font-family:Arial,sans-serif;padding:20px}
+.container{max-width:650px;margin:auto}
+header{text-align:center;padding:25px 10px}
+h1{color:#35d7ff;letter-spacing:2px}
+.subtitle{color:#8fa5bd}
+.card{background:#111d30;border:1px solid #233b56;border-radius:16px;padding:18px;margin:14px 0}
+button{width:100%;padding:14px;border:0;border-radius:10px;background:#087eaa;color:white;font-size:16px;font-weight:bold;margin-top:10px}
+button:disabled{opacity:.5}
+.status{color:#35d7ff;text-align:center;white-space:pre-wrap}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>OXIDE HUB</h1>
+<div class="subtitle">ADMIN CONTROL CENTER</div>
+</header>
+
+<div class="card" id="loading">
+<div class="status" id="status">جارٍ التحقق من صلاحية المدير...</div>
+</div>
+
+<div id="panel" class="hidden">
+<div class="card">
+<h3>🛠️ إدارة الموقع</h3>
+<button onclick="action('maintenance')">حالة الصيانة</button>
+<button onclick="action('message')">رسالة الصيانة</button>
+</div>
+
+<div class="card">
+<h3>📦 إدارة التنزيلات</h3>
+<button onclick="action('android')">إدارة Android APK</button>
+<button onclick="action('ios')">إدارة iOS</button>
+<button onclick="action('beta')">إدارة BETA</button>
+</div>
+
+<div class="card">
+<h3>📊 الإحصائيات</h3>
+<button onclick="action('stats')">عرض إحصائيات الموقع</button>
+</div>
+
+<div class="card">
+<h3>📢 الإعلانات والأخبار</h3>
+<button onclick="action('news')">إدارة الأخبار والإعلانات</button>
+</div>
+
+<div class="card">
+<h3>🔐 الأمان</h3>
+<p class="status">لوحة الإدارة محمية بحساب المدير.</p>
+</div>
+</div>
+</div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+const statusBox = document.getElementById("status");
+
+async function start() {
+  if (!tg || !tg.initData) {
+    statusBox.textContent =
+      "افتح لوحة الإدارة من رابط Mini App داخل Telegram.";
+    return;
+  }
+
+  tg.ready();
+  tg.expand();
+
+  try {
+    const response = await fetch("/api/admin/auth", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({initData:tg.initData})
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success || !result.admin) {
+      statusBox.textContent = "غير مصرح لك بالدخول.";
+      return;
+    }
+
+    document.getElementById("loading").classList.add("hidden");
+    document.getElementById("panel").classList.remove("hidden");
+
+  } catch {
+    statusBox.textContent = "تعذر الاتصال بالخادم. حاول مجدداً.";
+  }
+}
+
+function action(name) {
+  const messages = {
+    maintenance:"إدارة الصيانة",
+    message:"رسالة الصيانة",
+    android:"إدارة Android APK",
+    ios:"إدارة iOS",
+    beta:"إدارة BETA",
+    stats:"إحصائيات الموقع",
+    news:"إدارة الأخبار والإعلانات"
+  };
+
+  alert(messages[name] + "\nسيتم ربط هذه الوظيفة بالخادم في الخطوات القادمة.");
+}
+
+start();
+</script>
+</body>
+</html>
