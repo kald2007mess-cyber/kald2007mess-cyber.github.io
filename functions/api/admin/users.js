@@ -1,6 +1,7 @@
 
+import { authorizeAdmin, adminAuthResponse } from "../_lib/admin-auth.js";
+
 // OXIDE HUB - Admin users API
-// Path: functions/api/admin/users.js
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -10,90 +11,6 @@ function json(data, status = 200) {
       "Cache-Control": "no-store"
     }
   });
-}
-
-function toHex(buffer) {
-  return [...new Uint8Array(buffer)]
-    .map(byte => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-async function hmacSha256(key, message) {
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    key,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-
-  return new Uint8Array(
-    await crypto.subtle.sign(
-      "HMAC",
-      cryptoKey,
-      new TextEncoder().encode(message)
-    )
-  );
-}
-
-function safeEqual(a, b) {
-  if (a.length !== b.length) return false;
-  let result = 0;
-
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-
-  return result === 0;
-}
-
-async function verifyAdmin(initData, env) {
-  if (!initData || !env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_ADMIN_ID) {
-    return false;
-  }
-
-  const params = new URLSearchParams(initData);
-  const receivedHash = params.get("hash");
-  const authDate = Number(params.get("auth_date") || 0);
-  const userRaw = params.get("user");
-
-  if (!receivedHash || !authDate || !userRaw) return false;
-
-  const now = Math.floor(Date.now() / 1000);
-
-  if (authDate > now + 60 || now - authDate > 86400) {
-    return false;
-  }
-
-  let telegramUser;
-
-  try {
-    telegramUser = JSON.parse(userRaw);
-  } catch {
-    return false;
-  }
-
-  if (String(telegramUser.id) !== String(env.TELEGRAM_ADMIN_ID)) {
-    return false;
-  }
-
-  params.delete("hash");
-
-  const dataCheckString = [...params.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-    .join("\n");
-
-  const secretKey = await hmacSha256(
-    new TextEncoder().encode("WebAppData"),
-    env.TELEGRAM_BOT_TOKEN
-  );
-
-  const calculatedHash = toHex(
-    await hmacSha256(secretKey, dataCheckString)
-  );
-
-  return safeEqual(calculatedHash, receivedHash.toLowerCase());
 }
 
 function publicUserId(value) {
@@ -112,16 +29,14 @@ export async function onRequestPost({ request, env }) {
 
     const body = await request.json();
 
-    const authorized = await verifyAdmin(
+    const auth = await authorizeAdmin(
       String(body.initData || ""),
-      env
+      env,
+      "users"
     );
 
-    if (!authorized) {
-      return json({
-        success: false,
-        error: "UNAUTHORIZED"
-      }, 403);
+    if (!auth.ok) {
+      return adminAuthResponse(auth);
     }
 
     const page = Math.max(
