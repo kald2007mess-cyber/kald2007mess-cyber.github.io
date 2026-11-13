@@ -1,0 +1,54 @@
+import { json } from "./_lib/session.js";
+
+export async function onRequestGet({ env }) {
+  try {
+    const result = await env.DB.prepare(
+      `SELECT platform, title, version, description, file_name,
+              download_url, file_size, enabled, updated_at
+       FROM platform_downloads
+       ORDER BY platform`
+    ).all();
+
+    const platforms = {};
+
+    for (const row of (result.results || [])) {
+      const key = String(row.platform || "").toLowerCase();
+      if (!["android", "ios", "beta"].includes(key)) continue;
+
+      platforms[key] = {
+        platform: key,
+        title: row.title || "",
+        version: row.version || "",
+        description: row.description || "",
+        file_name: row.file_name || "",
+        download_url: row.download_url || "",
+        file_size: Number(row.file_size || 0),
+        enabled: Number(row.enabled) === 1,
+        updated_at: Number(row.updated_at || 0)
+      };
+    }
+
+    for (const key of ["android", "ios", "beta"]) {
+      if (!platforms[key]) {
+        platforms[key] = {
+          platform: key,
+          title: "",
+          version: "",
+          description: "",
+          file_name: "",
+          download_url: "",
+          file_size: 0,
+          enabled: false,
+          updated_at: 0
+        };
+      }
+    }
+
+    return json({ success: true, platforms });
+  } catch (error) {
+    return json({
+      success: false,
+      error: "PLATFORM_STATUS_UNAVAILABLE"
+    }, 500);
+  }
+}
