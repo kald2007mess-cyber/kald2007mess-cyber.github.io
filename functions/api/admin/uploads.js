@@ -7,6 +7,7 @@ import {
 const MAX_FILE_SIZE = 2.5 * 1024 * 1024 * 1024;
 const PART_SIZE = 16 * 1024 * 1024;
 const ALLOWED_PLATFORMS = ["android", "beta"];
+
 const R2_PUBLIC_URL =
   "https://pub-052cdf3a8da44cd2bb81e3b138ebcb45.r2.dev";
 
@@ -31,42 +32,8 @@ function validPlatform(platform) {
   return ALLOWED_PLATFORMS.includes(platform);
 }
 
-async function authenticate(request, env, platform) {
-  const initData =
-    request.headers.get("x-init-data") ||
-    request.headers.get("content-type")?.includes("application/json")
-      ? null
-      : null;
-
-  let data = {};
-
-  if (request.method === "PUT") {
-    data.initData = request.headers.get("x-init-data") || "";
-  } else {
-    try {
-      data = await request.clone().json();
-    } catch {
-      return {
-        response: json({ success: false, error: "INVALID_JSON" }, 400)
-      };
-    }
-  }
-
-  const auth = await authorizeAdmin(
-    String(data.initData || ""),
-    env,
-    platform
-  );
-
-  if (!auth.ok) {
-    return { response: adminAuthResponse(auth) };
-  }
-
-  return { auth, data };
-}
-
 async function getSession(env, id, adminId, platform) {
-  return await env.DB.prepare(`
+  return env.DB.prepare(`
     SELECT *
     FROM upload_sessions
     WHERE id = ?
@@ -76,6 +43,7 @@ async function getSession(env, id, adminId, platform) {
   `).bind(id, adminId, platform).first();
 }
 
+// START MULTIPART UPLOAD
 async function startUpload(request, env) {
   const data = await request.json();
 
@@ -95,6 +63,12 @@ async function startUpload(request, env) {
 
   if (!auth.ok) return adminAuthResponse(auth);
 
+  const adminId = String(auth.telegramId || "");
+
+  if (!adminId) {
+    return json({ success: false, error: "ADMIN_ID_MISSING" }, 403);
+  }
+
   if (
     !fileName.toLowerCase().endsWith(".apk") ||
     !Number.isSafeInteger(fileSize) ||
@@ -104,11 +78,22 @@ async function startUpload(request, env) {
     return json({ success: false, error: "INVALID_FILE" }, 400);
   }
 
-  if (!env.DB || !env.DOWNLOADS_BUCKET) {
-    return json({ success: false, error: "SERVER_CONFIG" }, 500);
+  const platformRow = await env.DB.prepare(`
+    SELECT platform
+    FROM platform_downloads
+    WHERE platform = ?
+    LIMIT 1
+  `).bind(platform).first();
+
+  if (!platformRow) {
+    return json({
+      success: false,
+      error: "PLATFORM_NOT_CONFIGURED"
+    }, 409);
   }
 
   const sessionId = crypto.randomUUID();
+
   const key =
     platform + "/" +
     Date.now() + "-" +
@@ -145,7 +130,7 @@ async function startUpload(request, env) {
       String(data.version || "").slice(0, 50),
       String(data.description || "").slice(0, 1000),
       Math.floor(Date.now() / 1000),
-      auth.telegramId
+      adminId
     ).run();
 
     return json({
@@ -169,22 +154,15 @@ async function startUpload(request, env) {
   }
 }
 
+// UPLOAD ONE PART
 async function uploadPart(request, env) {
-  if (!env.DB || !env.DOWNLOADS_BUCKET) {
-    return json({ success: false, error: "SERVER_CONFIG" }, 500);
-  }
-
   const sessionId = request.headers.get("x-session-id") || "";
   const partNumber = Number(request.headers.get("x-part-number"));
-  const contentLength = Number(request.headers.get("content-length"));
 
   if (
     !sessionId ||
     !Number.isInteger(partNumber) ||
-    partNumber < 1 ||
-    !Number.isSafeInteger(contentLength) ||
-    contentLength <= 0 ||
-    contentLength > PART_SIZE
+    partNumber < 1
   ) {
     return json({ success: false, error: "INVALID_PART" }, 400);
   }
@@ -200,6 +178,10 @@ async function uploadPart(request, env) {
     return json({ success: false, error: "SESSION_NOT_FOUND" }, 404);
   }
 
+  if (!validPlatform(session.platform)) {
+    return json({ success: false, error: "INVALID_PLATFORM" }, 400);
+  }
+
   const auth = await authorizeAdmin(
     request.headers.get("x-init-data") || "",
     env,
@@ -208,30 +190,45 @@ async function uploadPart(request, env) {
 
   if (!auth.ok) return adminAuthResponse(auth);
 
-  if (String(session.admin_id) !== String(auth.telegramId)) {
+  if (
+    !auth.telegramId ||
+    String(session.admin_id) !== String(auth.telegramId)
+  ) {
     return json({ success: false, error: "SESSION_OWNER_MISMATCH" }, 403);
   }
 
-  const totalParts = Math.ceil(Number(session.file_size) / PART_SIZE);
+  const fileSize = Number(session.file_size);
+  const totalParts = Math.ceil(fileSize / PART_SIZE);
 
-  if (partNumber > totalParts) {
+  if (
+    !Number.isSafeInteger(fileSize) ||
+    fileSize <= 0 ||
+    fileSize > MAX_FILE_SIZE ||
+    partNumber > totalParts
+  ) {
     return json({ success: false, error: "INVALID_PART_NUMBER" }, 400);
   }
 
   const expectedSize =
     partNumber === totalParts
-      ? Number(session.file_size) - PART_SIZE * (totalParts - 1)
+      ? fileSize - PART_SIZE * (totalParts - 1)
       : PART_SIZE;
 
-  if (contentLength !== expectedSize) {
-    return json({ success: false, error: "INVALID_PART_SIZE" }, 400);
+  const declaredLength = request.headers.get("content-length");
+
+  if (declaredLength !== null) {
+    const length = Number(declaredLength);
+
+    if (!Number.isSafeInteger(length) || length !== expectedSize) {
+      return json({ success: false, error: "INVALID_PART_SIZE" }, 400);
+    }
   }
 
   try {
     const bytes = await request.arrayBuffer();
 
     if (bytes.byteLength !== expectedSize) {
-      return json({ success: false, error: "PART_SIZE_MISMATCH" }, 400);
+      return json({ success: false, error: "INVALID_PART_SIZE" }, 400);
     }
 
     const upload = env.DOWNLOADS_BUCKET.resumeMultipartUpload(
@@ -241,6 +238,10 @@ async function uploadPart(request, env) {
 
     const result = await upload.uploadPart(partNumber, bytes);
 
+    if (!result || !result.etag) {
+      return json({ success: false, error: "PART_ETAG_MISSING" }, 500);
+    }
+
     await env.DB.prepare(`
       INSERT INTO upload_parts (session_id, part_number, etag)
       VALUES (?, ?, ?)
@@ -249,7 +250,7 @@ async function uploadPart(request, env) {
     `).bind(
       sessionId,
       partNumber,
-      result.etag
+      String(result.etag)
     ).run();
 
     return json({
@@ -265,6 +266,7 @@ async function uploadPart(request, env) {
   }
 }
 
+// COMPLETE UPLOAD
 async function completeUpload(request, env) {
   const data = await request.json();
 
@@ -283,10 +285,16 @@ async function completeUpload(request, env) {
 
   if (!auth.ok) return adminAuthResponse(auth);
 
+  const adminId = String(auth.telegramId || "");
+
+  if (!adminId) {
+    return json({ success: false, error: "ADMIN_ID_MISSING" }, 403);
+  }
+
   const session = await getSession(
     env,
     sessionId,
-    auth.telegramId,
+    adminId,
     platform
   );
 
@@ -314,16 +322,26 @@ async function completeUpload(request, env) {
       }, 400);
     }
 
-    const parts = savedParts.map((part, index) => {
-      if (Number(part.part_number) !== index + 1 || !part.etag) {
-        throw new Error("INVALID_PART_SEQUENCE");
+    const parts = [];
+
+    for (let i = 0; i < savedParts.length; i++) {
+      const part = savedParts[i];
+
+      if (
+        Number(part.part_number) !== i + 1 ||
+        !part.etag
+      ) {
+        return json({
+          success: false,
+          error: "INVALID_PART_SEQUENCE"
+        }, 400);
       }
 
-      return {
+      parts.push({
         partNumber: Number(part.part_number),
         etag: String(part.etag)
-      };
-    });
+      });
+    }
 
     const upload = env.DOWNLOADS_BUCKET.resumeMultipartUpload(
       session.object_key,
@@ -361,11 +379,13 @@ async function completeUpload(request, env) {
     ).run();
 
     await env.DB.prepare(`
-      DELETE FROM upload_parts WHERE session_id = ?
+      DELETE FROM upload_parts
+      WHERE session_id = ?
     `).bind(sessionId).run();
 
     await env.DB.prepare(`
-      DELETE FROM upload_sessions WHERE id = ?
+      DELETE FROM upload_sessions
+      WHERE id = ?
     `).bind(sessionId).run();
 
     return json({
@@ -373,7 +393,7 @@ async function completeUpload(request, env) {
       file_name: session.file_name,
       file_size: Number(session.file_size),
       download_url: downloadUrl,
-      etag: object.httpEtag
+      etag: object?.httpEtag || null
     });
 
   } catch (error) {
@@ -384,6 +404,7 @@ async function completeUpload(request, env) {
   }
 }
 
+// ABORT UPLOAD
 async function abortUpload(request, env) {
   const data = await request.json();
 
@@ -402,10 +423,12 @@ async function abortUpload(request, env) {
 
   if (!auth.ok) return adminAuthResponse(auth);
 
+  const adminId = String(auth.telegramId || "");
+
   const session = await getSession(
     env,
     sessionId,
-    auth.telegramId,
+    adminId,
     platform
   );
 
@@ -422,11 +445,13 @@ async function abortUpload(request, env) {
     await upload.abort();
 
     await env.DB.prepare(`
-      DELETE FROM upload_parts WHERE session_id = ?
+      DELETE FROM upload_parts
+      WHERE session_id = ?
     `).bind(sessionId).run();
 
     await env.DB.prepare(`
-      DELETE FROM upload_sessions WHERE id = ?
+      DELETE FROM upload_sessions
+      WHERE id = ?
     `).bind(sessionId).run();
 
     return json({ success: true });
@@ -439,6 +464,7 @@ async function abortUpload(request, env) {
   }
 }
 
+// POST ROUTER
 export async function onRequestPost({ request, env }) {
   try {
     if (!env.DB || !env.DOWNLOADS_BUCKET) {
@@ -470,9 +496,15 @@ export async function onRequestPost({ request, env }) {
   }
 }
 
+// PUT ROUTE
 export async function onRequestPut({ request, env }) {
   try {
+    if (!env.DB || !env.DOWNLOADS_BUCKET) {
+      return json({ success: false, error: "SERVER_CONFIG" }, 500);
+    }
+
     return await uploadPart(request, env);
+
   } catch (error) {
     return json({
       success: false,
