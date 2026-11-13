@@ -4,7 +4,6 @@ import { json, getVisitor } from "./_lib/session.js";
 function parseRange(rangeHeader, size) {
   if (!rangeHeader) return null;
 
-  // We support one byte range only.
   const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader.trim());
 
   if (!match || (!match[1] && !match[2])) {
@@ -60,6 +59,31 @@ function attachmentHeader(fileName) {
   );
 }
 
+async function findFile(env, platform, fileId) {
+  // New multi-file system.
+  if (fileId) {
+    const item = await env.DB.prepare(`
+      SELECT *
+      FROM platform_files
+      WHERE id = ?
+        AND platform = ?
+        AND enabled = 1
+      LIMIT 1
+    `).bind(fileId, platform).first();
+
+    return item || null;
+  }
+
+  // Legacy system: keep old links working.
+  return await env.DB.prepare(`
+    SELECT *
+    FROM platform_downloads
+    WHERE platform = ?
+      AND enabled = 1
+    LIMIT 1
+  `).bind(platform).first();
+}
+
 export async function onRequestGet({ request, env }) {
   try {
     if (!env.DB || !env.DOWNLOADS_BUCKET) {
@@ -69,7 +93,6 @@ export async function onRequestGet({ request, env }) {
       }, 500);
     }
 
-    // Check visitor identity.
     const visitorId = await getVisitor(request, env);
 
     if (!visitorId) {
@@ -79,7 +102,6 @@ export async function onRequestGet({ request, env }) {
       }, 401);
     }
 
-    // Keep the existing requirement: 3 completed ads.
     const visitor = await env.DB.prepare(`
       SELECT progress
       FROM visitors
@@ -95,9 +117,14 @@ export async function onRequestGet({ request, env }) {
     }
 
     const url = new URL(request.url);
+
     const platform = (
       url.searchParams.get("platform") || ""
     ).toLowerCase();
+
+    const fileId = String(
+      url.searchParams.get("id") || ""
+    ).trim();
 
     if (!["android", "ios", "beta"].includes(platform)) {
       return json({
@@ -106,13 +133,7 @@ export async function onRequestGet({ request, env }) {
       }, 400);
     }
 
-    const item = await env.DB.prepare(`
-      SELECT *
-      FROM platform_downloads
-      WHERE platform = ?
-        AND enabled = 1
-      LIMIT 1
-    `).bind(platform).first();
+    const item = await findFile(env, platform, fileId);
 
     if (!item) {
       return json({
@@ -121,7 +142,7 @@ export async function onRequestGet({ request, env }) {
       }, 404);
     }
 
-    // iOS uses its external download URL.
+    // iOS external download.
     if (platform === "ios") {
       if (!item.download_url) {
         return json({
@@ -140,7 +161,6 @@ export async function onRequestGet({ request, env }) {
       }, 404);
     }
 
-    // Read object metadata without downloading its contents.
     const info = await env.DOWNLOADS_BUCKET.head(item.file_key);
 
     if (!info) {
@@ -178,7 +198,6 @@ export async function onRequestGet({ request, env }) {
     const rangeHeader = request.headers.get("range");
     const range = parseRange(rangeHeader, fileSize);
 
-    // Invalid or unsupported range.
     if (range && range.invalid) {
       headers.set("Content-Range", `bytes */${fileSize}`);
 
@@ -188,7 +207,7 @@ export async function onRequestGet({ request, env }) {
       });
     }
 
-    // Partial download / resume.
+    // Resume / partial download.
     if (range) {
       const file = await env.DOWNLOADS_BUCKET.get(
         item.file_key,
@@ -220,7 +239,7 @@ export async function onRequestGet({ request, env }) {
       });
     }
 
-    // Full download: stream directly from R2.
+    // Full streaming download.
     const file = await env.DOWNLOADS_BUCKET.get(item.file_key);
 
     if (!file) {
