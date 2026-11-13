@@ -1,6 +1,8 @@
 
 import { json, getVisitor } from "./_lib/session.js";
 
+const CYCLE_SECONDS = 1800;
+
 function parseRange(rangeHeader, size) {
   if (!rangeHeader) return null;
 
@@ -60,9 +62,8 @@ function attachmentHeader(fileName) {
 }
 
 async function findFile(env, platform, fileId) {
-  // New multi-file system.
   if (fileId) {
-    const item = await env.DB.prepare(`
+    return await env.DB.prepare(`
       SELECT *
       FROM platform_files
       WHERE id = ?
@@ -70,11 +71,8 @@ async function findFile(env, platform, fileId) {
         AND enabled = 1
       LIMIT 1
     `).bind(fileId, platform).first();
-
-    return item || null;
   }
 
-  // Legacy system: keep old links working.
   return await env.DB.prepare(`
     SELECT *
     FROM platform_downloads
@@ -103,16 +101,46 @@ export async function onRequestGet({ request, env }) {
     }
 
     const visitor = await env.DB.prepare(`
-      SELECT progress
+      SELECT progress, cycle_started_at
       FROM visitors
       WHERE user_id = ?
     `).bind(visitorId).first();
 
-    if (!visitor || Number(visitor.progress || 0) < 3) {
+    if (!visitor) {
+      return json({
+        success: false,
+        error: "VISITOR_NOT_FOUND"
+      }, 401);
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const cycleStartedAt = Number(visitor.cycle_started_at || 0);
+
+    if (
+      !cycleStartedAt ||
+      now - cycleStartedAt >= CYCLE_SECONDS
+    ) {
+      await env.DB.prepare(`
+        UPDATE visitors
+        SET progress = 0,
+            cycle_started_at = ?
+        WHERE user_id = ?
+      `).bind(now, visitorId).run();
+
       return json({
         success: false,
         error: "AD_PROGRESS_REQUIRED",
-        required: 3
+        required: 3,
+        progress: 0
+      }, 403);
+    }
+
+    if (Number(visitor.progress || 0) < 3) {
+      return json({
+        success: false,
+        error: "AD_PROGRESS_REQUIRED",
+        required: 3,
+        progress: Number(visitor.progress || 0)
       }, 403);
     }
 
@@ -142,7 +170,6 @@ export async function onRequestGet({ request, env }) {
       }, 404);
     }
 
-    // iOS external download.
     if (platform === "ios") {
       if (!item.download_url) {
         return json({
@@ -207,7 +234,6 @@ export async function onRequestGet({ request, env }) {
       });
     }
 
-    // Resume / partial download.
     if (range) {
       const file = await env.DOWNLOADS_BUCKET.get(
         item.file_key,
@@ -239,7 +265,6 @@ export async function onRequestGet({ request, env }) {
       });
     }
 
-    // Full streaming download.
     const file = await env.DOWNLOADS_BUCKET.get(item.file_key);
 
     if (!file) {
@@ -257,6 +282,8 @@ export async function onRequestGet({ request, env }) {
     });
 
   } catch (error) {
+    console.error("Download error:", error);
+
     return json({
       success: false,
       error: "DOWNLOAD_SERVER_ERROR"
