@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OXIDE HUB</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:Arial,sans-serif;color:white;text-align:center;background:linear-gradient(rgba(3,8,22,.68),rgba(3,8,22,.88)),url("background.png") center/cover fixed;background-size:auto,105% 105%;padding:25px 12px;animation:backgroundDrift 35s ease-in-out infinite alternate;isolation:isolate}
+@keyframes backgroundDrift{from{background-position:center,48% 48%}to{background-position:center,52% 52%}}
+.stars{position:fixed;inset:-100px;z-index:-1;pointer-events:none;opacity:.25;background-image:radial-gradient(2px 2px at 30px 40px,#fff,transparent),radial-gradient(1px 1px at 100px 130px,#fff,transparent),radial-gradient(2px 2px at 190px 80px,#54caff,transparent),radial-gradient(1px 1px at 250px 190px,#fff,transparent),radial-gradient(2px 2px at 320px 40px,#fff,transparent);background-size:350px 250px;animation:starMove 65s linear infinite}
+@keyframes starMove{from{transform:translate(0,0)}to{transform:translate(-100px,80px)}}
+.container{max-width:430px;margin:auto;position:relative;z-index:1}
+.top-bar{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:15px;direction:rtl}
+.top-actions{display:flex;align-items:flex-start;gap:7px;direction:ltr;flex-shrink:0}
+.language-box{display:flex;justify-content:flex-start;margin:0}
+.language-box select{background:rgba(12,25,48,.9);color:white;border:1px solid #176caa;border-radius:8px;padding:9px 12px;font-size:14px}
+.language-box option{background:#0c1930;color:white}
+.support-top-button{border:1px solid #00b7ff;border-radius:8px;padding:9px 10px;background:linear-gradient(135deg,#087ed0,#0055a0);color:#fff;font-size:13px;font-weight:bold;white-space:nowrap;cursor:pointer;font-family:Arial,sans-serif}
+.support-top-button:active{transform:scale(.97)}
+.top-bar .user-id-card{margin:0;max-width:65%}
+.user-id-card{width:fit-content;max-width:100%;background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:12px;padding:10px 12px;margin:0 0 15px auto;text-align:right;box-shadow:0 0 12px rgba(0,145,255,.12)}
+.user-id-label{color:#b8c9dd;font-size:11px;margin-bottom:7px}
+.user-id-row{display:flex;align-items:center;justify-content:flex-start;gap:8px;direction:ltr}
+.user-id-value{color:#35ef91;font-size:14px;font-weight:bold;letter-spacing:1px}
+.copy-id-button{border:1px solid #00aaff;background:#075a9d;color:white;padding:7px 9px;border-radius:7px;font-size:11px;font-weight:bold;cursor:pointer;font-family:Arial,sans-serif}
+.copy-id-button:active{transform:scale(.96)}
+.logo{font-size:35px;font-weight:900;letter-spacing:3px;color:#fff;text-shadow:0 0 15px #00aaff;margin:25px 0 8px}
+.subtitle{color:#b8c9dd;margin-bottom:24px}
+.navigation{display:flex;direction:rtl;align-items:stretch;width:100%;gap:3px;padding:5px;margin:0 0 20px;background:rgba(5,15,32,.92);border:1px solid #176caa;border-radius:13px;box-shadow:0 0 12px rgba(0,145,255,.12)}
+.nav-item{flex:1;min-width:0;min-height:68px;padding:7px 2px;border:1px solid transparent;border-radius:9px;background:transparent;color:#c6d5e7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-family:Arial,sans-serif;cursor:pointer}
+.nav-item.active{color:white;background:linear-gradient(145deg,#075a9d,#06305d);border-color:#00aaff;box-shadow:0 0 12px rgba(0,170,255,.45)}
+.nav-icon{width:23px;height:23px;display:flex;align-items:center;justify-content:center;color:#d6eaff}
+.nav-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-label{font-size:10px;font-weight:bold;white-space:nowrap}
+.nav-soon{font-size:8px;color:#111;background:#ffc52e;border-radius:4px;padding:2px 4px;font-weight:bold;white-space:nowrap}
+.nav-item:disabled{opacity:.85;cursor:not-allowed}
+#homePage{display:block}#rewardsPage,#referralPage,#newsPage{display:none}
+.progress-box{background:rgba(12,25,48,.85);border:1px solid #176caa;border-radius:14px;padding:15px;margin-bottom:20px}
+.progress-text{font-size:19px;font-weight:bold;margin-bottom:12px}
+.bar{height:10px;background:#25364b;border-radius:20px;overflow:hidden}
+.bar-fill{height:100%;width:0%;background:#00b7ff;transition:width .3s;box-shadow:0 0 10px #00b7ff}
+.stage{display:flex;justify-content:space-between;align-items:center;background:rgba(13,29,52,.88);border:1px solid #244765;padding:16px;margin:12px 0;border-radius:13px;gap:8px}
+.stage button{border:0;padding:11px 14px;border-radius:8px;color:white;background:#087ed0;font-weight:bold;cursor:pointer;white-space:nowrap}
+.stage button:disabled{background:#28634c;cursor:default}.stage button.locked{background:#344253;color:#b6c1ce;cursor:not-allowed}
+.platform-button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:13px;padding:16px;border-radius:12px;color:white;background:#26394f;font-size:17px;font-weight:bold;text-decoration:none;border:1px solid #40536b;opacity:.55;cursor:not-allowed;font-family:Arial,sans-serif;transition:.3s}
+.platform-button.available{opacity:1;cursor:pointer;background:linear-gradient(135deg,#087ed0,#0055a0);border-color:#00b7ff;box-shadow:0 0 17px rgba(0,183,255,.45)}
+.platform-button.available:active{transform:scale(.98)}.platform-button:disabled{opacity:.55;cursor:not-allowed}
+.android-icon{width:29px;height:29px;fill:#3ddc84;flex-shrink:0}.platform-icon{font-size:25px;line-height:1}
+.soon-label{font-size:11px;background:rgba(0,0,0,.3);padding:5px 8px;border-radius:6px}
+#status{min-height:25px;color:#ffd36a;margin-top:15px;line-height:1.6}
+.guide-box{background:rgba(12,25,48,.88);border:1px solid #176caa;border-radius:14px;padding:18px;margin-top:28px;text-align:start}
+.guide-title{color:#00b7ff;font-size:19px;font-weight:bold;text-align:center;margin:0 0 18px}
+.guide-step{display:flex;align-items:flex-start;gap:12px;margin:14px 0;color:#d8e5f3;font-size:14px;line-height:1.7}
+.step-number{display:flex;align-items:center;justify-content:center;min-width:27px;height:27px;border-radius:50%;background:#087ed0;color:white;font-weight:bold;font-size:13px}
+.guide-note{color:#35ef91;text-align:center;font-weight:bold;font-size:14px;line-height:1.7;margin-top:18px}
+.support-box{background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:14px;padding:15px;margin-top:20px;text-align:start;box-shadow:0 0 12px rgba(0,145,255,.12)}
+.support-title{color:#00b7ff;text-align:center;font-size:19px;margin:0 0 8px}
+.support-description{color:#b8c9dd;text-align:center;font-size:12px;line-height:1.6;margin:0 0 12px}
+.support-messages{height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:9px;padding:10px;background:rgba(3,13,29,.72);border:1px solid #244765;border-radius:10px}
+.support-empty{color:#9fb2c8;text-align:center;font-size:12px;margin:auto;line-height:1.7}
+.support-message{max-width:88%;padding:9px 11px;border-radius:10px;font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.support-message.user{align-self:flex-end;background:#075a9d;border:1px solid #168bd0}
+.support-message.admin{align-self:flex-start;background:#26394f;border:1px solid #40536b}
+.support-sender{display:block;font-size:10px;color:#a9dfff;margin-bottom:3px;font-weight:bold}
+.support-form{display:flex;gap:7px;margin-top:10px;align-items:stretch}
+.support-input{flex:1;min-width:0;resize:vertical;min-height:44px;max-height:110px;padding:10px;border:1px solid #176caa;border-radius:9px;background:#07172c;color:#fff;font-family:Arial,sans-serif;font-size:13px;outline:none}
+.support-input:focus{border-color:#00b7ff}
+.support-send{border:1px solid #00b7ff;border-radius:9px;padding:0 15px;background:linear-gradient(135deg,#087ed0,#0055a0);color:white;font-weight:bold;font-family:Arial,sans-serif;cursor:pointer}
+.support-send:disabled{opacity:.55;cursor:not-allowed}
+.support-status{min-height:20px;margin-top:8px;text-align:center;color:#ffd36a;font-size:11px;line-height:1.5}
+.support-media-note{color:#8ea6bf;font-size:10px;text-align:center;margin-top:5px}
+.rewards-heading{color:#00b7ff;font-size:23px;margin:8px 0 18px;text-shadow:0 0 12px rgba(0,183,255,.4)}
+.balance-card{background:linear-gradient(145deg,rgba(8,65,112,.95),rgba(8,25,50,.95));border:1px solid #168bd0;border-radius:15px;padding:20px;margin-bottom:20px;box-shadow:0 0 17px rgba(0,145,255,.15)}
+.balance-label{color:#b8d9f3;font-size:14px;margin-bottom:8px}.balance-number{font-size:32px;font-weight:900;color:#fff;text-shadow:0 0 12px #00aaff}.balance-unit{color:#70d5ff;font-size:13px;margin-top:5px}
+.rewards-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.reward-card{background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:13px;padding:12px 9px;display:flex;flex-direction:column;align-items:center;min-width:0}
+.reward-image{width:100%;height:125px;object-fit:contain;display:block;margin-bottom:8px}
+.reward-name{font-size:14px;font-weight:bold;color:#fff;min-height:34px;display:flex;align-items:center;justify-content:center}
+.reward-price{color:#68d3ff;font-size:13px;font-weight:bold;margin:7px 0 12px}
+.reward-button{width:100%;border:0;border-radius:8px;padding:11px 5px;color:white;background:linear-gradient(135deg,#087ed0,#0055a0);font-weight:bold;font-size:12px;cursor:pointer}
+.reward-button:disabled{background:#344253;color:#aab7c6;cursor:not-allowed}
+.reward-message{min-height:26px;margin-top:17px;font-size:13px;line-height:1.6;color:#ffd36a}
+.pending-note{color:#b8c9dd;font-size:12px;line-height:1.7;background:rgba(12,25,48,.85);border:1px solid #244765;border-radius:10px;padding:12px;margin-top:15px}
+.island-section{background:rgba(7,20,42,.94);border:1px solid #168bd0;border-radius:15px;padding:16px 12px;margin-bottom:20px;box-shadow:0 0 18px rgba(0,145,255,.13)}
+.island-title{color:#00b7ff;font-size:24px;font-weight:900;letter-spacing:2px;margin:3px 0 16px;text-shadow:0 0 12px #007fc7}
+.island-tabs{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.island-tab{min-width:0;min-height:83px;padding:12px 5px;border-radius:11px;border:1px solid #176caa;background:rgba(15,38,67,.95);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;font-family:Arial,sans-serif;font-weight:bold}
+.island-tab.active{background:linear-gradient(145deg,#075a9d,#06305d);border-color:#00b7ff;box-shadow:0 0 12px rgba(0,183,255,.3)}
+.island-tab svg{width:25px;height:25px;fill:none;stroke:#70d5ff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.island-tab-label{font-size:12px}.island-counter{color:#35ef91;font-size:13px}.island-soon{color:#ffc52e;font-size:11px}
+.island-panel{margin-top:15px;padding:14px 10px;background:rgba(3,13,29,.8);border:1px solid #244765;border-radius:11px}
+.island-progress{height:9px;background:#25364b;border-radius:20px;overflow:hidden;margin:12px 0}
+.island-progress-fill{width:0%;height:100%;background:linear-gradient(90deg,#087ed0,#35ef91);transition:width .3s}
+.island-watch-button{width:100%;padding:14px;margin-top:10px;border:1px solid #00b7ff;border-radius:9px;background:linear-gradient(135deg,#087ed0,#0055a0);color:white;font-size:15px;font-weight:bold;cursor:pointer}
+.island-watch-button:disabled{background:#344253;border-color:#46576b;color:#aab7c6;cursor:not-allowed}
+.island-timer{color:#ffd36a;font-size:13px;margin-top:12px}
+.island-message{color:#b8c9dd;font-size:12px;line-height:1.7;min-height:22px;margin-top:10px}
+.island-task-lock{padding:24px 10px;color:#ffc52e;font-weight:bold}
+.mission-center{background:linear-gradient(155deg,rgba(7,19,39,.97),rgba(3,11,25,.96));border:1px solid #285276;border-radius:18px;padding:15px;text-align:start;box-shadow:0 8px 28px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.035);overflow:hidden}
+.mission-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:15px}
+.mission-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mission-brand-icon{width:42px;height:42px;display:grid;place-items:center;flex-shrink:0;border-radius:13px;background:linear-gradient(145deg,#153c60,#10233e);border:1px solid #2d80b5;color:#55d6ff;font-size:21px;box-shadow:0 0 15px rgba(0,183,255,.12)}
+.mission-brand-name{color:#fff;font-size:17px;font-weight:900;letter-spacing:1.1px}
+.mission-brand-sub{color:#8ea6c8;font-size:9px;letter-spacing:1.5px;margin-top:3px}
+.mission-live{font-size:9px;font-weight:800;color:#55e5a3;border:1px solid rgba(67,214,154,.35);background:rgba(67,214,154,.08);padding:5px 8px;border-radius:20px;white-space:nowrap}
+.mission-language{background:#101f36;color:#d9e8f8;border:1px solid #315879;border-radius:8px;padding:7px 8px;font-size:11px;max-width:112px}
+.mission-progress-card{background:linear-gradient(135deg,rgba(19,38,64,.98),rgba(13,28,49,.98));border:1px solid #284766;border-radius:13px;padding:12px;margin-bottom:11px}
+.mission-progress-top{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#eaf4ff;font-size:12px;font-weight:bold}
+.mission-progress-number{font-size:20px;color:#55d6ff;font-weight:900;white-space:nowrap}
+.mission-progress-track{height:7px;background:#263b55;border-radius:20px;overflow:hidden;margin:9px 0 6px}
+.mission-progress-fill{height:100%;width:0;background:linear-gradient(90deg,#087ed0,#55d6ff);border-radius:20px;box-shadow:0 0 12px rgba(85,214,255,.5);transition:width .35s}
+.mission-progress-foot{display:flex;justify-content:space-between;color:#8ea6c8;font-size:9px}
+.mission-summary{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:17px}
+.mission-summary-item{display:flex;flex-direction:column;gap:5px;text-align:start;background:rgba(19,34,57,.9);border:1px solid #294967;border-radius:12px;padding:11px;color:#9fb4ce;font-size:10px;line-height:1.5}
+.mission-summary-value{display:block;color:#fff;font-size:22px;font-weight:900;margin-top:1px}
+.mission-group-title{display:flex;align-items:center;justify-content:space-between;color:#dceeff;font-size:12px;font-weight:800;letter-spacing:.4px;margin:16px 1px 9px}
+.mission-group-count{font-size:9px;color:#8ea6c8;font-weight:normal}
+.mission-list{display:grid;grid-template-columns:1fr;gap:9px}
+.mission-item{display:block;background:linear-gradient(145deg,rgba(18,35,59,.98),rgba(12,26,46,.98));border:1px solid #2b4b6b;border-radius:14px;padding:12px;color:#d8e5f3;font-size:12px;min-width:0}
+.mission-item-main{display:flex;align-items:center;justify-content:space-between;gap:9px}
+.mission-item-heading{display:flex;align-items:center;gap:9px;min-width:0}
+.mission-item-icon{width:39px;height:39px;display:grid;place-items:center;flex-shrink:0;background:#26304a;border:1px solid #46516f;border-radius:11px;font-size:20px}
+.mission-item-title{color:#f3f8ff;font-size:12px;font-weight:800;line-height:1.4}
+.mission-item-meta{color:#829bb9;font-size:9px;margin-top:4px;letter-spacing:.45px}
+.mission-status-pill{font-size:9px;font-weight:800;padding:5px 8px;border-radius:20px;white-space:nowrap;background:rgba(85,214,255,.09);border:1px solid rgba(85,214,255,.3);color:#55d6ff}
+.mission-status-pill.approved{background:rgba(67,214,154,.09);border-color:rgba(67,214,154,.35);color:#43d69a}
+.mission-status-pill.pending{background:rgba(255,197,46,.09);border-color:rgba(255,197,46,.35);color:#ffd36a}
+.mission-description{color:#b4c6dc;font-size:11px;line-height:1.7;margin:11px 0}
+.mission-reward-row{display:flex;align-items:center;justify-content:space-between;color:#8ea6c8;font-size:10px;margin:9px 0}
+.mission-reward{color:#43d69a;font-size:14px;font-weight:900}
+.mission-link-button,.mission-submit-button{display:block;width:100%;text-align:center;text-decoration:none;border:1px solid #34739b;border-radius:9px;padding:11px;color:#fff;font-size:11px;font-weight:800;background:#1b3049;font-family:Arial,sans-serif}
+.mission-submit-button{margin-top:8px;border-color:#1599d0;background:linear-gradient(135deg,#087ed0,#07518e);cursor:pointer}
+.mission-submit-button:disabled{opacity:.6;cursor:not-allowed}
+.mission-file-label{display:block;color:#a9bfd9;font-size:10px;margin:11px 0 6px}
+.mission-file-input{width:100%;padding:9px;background:#07172c;color:#dceeff;border:1px solid #315879;border-radius:8px;font-size:10px}
+.mission-message{color:#ffd36a;font-size:10px;line-height:1.7;margin-top:9px;min-height:12px}
+.mission-item.soon{opacity:.78;border-style:dashed;background:linear-gradient(145deg,rgba(15,28,47,.92),rgba(9,19,34,.92))}
+.mission-item.soon .mission-item-icon{background:#1b2a3e;border-color:#344b63;color:#91a6bf}
+.mission-item.soon .mission-item-title{color:#a9bbcf}
+.mission-item.soon .mission-status-pill{color:#ffc95c;border-color:rgba(255,201,92,.28);background:rgba(255,201,92,.07)}
+@media(max-width:360px){.mission-center{padding:11px}.mission-brand-name{font-size:15px}.mission-summary-item{padding:9px}.mission-language{max-width:96px}}
+
+.referral-card{background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:14px;padding:16px;margin:12px 0;text-align:center;box-shadow:0 0 12px rgba(0,145,255,.12)}
+.referral-title{color:#00b7ff;font-size:20px;margin:4px 0 12px}
+.referral-description{color:#b8c9dd;font-size:13px;line-height:1.7;margin:0 0 14px}
+.referral-link-row{display:flex;gap:7px;direction:ltr}
+.referral-link{flex:1;min-width:0;background:#07172c;color:#35ef91;border:1px solid #176caa;border-radius:8px;padding:11px 8px;font-size:11px;text-align:left;direction:ltr}
+.referral-button{border:1px solid #00b7ff;border-radius:8px;padding:10px 12px;background:linear-gradient(135deg,#087ed0,#0055a0);color:white;font-weight:bold;cursor:pointer;font-family:Arial,sans-serif}
+.referral-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.referral-stat{background:rgba(7,20,42,.85);border:1px solid #244765;border-radius:10px;padding:14px 6px}
+.referral-stat-label{font-size:12px;color:#b8c9dd;margin-bottom:7px}
+.referral-stat-value{font-size:24px;color:#35ef91;font-weight:bold}
+.referral-ranking{background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:13px;padding:13px;margin-top:14px;text-align:start}
+.referral-ranking h3{font-size:15px;color:#00b7ff;text-align:center;margin:3px 0 12px}
+.ranking-row{display:flex;justify-content:space-between;gap:8px;padding:9px 5px;border-bottom:1px solid rgba(65,105,140,.35);font-size:12px;color:#d8e5f3}
+.ranking-row:last-child{border-bottom:0}
+.ranking-place{color:#ffc52e;font-weight:bold;min-width:24px}
+.ranking-id{direction:ltr;unicode-bidi:embed;color:#8fdcff}
+.ranking-score{color:#35ef91;font-weight:bold;white-space:nowrap}
+.referral-status{min-height:24px;color:#ffd36a;font-size:12px;line-height:1.6;margin-top:10px}
+footer{margin-top:30px;color:#879bb2;font-size:12px}
+@media(max-width:360px){.nav-item{min-height:62px}.nav-icon,.nav-icon svg{width:20px;height:20px}.nav-label{font-size:9px}.nav-soon{font-size:7px}.navigation{gap:1px;padding:3px}.reward-image{height:105px}.top-bar .user-id-card{padding:7px;max-width:55%}.top-bar .user-id-value{font-size:11px}.top-bar .language-box select{padding:8px 5px;font-size:12px}.support-top-button{padding:8px 7px;font-size:11px}.support-form{gap:5px}.support-send{padding:0 10px;font-size:12px}.referral-link-row{flex-direction:column}.referral-button{width:100%}}
+@media(prefers-reduced-motion:reduce){body,.stars{animation:none}}
+
+.news-wrap{background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:14px;padding:14px;margin:12px 0;text-align:start;box-shadow:0 0 12px rgba(0,145,255,.12)}
+.news-heading{color:#00b7ff;text-align:center;font-size:22px;margin:5px 0 14px}
+.news-card{background:rgba(4,15,31,.92);border:1px solid #244765;border-radius:12px;padding:12px;margin:12px 0;overflow:hidden}
+.news-card-title{font-size:16px;font-weight:bold;line-height:1.6;margin:0 0 10px;color:#fff;overflow-wrap:anywhere}
+.news-media{width:100%;max-height:420px;object-fit:contain;background:#020914;border-radius:9px;display:block}
+.news-meta{display:flex;gap:14px;flex-wrap:wrap;color:#9fb8d2;font-size:12px;margin:10px 0}
+.news-reactions{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.news-reaction{background:#102844;color:#fff;border:1px solid #315879;border-radius:20px;padding:7px 9px;font-size:13px;cursor:pointer}
+.news-reaction.active{background:#075a9d;border-color:#00b7ff}
+.news-comments{border-top:1px solid #244765;padding-top:10px;margin-top:10px}
+.news-comment{font-size:12px;line-height:1.6;color:#d8e5f3;padding:7px 0;border-bottom:1px solid rgba(65,105,140,.25);overflow-wrap:anywhere}
+.news-comment-user{color:#70d5ff;font-size:10px;display:block}
+.news-comment-form{display:flex;gap:6px;margin-top:9px}
+.news-comment-input{flex:1;min-width:0;background:#07172c;color:#fff;border:1px solid #176caa;border-radius:8px;padding:9px;font:13px Arial}
+.news-comment-send{background:#087ed0;color:#fff;border:0;border-radius:8px;padding:8px 12px;font-weight:bold}
+.news-empty,.news-status{color:#b8c9dd;text-align:center;font-size:13px;line-height:1.7;padding:16px}
+
+
+/* Maintenance notice — uses the existing OXIDE HUB theme. */
+.maintenance-panel{display:none;background:rgba(12,25,48,.96);border:1px solid #d69b28;border-radius:16px;padding:24px 18px;margin:18px 0 22px;box-shadow:0 0 20px rgba(214,155,40,.13)}
+.maintenance-icon{font-size:42px;margin-bottom:10px}
+.maintenance-title{color:#ffd36a;font-size:23px;font-weight:900;margin:0 0 12px}
+.maintenance-message{color:#d8e5f3;font-size:15px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.nav-item.maintenance-locked{opacity:.78;cursor:not-allowed}
+.nav-item.maintenance-locked .nav-label{display:none}
+.nav-item.maintenance-locked .nav-soon{display:inline-block}
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<main class="container">
+<div class="top-bar">
+  <div class="user-id-card"><div class="user-id-label" id="userIdLabel">🆔 رقم المستخدم الخاص بك</div><div class="user-id-row"><span class="user-id-value" id="userIdValue">Loading...</span><button class="copy-id-button" id="copyIdButton" type="button" onclick="copyUserId()">📋 نسخ</button></div></div>
+  <div class="top-actions"><div class="language-box"><select id="language" onchange="changeLanguage(this.value)"><option value="ar">🇩🇿 العربية</option><option value="en">🇬🇧 English</option><option value="ru">🇷🇺 Русский</option><option value="es">🇪🇸 Español</option><option value="tr">🇹🇷 Türkçe</option><option value="id">🇮🇩 Bahasa Indonesia</option></select></div><button class="support-top-button" id="supportTopButton" type="button" onclick="showPage('support')">💬 الدعم الفني</button></div>
+</div>
+<div class="logo">OXIDE HUB</div><div class="subtitle">SURVIVE • EXPLORE • DOMINATE</div>
+<section class="maintenance-panel" id="maintenancePanel" role="status" aria-live="polite">
+  <div class="maintenance-icon">🛠️</div>
+  <h2 class="maintenance-title">الموقع تحت الصيانة</h2>
+  <p class="maintenance-message" id="maintenanceMessage">نعتذر عن الإزعاج، الموقع تحت الصيانة حالياً. سنعود قريباً.</p>
+</section>
+<nav class="navigation" aria-label="Main navigation">
+<button class="nav-item active" id="homeTab" type="button" onclick="showPage('home')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9 21v-7h6v7"/></svg></span><span class="nav-label" id="navHome">الرئيسية</span></button>
+<button class="nav-item" id="rewardsTab" type="button" onclick="showPage('rewards')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 7v14"/><path d="M12 7H7.5a2.5 2.5 0 1 1 2.5-2.5C10 6 12 7 12 7Z"/><path d="M12 7h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z"/></svg></span><span class="nav-label" id="navRewards">مكافأة</span></button>
+<button class="nav-item" type="button" disabled><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m12 3 2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8L12 3Z"/><path d="M7 21h10"/></svg></span><span class="nav-label">VIP</span><span class="nav-soon" id="soon2">🔒 SOON</span></button>
+<button class="nav-item" id="referralTab" type="button" onclick="showPage('referral')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6M17 11h6"/></svg></span><span class="nav-label" id="navReferral">إحالة</span></button>
+<button class="nav-item" id="newsTab" type="button" onclick="showPage('news')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><span class="nav-label" id="navNews">أخبار</span></button>
+</nav>
+<div id="homePage">
+<section class="progress-box"><div class="progress-text"><span id="progressLabel">التقدم:</span> <span id="count">0/3</span></div><div class="bar"><div class="bar-fill" id="bar"></div></div></section><div id="stages"></div>
+<a id="download" class="platform-button" href="#" aria-disabled="true"><svg class="android-icon" viewBox="0 0 24 24"><path d="M6.2 7.2 4.6 4.5a.5.5 0 0 1 .86-.5l1.65 2.8a8.2 8.2 0 0 1 9.78 0l1.65-2.8a.5.5 0 1 1 .86.5l-1.6 2.7A7.2 7.2 0 0 1 21 13H3a7.2 7.2 0 0 1 3.2-5.8ZM7 14h10v5.5a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 7 19.5V14Zm-3-1h2v6H5a2 2 0 0 1-2-2v-2a2 2 0 0 1 1-2Zm15 0h1a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-1v-6Z"/></svg><span id="androidText">تحميل ANDROID</span></a>
+<button class="platform-button" id="iphoneButton" disabled><span class="platform-icon">🍎</span><span id="iphoneText">تحميل iPHONE</span><span class="soon-label" id="iphoneSoon">🔒 SOON</span></button>
+<button class="platform-button" id="betaButton" disabled><span class="platform-icon">🧪</span><span id="betaText">تحميل BETA</span><span class="soon-label" id="betaSoon">🔒 SOON</span></button>
+<div id="oxideDownloadProgress" style="display:none;margin:12px 0;padding:12px;border:1px solid rgba(0,183,255,.35);border-radius:10px;background:rgba(4,18,38,.82);color:#fff;text-align:center"><div id="oxideDownloadLabel">جاري التحميل 0%</div><div style="height:9px;margin-top:8px;background:#172b43;border-radius:20px;overflow:hidden"><div id="oxideDownloadBar" style="height:100%;width:0%;background:linear-gradient(90deg,#087ed0,#00c8ff);transition:width .12s"></div></div></div>
+<div id="status" role="status"></div>
+<section class="guide-box"><h2 class="guide-title" id="guideTitle">📖 طريقة الاستخدام</h2><div id="guideSteps"></div><div class="guide-note" id="guideNote"></div></section>
+</div>
+<section id="supportPage" style="display:none"><button class="support-top-button" id="supportBackButton" type="button" onclick="showPage('home')" style="margin:12px 0">⬅ العودة للرئيسية</button><section class="support-box" id="supportBox"><h2 class="support-title" id="supportTitle">💬 الدعم الفني</h2><p class="support-description" id="supportDescription">أرسل رسالتك وسيرد عليك فريق OXIDE HUB هنا.</p><div class="support-messages" id="supportMessages" aria-live="polite"><div class="support-empty" id="supportEmpty">جاري تحميل المحادثة...</div></div><form class="support-form" id="supportForm"><textarea class="support-input" id="supportInput" maxlength="2000" rows="2" placeholder="اكتب رسالتك هنا..." required></textarea><button class="support-send" id="supportSend" type="submit">إرسال</button></form><div class="support-status" id="supportStatus" role="status"></div><div class="support-media-note" id="supportMediaNote">هذه النسخة تدعم الرسائل النصية. دعم الصور والفيديو يحتاج إضافة تقنية منفصلة.</div></section></section>
+<section id="newsPage">
+  <section class="news-wrap">
+    <h2 class="news-heading" id="newsHeading">📰 NEWS</h2>
+    <div id="newsStatus" class="news-status" role="status"></div>
+    <div id="newsPosts"><div class="news-empty" id="newsEmpty">لا توجد أخبار بعد.</div></div>
+  </section>
+</section>
+<section id="rewardsPage"><h2 class="rewards-heading" id="rewardsHeading">🎁 المكافآت</h2><section class="island-section"><h2 class="island-title">🌌 OXIDE ISLAND</h2><div class="island-tabs"><button class="island-tab active" id="islandAdsTab" onclick="showIslandTab('ads')" type="button"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg><span class="island-tab-label" id="islandAdsLabel">مشاهدة إعلانات</span><span class="island-counter" id="islandTabCount">0/10</span></button><button class="island-tab" id="islandTasksTab" onclick="showIslandTab('tasks')" type="button"><svg viewBox="0 0 24 24"><path d="M6 11H3a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h3l3 3h8l3-3h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-3l-3-3H9l-3 3Z"/><path d="M7 14v4M5 16h4M16 15h.01M19 17h.01"/></svg><span class="island-tab-label" id="islandTasksLabel">المهمات</span><span class="island-soon">SOON 🔒</span></button></div><div class="island-panel" id="islandAdsPanel"><div style="font-weight:bold" id="islandProgressText">إعلانات مكتملة: 0 / 10</div><div class="island-progress"><div class="island-progress-fill" id="islandProgressFill"></div></div><div style="font-size:12px;color:#b8c9dd" id="islandRewardText">كل إعلان مكتمل = 5 نقاط</div><button class="island-watch-button" id="islandWatchButton" type="button" onclick="watchIslandAd()">▶ مشاهدة إعلان</button><div class="island-timer" id="islandTimer">جاري تحميل وقت الدورة...</div><div class="island-message" id="islandMessage" role="status"></div></div><div class="island-panel" id="islandTasksPanel" style="display:none">
+<div class="mission-center" id="missionCenter">
+  <div class="mission-header">
+    <div class="mission-brand">
+      <div class="mission-brand-icon">◎</div>
+      <div>
+        <div class="mission-brand-name">OXIDE HUB</div>
+        <div class="mission-brand-sub" id="missionSubtitle">MISSION CENTER</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:7px">
+      <span class="mission-live">● LIVE</span>
+      <span class="mission-language" id="missionLanguageLabel">SITE LANGUAGE</span>
+    </div>
+  </div>
+
+  <div class="mission-progress-card">
+    <div class="mission-progress-top">
+      <span id="missionJourneyLabel">Mission Journey</span>
+      <span class="mission-progress-number" id="missionProgressNumber">0 / 10</span>
+    </div>
+    <div class="mission-progress-track"><div class="mission-progress-fill" id="missionProgressFill"></div></div>
+    <div class="mission-progress-foot">
+      <span id="missionProgressPercent">0% Completed</span>
+      <span id="missionRemaining">10 Missions Left</span>
+    </div>
+  </div>
+
+  <div class="mission-summary">
+    <div class="mission-summary-item">
+      <span id="missionBalanceLabel">TOTAL BALANCE · PTS</span>
+      <span class="mission-summary-value" id="missionsBalance">0</span>
+    </div>
+    <div class="mission-summary-item">
+      <span id="missionCompletedLabel">COMPLETED MISSIONS</span>
+      <span class="mission-summary-value" id="completedMissionsCount">0/10</span>
+    </div>
+  </div>
+
+  <div class="mission-group-title">
+    <span id="missionAvailableTitle">AVAILABLE MISSIONS</span>
+    <span class="mission-group-count">01 — 03</span>
+  </div>
+
+  <div class="mission-list">
+    <div class="mission-item" id="mission1Card">
+      <div class="mission-item-main">
+        <div class="mission-item-heading">
+          <div class="mission-item-icon">♪</div>
+          <div>
+            <div class="mission-item-title" id="mission1Title">Follow on TikTok</div>
+            <div class="mission-item-meta" id="mission1Meta">SOCIAL MEDIA · MISSION #01</div>
+          </div>
+        </div>
+        <span class="mission-status-pill" id="mission1Status">AVAILABLE</span>
+      </div>
+      <div class="mission-description" id="mission1Description">Follow our official TikTok account and upload a screenshot as proof.</div>
+      <div class="mission-reward-row">
+        <span id="missionRewardLabel">Reward</span>
+        <span class="mission-reward">+50 PTS</span>
+      </div>
+      <a class="mission-link-button" id="missionTikTokLink" href="https://www.tiktok.com/@skimi_17_vip" target="_blank" rel="noopener noreferrer">♪ Open TikTok Account ↗</a>
+      <form id="mission1Form" style="margin-top:9px" onsubmit="submitMissionProof(event)">
+        <label class="mission-file-label" id="missionProofLabel" for="mission1Proof">Upload follow screenshot (JPG / PNG)</label>
+        <input class="mission-file-input" id="mission1Proof" name="proof" type="file" accept="image/*" required>
+        <button class="mission-submit-button" id="mission1Submit" type="submit">↑ Submit Proof</button>
+      </form>
+      <div class="mission-message" id="mission1Message" role="status"></div>
+    </div>
+
+    <div class="mission-item soon">
+      <div class="mission-item-main">
+        <div class="mission-item-heading">
+          <div class="mission-item-icon">✦</div>
+          <div>
+            <div class="mission-item-title" id="mission2Title">MISSION 02</div>
+            <div class="mission-item-meta" id="mission2Meta">NEW CHALLENGE</div>
+          </div>
+        </div>
+        <span class="mission-status-pill">🔒 SOON</span>
+      </div>
+    </div>
+
+    <div class="mission-item soon">
+      <div class="mission-item-main">
+        <div class="mission-item-heading">
+          <div class="mission-item-icon">✧</div>
+          <div>
+            <div class="mission-item-title" id="mission3Title">MISSION 03</div>
+            <div class="mission-item-meta" id="mission3Meta">NEW CHALLENGE</div>
+          </div>
+        </div>
+        <span class="mission-status-pill">🔒 SOON</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div></section><div class="balance-card"><div class="balance-label" id="balanceLabel">رصيدك الحالي</div><div class="balance-number" id="pointsBalance">0</div><div class="balance-unit">OXIDE POINTS</div></div><div class="rewards-grid" id="rewardsGrid"><div style="grid-column:1/-1;color:#b8c9dd;padding:20px">جاري تحميل المكافآت...</div></div><div class="reward-message" id="rewardMessage" role="status"></div><div class="pending-note" id="pendingNote">بعد الاستبدال سيتم تسجيل طلبك بحالة Pending حتى تتم مراجعته.</div></section>
+<section id="referralPage" style="display:none"><h2 class="rewards-heading" id="referralHeading">👥 الإحالات</h2><div class="referral-card"><h3 class="referral-title" id="referralInviteTitle">ادعُ أصدقاءك واربح</h3><p class="referral-description" id="referralDescription">اربح 15 نقطة عن كل صديق جديد يسجل عبر رابطك.</p><div class="referral-link-row"><input class="referral-link" id="referralLink" type="text" readonly value="Loading..."><button class="referral-button" id="copyReferralButton" type="button" onclick="copyReferralLink()">📋 نسخ</button></div><button class="referral-button" id="shareReferralButton" type="button" onclick="shareReferralLink()" style="width:100%;margin-top:9px">↗ مشاركة الرابط</button><div class="referral-status" id="referralStatus" role="status"></div></div><div class="referral-stats"><div class="referral-stat"><div class="referral-stat-label" id="referralCountLabel">الإحالات الناجحة</div><div class="referral-stat-value" id="referralCount">0</div></div><div class="referral-stat"><div class="referral-stat-label" id="referralEarnedLabel">النقاط المكتسبة</div><div class="referral-stat-value" id="referralEarned">0</div></div></div><div class="referral-ranking"><h3 id="pointsRankingTitle">🏆 أفضل 10 حسب النقاط</h3><div id="pointsRanking"><div class="ranking-row">جاري التحميل...</div></div></div><div class="referral-ranking"><h3 id="referralRankingTitle">👥 أفضل 10 حسب الإحالات</h3><div id="referralRanking"><div class="ranking-row">جاري التحميل...</div></div></div></section>
+<footer>OXIDE HUB © 2026<br>Created by SKIMI_17</footer>
+</main>
+<script>
+let MAINTENANCE_MODE=false;
+let maintenanceActive=false;
+const REQUIRED=3,LOCK_DURATION=5*60*1000,DOWNLOAD_PAGE="download.html",ISLAND_REQUIRED=10,ISLAND_CYCLE_SECONDS=18000;
+const PLATFORM_AVAILABILITY={iphone:false,beta:false};
+const stages=document.getElementById("stages"),statusBox=document.getElementById("status");
+let progress=0,busy=false,lastProgress=null,currentLanguage="ar",activePopup=null,rewardPoints=0,rewardOffers=[],redeeming=false;
+let islandAds=[],islandCompleted=0,islandRemaining=0,islandCycleEndsAt=0,islandBusy=false,islandTimerInterval=null;
+let userDisplayId="",userIdLoaded=false,referralLinkValue="",referralLoaded=false;
+const LOCK_KEY="oxide_active_ad_session";
+const rewardImages={1:"oxide_55_coins.png",2:"oxide_145_coins.png",3:"oxide_premium.png",4:"oxide_25_bp_coins.png"};
+let lastSupportMessageId=0,supportSending=false,supportPollingStarted=false;
+const translations={
+ar:{progress:"التقدم:",stage:"المرحلة",watch:"شاهد الإعلان",completed:"مكتمل",locked:"مقفل",android:"تحميل ANDROID",iphone:"تحميل iPHONE",beta:"تحميل BETA",soon:"🔒 SOON",home:"الرئيسية",rewards:"مكافأة",referral:"إحالة",news:"أخبار",searching:"جاري البحث عن إعلان متاح...",noAd:"لا يوجد إعلان متاح حاليًا. حاول لاحقًا.",popup:"اسمح بفتح النوافذ المنبثقة للمتابعة.",opened:"تم فتح الإعلان:",seconds:"ثانية. أكمله وانتظر تأكيد المكافأة.",confirmed:"تم تأكيد إكمال الإعلان! يمكنك الانتقال للمرحلة التالية.",complete:"اكتملت الإعلانات الثلاثة! يمكنك الآن فتح صفحة التحميل.",session:"لديك جلسة إعلان نشطة. أكملها أو انتظر انتهاء 5 دقائق.",error:"حدث خطأ. حاول مرة أخرى.",refreshError:"تعذر تحديث التقدم. تحقق من اتصال الموقع بالخادم.",guideTitle:"📖 طريقة الاستخدام",guideSteps:["اضغط على زر مشاهدة الإعلان لفتح الإعلان.","أكمل الإعلان وانتظر تأكيد المكافأة.","بعد التأكيد ستفتح المرحلة التالية.","أكمل الإعلانات الثلاثة لفتح زر Android.","اضغط على Android لفتح صفحة الملفات والفيديو."],guideNote:"شكرًا لاستخدامكم OXIDE HUB ❤️",balance:"رصيدك الحالي",redeem:"استبدال",insufficient:"نقاطك غير كافية",pending:"تم تسجيل طلبك بنجاح! حالة الطلب: Pending",redeemError:"تعذر تسجيل الطلب. حاول مرة أخرى.",loadingRewards:"جاري تحميل المكافآت...",rewardsError:"تعذر تحميل المكافآت. حاول تحديث الصفحة.",pendingNote:"بعد الاستبدال سيتم تسجيل طلبك بحالة Pending حتى تتم مراجعته.",confirmRedeem:"هل تريد استبدال هذه المكافأة؟ سيتم خصم النقاط من رصيدك.",islandAds:"مشاهدة إعلانات",islandTasks:"المهمات",islandProgress:"إعلانات مكتملة:",islandReward:"كل إعلان مكتمل = 5 نقاط",islandWatch:"▶ مشاهدة إعلان",islandLoading:"جاري تحميل بيانات الجزيرة...",islandError:"تعذر تحميل بيانات الجزيرة. حاول مجددًا.",islandNoAds:"لا توجد إعلانات متاحة الآن. حاول لاحقًا.",islandComplete:"أكملت 10 إعلانات! انتظر انتهاء دورة الخمس ساعات.",islandOpened:"تم فتح الإعلان. أكمله وانتظر تأكيد المكافأة.",islandWaiting:"انتظر انتهاء الإعلان وتأكيد النقاط من الخادم.",islandTasksSoon:"المهمات ستكون متاحة قريبًا",islandTimer:"الوقت المتبقي للدورة:",referralTitle:"ادعُ أصدقاءك واربح",referralDesc:"اربح 15 نقطة عن كل صديق جديد يسجل عبر رابطك.",referrals:"الإحالات الناجحة",earned:"النقاط المكتسبة",copy:"📋 نسخ",copied:"✓ تم النسخ",share:"↗ مشاركة الرابط",pointsRank:"🏆 أفضل 10 حسب النقاط",refRank:"👥 أفضل 10 حسب الإحالات",loading:"جاري التحميل...",refError:"تعذر تحميل بيانات الإحالة. حاول مجددًا.",refRegistered:"تم تسجيل الإحالة بنجاح!"},
+en:{progress:"Progress:",stage:"Stage",watch:"WATCH AD",completed:"COMPLETED",locked:"LOCKED",android:"DOWNLOAD ANDROID",iphone:"DOWNLOAD iPHONE",beta:"DOWNLOAD BETA",soon:"🔒 SOON",home:"HOME",rewards:"REWARDS",referral:"REFERRAL",news:"NEWS",searching:"Searching for an available ad...",noAd:"No ad is available right now. Try later.",popup:"Allow pop-ups to continue.",opened:"Advertisement opened:",seconds:"seconds. Complete it and wait for reward confirmation.",confirmed:"Ad completion confirmed! Continue to the next stage.",complete:"All three ads completed! You can now open the download page.",session:"You have an active ad session. Complete it or wait 5 minutes.",error:"An error occurred. Please try again.",refreshError:"Could not update progress. Check the server connection.",guideTitle:"📖 HOW TO USE",guideSteps:["Press Watch Ad to open an advertisement.","Complete the ad and wait for reward confirmation.","The next stage unlocks after confirmation.","Complete all three ads to unlock Android.","Press Android to open the files and video page."],guideNote:"Thank you for using OXIDE HUB ❤️",balance:"Your balance",redeem:"REDEEM",insufficient:"Not enough points",pending:"Your request was created! Status: Pending",redeemError:"Could not create request. Try again.",loadingRewards:"Loading rewards...",rewardsError:"Could not load rewards. Refresh the page.",pendingNote:"Your redemption request will be recorded as Pending for review.",confirmRedeem:"Do you want to redeem this reward? Points will be deducted.",islandAds:"Watch Ads",islandTasks:"Tasks",islandProgress:"Ads completed:",islandReward:"Each completed ad = 5 points",islandWatch:"▶ Watch Advertisement",islandLoading:"Loading island data...",islandError:"Could not load island data. Try again.",islandNoAds:"No ads available right now. Try later.",islandComplete:"You completed 10 ads! Wait for the five-hour cycle to end.",islandOpened:"Advertisement opened. Complete it and wait for reward confirmation.",islandWaiting:"Complete the ad and wait for server reward confirmation.",islandTasksSoon:"Tasks will be available soon",islandTimer:"Cycle time remaining:",referralTitle:"Invite friends and earn",referralDesc:"Earn 15 points for every new friend who joins using your link.",referrals:"Successful referrals",earned:"Points earned",copy:"📋 Copy",copied:"✓ Copied",share:"↗ Share link",pointsRank:"🏆 Top 10 by points",refRank:"👥 Top 10 by referrals",loading:"Loading...",refError:"Could not load referral data. Try again.",refRegistered:"Referral registered successfully!"},
+ru:{progress:"Прогресс:",stage:"Этап",watch:"СМОТРЕТЬ РЕКЛАМУ",completed:"ЗАВЕРШЕНО",locked:"ЗАКРЫТО",android:"СКАЧАТЬ ANDROID",iphone:"СКАЧАТЬ iPHONE",beta:"СКАЧАТЬ BETA",soon:"🔒 СКОРО",home:"ГЛАВНАЯ",rewards:"НАГРАДЫ",referral:"РЕФЕРАЛЫ",news:"НОВОСТИ",searching:"Поиск доступной рекламы...",noAd:"Сейчас нет доступной рекламы.",popup:"Разрешите всплывающие окна.",opened:"Реклама открыта:",seconds:"секунд. Завершите её и дождитесь подтверждения.",confirmed:"Реклама подтверждена! Можно продолжить.",complete:"Все три рекламы завершены! Можно открыть страницу загрузки.",session:"Рекламная сессия активна. Завершите её или подождите 5 минут.",error:"Произошла ошибка. Попробуйте снова.",refreshError:"Не удалось обновить прогресс.",guideTitle:"📖 КАК ИСПОЛЬЗОВАТЬ",guideSteps:["Нажмите кнопку просмотра рекламы.","Завершите рекламу и дождитесь подтверждения.","После подтверждения откроется следующий этап.","Завершите три рекламы, чтобы открыть Android.","Нажмите Android, чтобы открыть страницу файлов и видео."],guideNote:"Спасибо за использование OXIDE HUB ❤️",balance:"Ваш баланс",redeem:"ОБМЕНЯТЬ",insufficient:"Недостаточно баллов",pending:"Заявка создана! Статус: Pending",redeemError:"Не удалось создать заявку.",loadingRewards:"Загрузка наград...",rewardsError:"Не удалось загрузить награды.",pendingNote:"После обмена заявка получит статус Pending для проверки.",confirmRedeem:"Обменять эту награду? Баллы будут списаны.",islandAds:"Просмотр рекламы",islandTasks:"Задания",islandProgress:"Завершено:",islandReward:"За каждую рекламу = 5 очков",islandWatch:"▶ Смотреть рекламу",islandLoading:"Загрузка данных острова...",islandError:"Не удалось загрузить данные.",islandNoAds:"Сейчас нет рекламы.",islandComplete:"Вы завершили 10 реклам! Дождитесь нового цикла.",islandOpened:"Реклама открыта. Завершите её и дождитесь подтверждения.",islandWaiting:"Завершите рекламу и дождитесь подтверждения сервера.",islandTasksSoon:"Задания скоро появятся",islandTimer:"Осталось времени:",referralTitle:"Приглашайте друзей и зарабатывайте",referralDesc:"Получайте 15 очков за каждого нового друга по вашей ссылке.",referrals:"Успешные приглашения",earned:"Заработанные очки",copy:"📋 Копировать",copied:"✓ Скопировано",share:"↗ Поделиться",pointsRank:"🏆 Топ-10 по очкам",refRank:"👥 Топ-10 по приглашениям",loading:"Загрузка...",refError:"Не удалось загрузить рефералов.",refRegistered:"Приглашение зарегистрировано!"},
+es:{progress:"Progreso:",stage:"Etapa",watch:"VER ANUNCIO",completed:"COMPLETADO",locked:"BLOQUEADO",android:"DESCARGAR ANDROID",iphone:"DESCARGAR iPHONE",beta:"DESCARGAR BETA",soon:"🔒 PRONTO",home:"INICIO",rewards:"PREMIOS",referral:"REFERIDOS",news:"NOTICIAS",searching:"Buscando un anuncio disponible...",noAd:"No hay anuncios disponibles.",popup:"Permite las ventanas emergentes.",opened:"Anuncio abierto:",seconds:"segundos. Complétalo y espera la confirmación.",confirmed:"¡Anuncio confirmado! Puedes continuar.",complete:"¡Los tres anuncios están completos!",session:"Tienes una sesión activa. Espera 5 minutos.",error:"Ha ocurrido un error.",refreshError:"No se pudo actualizar el progreso.",guideTitle:"📖 CÓMO USAR",guideSteps:["Pulsa Ver anuncio para abrir un anuncio.","Completa el anuncio y espera la confirmación.","La siguiente etapa se desbloqueará después.","Completa los tres anuncios para desbloquear Android.","Pulsa Android para abrir los archivos y el vídeo."],guideNote:"Gracias por usar OXIDE HUB ❤️",balance:"Tu saldo",redeem:"CANJEAR",insufficient:"Puntos insuficientes",pending:"¡Solicitud creada! Estado: Pending",redeemError:"No se pudo crear la solicitud.",loadingRewards:"Cargando premios...",rewardsError:"No se pudieron cargar los premios.",pendingNote:"Tu solicitud quedará como Pending para revisión.",confirmRedeem:"¿Quieres canjear esta recompensa? Se descontarán los puntos.",islandAds:"Ver anuncios",islandTasks:"Tareas",islandProgress:"Anuncios completados:",islandReward:"Cada anuncio completado = 5 puntos",islandWatch:"▶ Ver anuncio",islandLoading:"Cargando isla...",islandError:"No se pudo cargar la isla.",islandNoAds:"No hay anuncios disponibles.",islandComplete:"Completaste 10 anuncios. Espera el nuevo ciclo.",islandOpened:"Anuncio abierto. Complétalo y espera la confirmación.",islandWaiting:"Completa el anuncio y espera la confirmación del servidor.",islandTasksSoon:"Las tareas estarán disponibles pronto",islandTimer:"Tiempo restante:",referralTitle:"Invita amigos y gana",referralDesc:"Gana 15 puntos por cada nuevo amigo que se registre con tu enlace.",referrals:"Referidos exitosos",earned:"Puntos ganados",copy:"📋 Copiar",copied:"✓ Copiado",share:"↗ Compartir enlace",pointsRank:"🏆 Top 10 por puntos",refRank:"👥 Top 10 por referidos",loading:"Cargando...",refError:"No se pudieron cargar los referidos.",refRegistered:"¡Referido registrado!"},
+id:{progress:"Progres:",stage:"Tahap",watch:"TONTON IKLAN",completed:"SELESAI",locked:"TERKUNCI",android:"UNDUH ANDROID",iphone:"UNDUH iPHONE",beta:"UNDUH BETA",soon:"🔒 SEGERA",home:"BERANDA",rewards:"HADIAH",referral:"REFERAL",news:"BERITA",searching:"Mencari iklan yang tersedia...",noAd:"Belum ada iklan tersedia.",popup:"Izinkan pop-up untuk melanjutkan.",opened:"Iklan dibuka:",seconds:"detik. Selesaikan dan tunggu konfirmasi hadiah.",confirmed:"Iklan berhasil dikonfirmasi!",complete:"Ketiga iklan selesai!",session:"Anda memiliki sesi aktif. Tunggu 5 menit.",error:"Terjadi kesalahan.",refreshError:"Gagal memperbarui progres.",guideTitle:"📖 CARA MENGGUNAKAN",guideSteps:["Tekan Tonton Iklan untuk membuka iklan.","Selesaikan iklan dan tunggu konfirmasi.","Tahap berikutnya terbuka setelah konfirmasi.","Selesaikan tiga iklan untuk membuka Android.","Tekan Android untuk membuka halaman file dan video."],guideNote:"Terima kasih telah menggunakan OXIDE HUB ❤️",balance:"Saldo Anda",redeem:"TUKAR",insufficient:"Poin tidak cukup",pending:"Permintaan berhasil dibuat! Status: Pending",redeemError:"Gagal membuat permintaan.",loadingRewards:"Memuat hadiah...",rewardsError:"Gagal memuat hadiah.",pendingNote:"Permintaan penukaran berstatus Pending untuk ditinjau.",confirmRedeem:"Tukar hadiah ini? Poin akan dikurangi.",islandAds:"Tonton Iklan",islandTasks:"Tugas",islandProgress:"Iklan selesai:",islandReward:"Setiap iklan selesai = 5 poin",islandWatch:"▶ Tonton Iklan",islandLoading:"Memuat data pulau...",islandError:"Gagal memuat data pulau.",islandNoAds:"Tidak ada iklan tersedia.",islandComplete:"10 iklan selesai! Tunggu siklus baru.",islandOpened:"Iklan dibuka. Selesaikan dan tunggu konfirmasi.",islandWaiting:"Selesaikan iklan dan tunggu konfirmasi server.",islandTasksSoon:"Tugas segera tersedia",islandTimer:"Sisa waktu siklus:",referralTitle:"Undang teman dan dapatkan poin",referralDesc:"Dapatkan 15 poin untuk setiap teman baru yang mendaftar melalui tautan Anda.",referrals:"Referal berhasil",earned:"Poin diperoleh",copy:"📋 Salin",copied:"✓ Tersalin",share:"↗ Bagikan tautan",pointsRank:"🏆 10 teratas berdasarkan poin",refRank:"👥 10 teratas berdasarkan referal",loading:"Memuat...",refError:"Gagal memuat data referal.",refRegistered:"Referal berhasil didaftarkan!"}
+};
+translations.fr={...translations.en,
+ progress:"Progression :",stage:"Étape",watch:"VOIR LA PUBLICITÉ",completed:"TERMINÉ",locked:"VERROUILLÉ",android:"TÉLÉCHARGER ANDROID",iphone:"TÉLÉCHARGER iPHONE",beta:"TÉLÉCHARGER BETA",soon:"🔒 BIENTÔT",home:"ACCUEIL",rewards:"RÉCOMPENSES",referral:"PARRAINAGE",news:"ACTUALITÉS",searching:"Recherche d’une publicité disponible...",noAd:"Aucune publicité disponible pour le moment. Réessayez plus tard.",popup:"Autorisez les fenêtres pop-up pour continuer.",opened:"Publicité ouverte :",seconds:"secondes. Terminez-la et attendez la confirmation de la récompense.",confirmed:"Publicité confirmée ! Vous pouvez continuer.",complete:"Les trois publicités sont terminées ! La page de téléchargement est accessible.",session:"Une session publicitaire est active. Terminez-la ou attendez 5 minutes.",error:"Une erreur est survenue. Réessayez.",refreshError:"Impossible de mettre à jour la progression. Vérifiez la connexion.",guideTitle:"📖 MODE D’EMPLOI",guideSteps:["Appuyez sur Voir la publicité pour l’ouvrir.","Terminez la publicité et attendez la confirmation.","L’étape suivante sera débloquée après confirmation.","Terminez les trois publicités pour débloquer Android.","Appuyez sur Android pour ouvrir la page des fichiers et vidéos."],guideNote:"Merci d’utiliser OXIDE HUB ❤️",balance:"Votre solde",redeem:"ÉCHANGER",insufficient:"Points insuffisants",pending:"Votre demande a été créée ! Statut : Pending",redeemError:"Impossible de créer la demande. Réessayez.",loadingRewards:"Chargement des récompenses...",rewardsError:"Impossible de charger les récompenses. Actualisez la page.",pendingNote:"Après l’échange, votre demande sera marquée Pending jusqu’à sa vérification.",confirmRedeem:"Voulez-vous échanger cette récompense ? Les points seront déduits.",islandAds:"Voir les publicités",islandTasks:"Missions",islandProgress:"Publicités terminées :",islandReward:"Chaque publicité terminée = 5 points",islandWatch:"▶ Voir la publicité",islandLoading:"Chargement de l’île...",islandError:"Impossible de charger les données de l’île.",islandNoAds:"Aucune publicité disponible pour le moment.",islandComplete:"10 publicités terminées ! Attendez le prochain cycle.",islandOpened:"Publicité ouverte. Terminez-la et attendez la confirmation.",islandWaiting:"Terminez la publicité et attendez la confirmation du serveur.",islandTasksSoon:"Les missions seront bientôt disponibles",islandTimer:"Temps restant du cycle :",referralTitle:"Invitez vos amis et gagnez",referralDesc:"Gagnez 15 points pour chaque nouvel ami inscrit avec votre lien.",referrals:"Parrainages réussis",earned:"Points gagnés",copy:"📋 Copier",copied:"✓ Copié",share:"↗ Partager le lien",pointsRank:"🏆 Top 10 par points",refRank:"👥 Top 10 par parrainages",loading:"Chargement...",refError:"Impossible de charger les données de parrainage.",refRegistered:"Parrainage enregistré avec succès !",
+ userId:"🆔 Votre identifiant",copyId:"📋 Copier",support:"💬 Assistance",back:"⬅ Retour à l’accueil",newsTitle:"Actualités",newsEmpty:"Aucune actualité pour le moment.",newsError:"Impossible de charger les actualités.",views:"vues",comments:"commentaires",writeComment:"Écrire un commentaire...",send:"Envoyer",commentError:"Impossible d’envoyer le commentaire.",commentSent:"Commentaire publié.",noComments:"Aucun commentaire pour le moment.",newsLoading:"Chargement des actualités..."};
+translations.de={...translations.en,
+ progress:"Fortschritt:",stage:"Stufe",watch:"WERBUNG ANSEHEN",completed:"ABGESCHLOSSEN",locked:"GESPERRT",android:"ANDROID HERUNTERLADEN",iphone:"iPHONE HERUNTERLADEN",beta:"BETA HERUNTERLADEN",soon:"🔒 BALD",home:"STARTSEITE",rewards:"BELOHNUNGEN",referral:"EINLADUNGEN",news:"NEUIGKEITEN",searching:"Suche nach verfügbarer Werbung...",noAd:"Derzeit ist keine Werbung verfügbar. Bitte später erneut versuchen.",popup:"Erlaube Pop-ups, um fortzufahren.",opened:"Werbung geöffnet:",seconds:"Sekunden. Schließe sie ab und warte auf die Bestätigung.",confirmed:"Werbung bestätigt! Du kannst fortfahren.",complete:"Alle drei Anzeigen abgeschlossen! Die Download-Seite ist jetzt verfügbar.",session:"Eine aktive Werbesitzung läuft. Schließe sie ab oder warte 5 Minuten.",error:"Ein Fehler ist aufgetreten. Bitte erneut versuchen.",refreshError:"Fortschritt konnte nicht aktualisiert werden. Prüfe deine Verbindung.",guideTitle:"📖 ANLEITUNG",guideSteps:["Tippe auf Werbung ansehen, um die Anzeige zu öffnen.","Schließe die Anzeige ab und warte auf die Bestätigung.","Danach wird die nächste Stufe freigeschaltet.","Schließe alle drei Anzeigen ab, um Android freizuschalten.","Tippe auf Android, um die Datei- und Videoseite zu öffnen."],guideNote:"Danke, dass du OXIDE HUB nutzt ❤️",balance:"Dein Kontostand",redeem:"EINTAUSCHEN",insufficient:"Nicht genügend Punkte",pending:"Deine Anfrage wurde erstellt! Status: Pending",redeemError:"Anfrage konnte nicht erstellt werden. Bitte erneut versuchen.",loadingRewards:"Belohnungen werden geladen...",rewardsError:"Belohnungen konnten nicht geladen werden. Seite aktualisieren.",pendingNote:"Nach dem Einlösen wird deine Anfrage bis zur Prüfung als Pending gespeichert.",confirmRedeem:"Möchtest du diese Belohnung einlösen? Die Punkte werden abgezogen.",islandAds:"Werbung ansehen",islandTasks:"Aufgaben",islandProgress:"Abgeschlossene Anzeigen:",islandReward:"Jede abgeschlossene Anzeige = 5 Punkte",islandWatch:"▶ Werbung ansehen",islandLoading:"Insel wird geladen...",islandError:"Inseldaten konnten nicht geladen werden.",islandNoAds:"Derzeit sind keine Anzeigen verfügbar.",islandComplete:"10 Anzeigen abgeschlossen! Warte auf den nächsten Zyklus.",islandOpened:"Anzeige geöffnet. Schließe sie ab und warte auf die Bestätigung.",islandWaiting:"Schließe die Anzeige ab und warte auf die Serverbestätigung.",islandTasksSoon:"Aufgaben sind bald verfügbar",islandTimer:"Verbleibende Zykluszeit:",referralTitle:"Lade Freunde ein und verdiene Punkte",referralDesc:"Erhalte 15 Punkte für jeden neuen Freund, der sich über deinen Link anmeldet.",referrals:"Erfolgreiche Einladungen",earned:"Verdiente Punkte",copy:"📋 Kopieren",copied:"✓ Kopiert",share:"↗ Link teilen",pointsRank:"🏆 Top 10 nach Punkten",refRank:"👥 Top 10 nach Einladungen",loading:"Wird geladen...",refError:"Einladungsdaten konnten nicht geladen werden.",refRegistered:"Einladung erfolgreich registriert!",
+ userId:"🆔 Deine Benutzer-ID",copyId:"📋 Kopieren",support:"💬 Support",back:"⬅ Zur Startseite",newsTitle:"Neuigkeiten",newsEmpty:"Noch keine Neuigkeiten vorhanden.",newsError:"Neuigkeiten konnten nicht geladen werden.",views:"Aufrufe",comments:"Kommentare",writeComment:"Kommentar schreiben...",send:"Senden",commentError:"Kommentar konnte nicht gesendet werden.",commentSent:"Kommentar veröffentlicht.",noComments:"Noch keine Kommentare.",newsLoading:"Neuigkeiten werden geladen..."};
+translations.ar.newsTitle="الأخبار";translations.ar.newsEmpty="لا توجد أخبار بعد.";translations.ar.newsError="تعذر تحميل الأخبار.";translations.ar.views="مشاهدة";translations.ar.comments="تعليق";translations.ar.writeComment="اكتب تعليقك...";translations.ar.send="إرسال";translations.ar.commentError="تعذر إرسال التعليق.";translations.ar.commentSent="تم نشر التعليق.";translations.ar.noComments="لا توجد تعليقات بعد.";translations.ar.newsLoading="جاري تحميل الأخبار...";translations.ar.userId="🆔 رقم المستخدم الخاص بك";translations.ar.copyId="📋 نسخ";translations.ar.support="💬 الدعم الفني";translations.ar.back="⬅ العودة للرئيسية";
+translations.en.newsTitle="News";translations.en.newsEmpty="No news yet.";translations.en.newsError="Could not load news.";translations.en.views="views";translations.en.comments="comments";translations.en.writeComment="Write a comment...";translations.en.send="Send";translations.en.commentError="Could not send the comment.";translations.en.commentSent="Comment posted.";translations.en.noComments="No comments yet.";translations.en.newsLoading="Loading news...";translations.en.userId="🆔 Your User ID";translations.en.copyId="📋 Copy";translations.en.support="💬 Support";translations.en.back="⬅ Back to Home";
+translations.es.newsTitle="Noticias";translations.es.newsEmpty="Aún no hay noticias.";translations.es.newsError="No se pudieron cargar las noticias.";translations.es.views="vistas";translations.es.comments="comentarios";translations.es.writeComment="Escribe un comentario...";translations.es.send="Enviar";translations.es.commentError="No se pudo enviar el comentario.";translations.es.commentSent="Comentario publicado.";translations.es.noComments="Aún no hay comentarios.";translations.es.newsLoading="Cargando noticias...";translations.es.userId="🆔 Tu ID de usuario";translations.es.copyId="📋 Copiar";translations.es.support="💬 Soporte";translations.es.back="⬅ Volver al inicio";
+
+translations.tr={...translations.en,
+progress:"İlerleme:",stage:"Aşama",watch:"REKLAMI İZLE",completed:"TAMAMLANDI",locked:"KİLİTLİ",android:"ANDROID İNDİR",iphone:"iPHONE İNDİR",beta:"BETA İNDİR",soon:"🔒 YAKINDA",home:"ANA SAYFA",rewards:"ÖDÜLLER",referral:"DAVETLER",news:"HABERLER",searching:"Uygun reklam aranıyor...",noAd:"Şu anda reklam yok. Daha sonra tekrar deneyin.",popup:"Devam etmek için açılır pencerelere izin verin.",opened:"Reklam açıldı:",seconds:"saniye. Tamamlayın ve ödül onayını bekleyin.",confirmed:"Reklam tamamlandı! Sonraki aşamaya geçebilirsiniz.",complete:"Üç reklam da tamamlandı! İndirme sayfasını açabilirsiniz.",session:"Etkin bir reklam oturumunuz var. Tamamlayın veya 5 dakika bekleyin.",error:"Bir hata oluştu. Tekrar deneyin.",refreshError:"İlerleme güncellenemedi. Bağlantınızı kontrol edin.",guideTitle:"📖 KULLANIM KILAVUZU",guideNote:"OXIDE HUB kullandığınız için teşekkürler ❤️",balance:"Bakiyeniz",redeem:"KULLAN",insufficient:"Yeterli puanınız yok",pending:"Talebiniz oluşturuldu! Durum: Pending",loading:"Yükleniyor...",refError:"Davet bilgileri yüklenemedi.",refRegistered:"Davet başarıyla kaydedildi!",newsTitle:"Haberler",newsEmpty:"Henüz haber yok.",newsError:"Haberler yüklenemedi.",views:"görüntüleme",comments:"yorum",writeComment:"Yorum yaz...",send:"Gönder",commentError:"Yorum gönderilemedi.",commentSent:"Yorum yayınlandı.",noComments:"Henüz yorum yok.",newsLoading:"Haberler yükleniyor..."};
+translations.id={...translations.en,
+progress:"Progres:",stage:"Tahap",watch:"TONTON IKLAN",completed:"SELESAI",locked:"TERKUNCI",android:"UNDUH ANDROID",iphone:"UNDUH iPHONE",beta:"UNDUH BETA",soon:"🔒 SEGERA",home:"BERANDA",rewards:"HADIAH",referral:"UNDANGAN",news:"BERITA",searching:"Mencari iklan yang tersedia...",noAd:"Belum ada iklan. Coba lagi nanti.",popup:"Izinkan pop-up untuk melanjutkan.",opened:"Iklan dibuka:",seconds:"detik. Selesaikan dan tunggu konfirmasi hadiah.",confirmed:"Iklan berhasil diselesaikan! Lanjut ke tahap berikutnya.",complete:"Semua tiga iklan selesai! Halaman unduhan sekarang tersedia.",session:"Sesi iklan masih aktif. Selesaikan atau tunggu 5 menit.",error:"Terjadi kesalahan. Silakan coba lagi.",refreshError:"Progres tidak dapat diperbarui. Periksa koneksi.",guideTitle:"📖 PANDUAN PENGGUNAAN",guideNote:"Terima kasih telah menggunakan OXIDE HUB ❤️",balance:"Saldo Anda",redeem:"TUKAR",insufficient:"Poin tidak mencukupi",pending:"Permintaan berhasil dibuat! Status: Pending",loading:"Memuat...",refError:"Data referral tidak dapat dimuat.",refRegistered:"Referral berhasil didaftarkan!",newsTitle:"Berita",newsEmpty:"Belum ada berita.",newsError:"Berita gagal dimuat.",views:"dilihat",comments:"komentar",writeComment:"Tulis komentar...",send:"Kirim",commentError:"Komentar gagal dikirim.",commentSent:"Komentar dipublikasikan.",noComments:"Belum ada komentar.",newsLoading:"Memuat berita..."};
+
+function t(key){return translations[currentLanguage]?.[key]||translations.en[key]||translations.ar[key]||key}
+function supportText(key){
+ const data={
+ ar:{title:"💬 الدعم الفني",description:"أرسل رسالتك وسيرد عليك فريق OXIDE HUB هنا.",placeholder:"اكتب رسالتك هنا...",send:"إرسال",you:"أنت",admin:"دعم OXIDE HUB",empty:"لا توجد رسائل بعد. اكتب رسالتك لبدء المحادثة.",loading:"جاري تحميل المحادثة...",sending:"جاري إرسال الرسالة...",sent:"تم إرسال رسالتك.",failed:"تعذر إرسال الرسالة. حاول مجددًا.",loadFailed:"تعذر تحميل المحادثة. أعد تحميل الصفحة.",media:"[أرسل فريق الدعم ملفًا مرفقًا]",mediaNote:"هذه النسخة تعرض المرفقات النصية فقط."},
+ en:{title:"💬 Support",description:"Send a message and the OXIDE HUB team will reply here.",placeholder:"Write your message...",send:"Send",you:"You",admin:"OXIDE HUB Support",empty:"No messages yet. Send a message to start.",loading:"Loading conversation...",sending:"Sending message...",sent:"Your message was sent.",failed:"Could not send the message. Try again.",loadFailed:"Could not load the conversation. Reload the page.",media:"[Support sent an attachment]",mediaNote:"Attachments are shown as a message notice."},
+ fr:{title:"💬 Assistance",description:"Envoyez un message et l’équipe OXIDE HUB vous répondra ici.",placeholder:"Écrivez votre message...",send:"Envoyer",you:"Vous",admin:"Assistance OXIDE HUB",empty:"Aucun message. Écrivez pour commencer.",loading:"Chargement de la conversation...",sending:"Envoi du message...",sent:"Votre message a été envoyé.",failed:"Envoi impossible. Réessayez.",loadFailed:"Conversation indisponible. Rechargez la page.",media:"[Pièce jointe de l’assistance]",mediaNote:"Les pièces jointes sont indiquées dans la conversation."},
+ es:{title:"💬 Soporte",description:"Envía un mensaje y el equipo de OXIDE HUB responderá aquí.",placeholder:"Escribe tu mensaje...",send:"Enviar",you:"Tú",admin:"Soporte OXIDE HUB",empty:"Aún no hay mensajes. Escribe para comenzar.",loading:"Cargando conversación...",sending:"Enviando mensaje...",sent:"Tu mensaje fue enviado.",failed:"No se pudo enviar. Inténtalo de nuevo.",loadFailed:"No se pudo cargar la conversación. Recarga la página.",media:"[El soporte envió un archivo]",mediaNote:"Los archivos adjuntos se indican en la conversación."},
+ de:{title:"💬 Support",description:"Sende eine Nachricht. Das OXIDE-HUB-Team antwortet hier.",placeholder:"Nachricht schreiben...",send:"Senden",you:"Du",admin:"OXIDE HUB Support",empty:"Noch keine Nachrichten. Schreibe eine Nachricht, um zu beginnen.",loading:"Unterhaltung wird geladen...",sending:"Nachricht wird gesendet...",sent:"Deine Nachricht wurde gesendet.",failed:"Nachricht konnte nicht gesendet werden. Bitte erneut versuchen.",loadFailed:"Unterhaltung konnte nicht geladen werden. Seite neu laden.",media:"[Support hat einen Anhang gesendet]",mediaNote:"Anhänge werden in der Unterhaltung angezeigt."}
+ };
+ return data[currentLanguage]?.[key] || data.en[key] || key;
+}
+function clearActiveSession(){localStorage.removeItem(LOCK_KEY);if(activePopup&&!activePopup.closed){try{activePopup.close()}catch{}}activePopup=null}
+function getActiveSession(){try{const raw=localStorage.getItem(LOCK_KEY);if(!raw)return null;const session=JSON.parse(raw);const startedAt=Number(session.startedAt);if(!session||!Number.isFinite(startedAt)||startedAt>Date.now()||Date.now()-startedAt>=LOCK_DURATION){clearActiveSession();return null}return session}catch{clearActiveSession();return null}}
+function saveActiveSession(number){localStorage.setItem(LOCK_KEY,JSON.stringify({stage:number,startedAt:Date.now()}))}
+function renderGuide(){const language=translations[currentLanguage];document.getElementById("guideTitle").textContent=language.guideTitle;const container=document.getElementById("guideSteps");container.innerHTML="";language.guideSteps.forEach((step,index)=>{const row=document.createElement("div");row.className="guide-step";const number=document.createElement("span");number.className="step-number";number.textContent=index+1;const text=document.createElement("span");text.textContent=step;row.append(number,text);container.appendChild(row)});document.getElementById("guideNote").textContent=language.guideNote}
+function createStages(){stages.innerHTML="";for(let i=1;i<=REQUIRED;i++){const item=document.createElement("div");item.className="stage";const label=document.createElement("span");label.id="label"+i;const button=document.createElement("button");button.id="btn"+i;button.onclick=()=>watchAd(i);item.append(label,button);stages.appendChild(item)}updateProgress(progress)}
+function changeLanguage(language,save=true){if(!translations[language])return;currentLanguage=language;localStorage.setItem("oxide_language",language);if(save)saveLanguagePreference(language);document.documentElement.lang=language;document.documentElement.dir=language==="ar"?"rtl":"ltr";document.getElementById("progressLabel").textContent=t("progress");document.getElementById("androidText").textContent=t("android");document.getElementById("iphoneText").textContent=t("iphone");document.getElementById("betaText").textContent=t("beta");document.getElementById("navHome").textContent=t("home");document.getElementById("navRewards").textContent=t("rewards");document.getElementById("navReferral").textContent=t("referral");document.getElementById("navNews").textContent=t("news");["soon2","iphoneSoon","betaSoon"].forEach(id=>document.getElementById(id).textContent=t("soon"));document.getElementById("balanceLabel").textContent=t("balance");document.getElementById("pendingNote").textContent=t("pendingNote");document.getElementById("rewardsHeading").textContent="🎁 "+t("rewards");document.getElementById("islandAdsLabel").textContent=t("islandAds");document.getElementById("islandTasksLabel").textContent=t("islandTasks");document.getElementById("islandRewardText").textContent=t("islandReward");document.getElementById("islandWatchButton").textContent=t("islandWatch");document.getElementById("userIdLabel").textContent=t("userId");document.getElementById("copyIdButton").textContent=t("copyId");document.getElementById("supportTopButton").textContent=t("support");document.getElementById("supportBackButton").textContent=t("back");document.getElementById("newsHeading").textContent="📰 "+t("newsTitle");document.getElementById("supportTitle").textContent=supportText("title");document.getElementById("supportDescription").textContent=supportText("description");document.getElementById("supportInput").placeholder=supportText("placeholder");document.getElementById("supportSend").textContent=supportText("send");document.getElementById("supportMediaNote").textContent=supportText("mediaNote");document.getElementById("referralHeading").textContent="👥 "+t("referral");document.getElementById("referralInviteTitle").textContent=t("referralTitle");document.getElementById("referralDescription").textContent=t("referralDesc");document.getElementById("referralCountLabel").textContent=t("referrals");document.getElementById("referralEarnedLabel").textContent=t("earned");document.getElementById("copyReferralButton").textContent=t("copy");document.getElementById("shareReferralButton").textContent=t("share");document.getElementById("pointsRankingTitle").textContent=t("pointsRank");document.getElementById("referralRankingTitle").textContent=t("refRank");renderGuide();createStages();renderRewards();updateIslandDisplay();renderSupportLanguage();changeMissionLanguage(language);renderNewsLanguage();if(progress>=REQUIRED)statusBox.textContent=t("complete");if(referralLoaded)loadReferral()}
+async function loadUserId(){if(userIdLoaded)return;try{const response=await fetch("/api/me",{method:"GET",cache:"no-store",credentials:"same-origin"});const data=await response.json();if(!response.ok||!data.success||!data.displayId)throw new Error("User ID loading failed");userDisplayId=data.displayId;userIdLoaded=true;document.getElementById("userIdValue").textContent=userDisplayId}catch(error){document.getElementById("userIdValue").textContent="Unavailable"}}
+async function copyUserId(){if(!userDisplayId)await loadUserId();if(!userDisplayId)return;try{await navigator.clipboard.writeText(userDisplayId);const button=document.getElementById("copyIdButton");button.textContent=currentLanguage==="ar"?"✓ تم النسخ":"✓ Copied";setTimeout(()=>{button.textContent=currentLanguage==="ar"?"📋 نسخ":"📋 Copy"},1800)}catch(error){document.getElementById("userIdValue").textContent=userDisplayId}}
+function showPage(page){
+ const support=page==="support";
+ if(maintenanceActive){
+  document.getElementById("maintenancePanel").style.display=support?"none":"block";
+  document.getElementById("homePage").style.display="none";
+  document.getElementById("rewardsPage").style.display="none";
+  document.getElementById("referralPage").style.display="none";
+  document.getElementById("newsPage").style.display="none";
+  document.getElementById("supportPage").style.display=support?"block":"none";
+  if(support)loadSupportMessages(true);
+  return;
+ }
+ const home=page==="home",rewards=page==="rewards",referral=page==="referral",news=page==="news";
+ document.getElementById("maintenancePanel").style.display="none";
+ document.getElementById("homePage").style.display=home?"block":"none";
+ document.getElementById("rewardsPage").style.display=rewards?"block":"none";
+ document.getElementById("supportPage").style.display=support?"block":"none";
+ document.getElementById("referralPage").style.display=referral?"block":"none";
+ document.getElementById("newsPage").style.display=news?"block":"none";
+ document.getElementById("homeTab").classList.toggle("active",home);
+ document.getElementById("rewardsTab").classList.toggle("active",rewards);
+ document.getElementById("referralTab").classList.toggle("active",referral);
+ document.getElementById("newsTab").classList.toggle("active",news);
+ if(rewards){loadRewards();loadIsland()}
+ if(support)loadSupportMessages(true);
+ if(referral)loadReferral();
+ if(news)loadNewsPosts();
+}
+function showIslandTab(tab){const ads=tab==="ads";document.getElementById("islandAdsPanel").style.display=ads?"block":"none";document.getElementById("islandTasksPanel").style.display=ads?"none":"block";document.getElementById("islandAdsTab").classList.toggle("active",ads);document.getElementById("islandTasksTab").classList.toggle("active",!ads);if(!ads)loadMissionStatus()}
+function updatePlatforms(){const download=document.getElementById("download"),androidReady=progress>=REQUIRED;download.href=androidReady?DOWNLOAD_PAGE:"#";window.dispatchEvent(new Event("oxide-progress-updated"));}
+function updateProgress(value){progress=Math.max(0,Math.min(REQUIRED,Number(value)||0));document.getElementById("count").textContent=progress+"/"+REQUIRED;document.getElementById("bar").style.width=(progress/REQUIRED*100)+"%";for(let i=1;i<=REQUIRED;i++){const button=document.getElementById("btn"+i),label=document.getElementById("label"+i);if(!button||!label)continue;label.textContent=t("stage")+" "+i+"/"+REQUIRED;if(i<=progress){button.textContent="✓ "+t("completed");button.disabled=true;button.className=""}else if(i===progress+1){button.textContent=t("watch");button.disabled=false;button.className=""}else{button.textContent="🔒 "+t("locked");button.disabled=true;button.className="locked"}}updatePlatforms()}
+async function refreshProgress(){try{const response=await fetch("/api/progress",{method:"GET",cache:"no-store",credentials:"same-origin"});if(!response.ok)throw new Error("Progress request failed");const data=await response.json();if(!data||!Number.isFinite(Number(data.progress)))throw new Error("Invalid progress response");const newProgress=Math.max(0,Math.min(REQUIRED,Number(data.progress))),session=getActiveSession();if(session&&Number(session.stage)<=newProgress){clearActiveSession();if(newProgress<REQUIRED)statusBox.textContent=t("confirmed")}else if(lastProgress!==null&&newProgress>lastProgress){clearActiveSession();if(newProgress<REQUIRED)statusBox.textContent=t("confirmed")}lastProgress=newProgress;updateProgress(newProgress);if(!userIdLoaded)await loadUserId();if(newProgress>=REQUIRED)statusBox.textContent=t("complete")}catch(error){statusBox.textContent=t("refreshError")}}
+async function watchAd(number){if(MAINTENANCE_MODE||busy||number!==progress+1)return;if(getActiveSession()){statusBox.textContent=t("session");return}const popup=window.open("about:blank","_blank");if(!popup){statusBox.textContent=t("popup");return}busy=true;activePopup=popup;saveActiveSession(number);statusBox.textContent=t("searching");try{const response=await fetch("/api/ptc",{method:"GET",cache:"no-store",credentials:"same-origin"});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||t("error"));const ads=Array.isArray(data.ads)?data.ads:[],validAds=ads.filter(ad=>[0,1].includes(Number(ad.type))&&Number(ad.duration)>0&&typeof ad.url==="string"&&ad.url.startsWith("https://"));if(!validAds.length)throw new Error(t("noAd"));const ad=validAds[Math.floor(Math.random()*validAds.length)];if(popup.closed)throw new Error(t("popup"));popup.location.href=ad.url;statusBox.textContent=t("opened")+" "+(ad.title||"PTC Ad")+" ("+(Number(ad.type)===0?"iFrame / Video":"Window")+") — "+ad.duration+" "+t("seconds")}catch(error){if(popup&&!popup.closed)popup.close();clearActiveSession();statusBox.textContent=error.message||t("error")}finally{busy=false;await refreshProgress()}}
+function updateIslandDisplay(){const count=Math.max(0,Math.min(ISLAND_REQUIRED,Number(islandCompleted)||0));document.getElementById("islandTabCount").textContent=count+"/"+ISLAND_REQUIRED;document.getElementById("islandProgressText").textContent=t("islandProgress")+" "+count+" / "+ISLAND_REQUIRED;document.getElementById("islandProgressFill").style.width=(count/ISLAND_REQUIRED*100)+"%";const button=document.getElementById("islandWatchButton");button.disabled=islandBusy||count>=ISLAND_REQUIRED||islandRemaining<=0||!islandAds.length;button.textContent=count>=ISLAND_REQUIRED?t("islandComplete"):t("islandWatch")}
+function formatIslandTimer(){if(!islandCycleEndsAt)return;const seconds=Math.max(0,Math.floor((islandCycleEndsAt-Date.now())/1000)),hours=Math.floor(seconds/3600),minutes=Math.floor((seconds%3600)/60),secs=seconds%60;document.getElementById("islandTimer").textContent=t("islandTimer")+" "+String(hours).padStart(2,"0")+":"+String(minutes).padStart(2,"0")+":"+String(secs).padStart(2,"0");if(seconds<=0){document.getElementById("islandTimer").textContent=t("islandLoading");loadIsland()}}
+async function loadIsland(){const message=document.getElementById("islandMessage");message.textContent=t("islandLoading");try{const response=await fetch("/api/reward-ptc",{method:"GET",cache:"no-store",credentials:"same-origin"});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||"Island request failed");islandAds=Array.isArray(data.ads)?data.ads.filter(ad=>typeof ad.url==="string"&&ad.url.startsWith("https://")&&Number(ad.duration)>0):[];islandCompleted=Math.max(0,Math.min(ISLAND_REQUIRED,Number(data.completedAds)||0));islandRemaining=Math.max(0,Number(data.remainingAds)||0);islandCycleEndsAt=Date.now()+Math.max(0,Number(data.remainingSeconds)||0)*1000;updateIslandDisplay();message.textContent=islandCompleted>=ISLAND_REQUIRED?t("islandComplete"):"";formatIslandTimer();if(!islandTimerInterval)islandTimerInterval=setInterval(formatIslandTimer,1000)}catch(error){message.textContent=t("islandError");document.getElementById("islandWatchButton").disabled=true}}
+async function watchIslandAd(){if(islandBusy)return;if(islandCompleted>=ISLAND_REQUIRED){document.getElementById("islandMessage").textContent=t("islandComplete");return}if(!islandAds.length){await loadIsland();if(!islandAds.length){document.getElementById("islandMessage").textContent=t("islandNoAds");return}}const popup=window.open("about:blank","_blank");if(!popup){document.getElementById("islandMessage").textContent=t("popup");return}islandBusy=true;updateIslandDisplay();try{const available=islandAds.filter(ad=>typeof ad.url==="string"&&ad.url.startsWith("https://"));if(!available.length)throw new Error(t("islandNoAds"));const ad=available[Math.floor(Math.random()*available.length)];popup.location.href=ad.url;document.getElementById("islandMessage").textContent=t("islandOpened")+" "+(ad.title||"PTC Ad")}catch(error){if(!popup.closed)popup.close();document.getElementById("islandMessage").textContent=error.message||t("islandError")}finally{islandBusy=false;updateIslandDisplay()}}
+async function refreshIslandAfterReturn(){if(document.getElementById("rewardsPage").style.display!=="none"){await loadIsland();await loadRewards()}}
+async function loadRewards(){const grid=document.getElementById("rewardsGrid");grid.innerHTML='<div style="grid-column:1/-1;color:#b8c9dd;padding:20px">'+t("loadingRewards")+"</div>";try{const response=await fetch("/api/rewards",{method:"GET",cache:"no-store",credentials:"same-origin"});const data=await response.json();if(!response.ok||!data.success)throw new Error("Rewards request failed");rewardPoints=Number(data.points)||0;rewardOffers=Array.isArray(data.offers)?data.offers:[];document.getElementById("pointsBalance").textContent=rewardPoints.toLocaleString();document.getElementById("missionsBalance").textContent=rewardPoints.toLocaleString();renderRewards()}catch(error){grid.innerHTML='<div style="grid-column:1/-1;color:#ff9c9c;padding:20px">'+t("rewardsError")+"</div>"}}
+function renderRewards(){const grid=document.getElementById("rewardsGrid");if(!grid||!rewardOffers.length)return;grid.innerHTML="";rewardOffers.forEach(offer=>{const card=document.createElement("div");card.className="reward-card";const image=document.createElement("img");image.className="reward-image";image.src=rewardImages[offer.id]||"";image.alt=offer.name||"Reward";image.loading="lazy";const name=document.createElement("div");name.className="reward-name";name.textContent=offer.name;const price=document.createElement("div");price.className="reward-price";price.textContent=Number(offer.points).toLocaleString()+" POINTS";const button=document.createElement("button");button.className="reward-button";button.textContent=rewardPoints>=Number(offer.points)?t("redeem"):t("insufficient");button.disabled=redeeming||rewardPoints<Number(offer.points);button.onclick=()=>redeemReward(offer.id);card.append(image,name,price,button);grid.appendChild(card)})}
+async function redeemReward(offerId){if(redeeming)return;const offer=rewardOffers.find(item=>Number(item.id)===Number(offerId));if(!offer)return;if(rewardPoints<Number(offer.points)){document.getElementById("rewardMessage").textContent=t("insufficient");return}if(!confirm(t("confirmRedeem")))return;redeeming=true;document.getElementById("rewardMessage").textContent=t("loadingRewards");renderRewards();try{const response=await fetch("/api/rewards",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({offerId:Number(offerId)})});const data=await response.json();if(!response.ok||!data.success){if(data.error==="INSUFFICIENT_POINTS"){await loadRewards();throw new Error(t("insufficient"))}throw new Error(data.error||t("redeemError"))}rewardPoints=Number(data.points)||0;document.getElementById("pointsBalance").textContent=rewardPoints.toLocaleString();document.getElementById("missionsBalance").textContent=rewardPoints.toLocaleString();document.getElementById("rewardMessage").textContent=t("pending")}catch(error){document.getElementById("rewardMessage").textContent=error.message||t("redeemError")}finally{redeeming=false;renderRewards()}}
+/* Referral list IDs are always public aliases; never print raw UUIDs. */
+function makePublicId(value){const input=String(value||"").trim();if(!input)return"OX-UNKNOWN";if(/^OX-[A-Z0-9]{8}$/i.test(input))return input.toUpperCase();const compact=input.replace(/-/g,"");if(/^[0-9a-f]{32}$/i.test(compact))return"OX-"+compact.slice(0,8).toUpperCase();return"OX-UNKNOWN"}
+function safeRankingId(item){if(item&&typeof item.displayId==="string"&&/^OX-[A-Z0-9]{8}$/i.test(item.displayId))return item.displayId.toUpperCase();const candidate=item&&(item.userId||item.user_id||item.id);return candidate?makePublicId(candidate):"OX-UNKNOWN"}
+function renderRanking(targetId,items,metric){const target=document.getElementById(targetId);target.innerHTML="";if(!Array.isArray(items)||!items.length){const row=document.createElement("div");row.className="ranking-row";row.textContent=currentLanguage==="ar"?"لا توجد بيانات بعد":"No data yet";target.appendChild(row);return}items.slice(0,10).forEach((item,index)=>{const row=document.createElement("div");row.className="ranking-row";const place=document.createElement("span");place.className="ranking-place";place.textContent="#"+(index+1);const id=document.createElement("span");id.className="ranking-id";id.textContent=safeRankingId(item);const score=document.createElement("span");score.className="ranking-score";score.textContent=Number(item[metric]||0).toLocaleString()+(metric==="points"?" pts":"");row.append(place,id,score);target.appendChild(row)})}
+async function loadReferral(){const status=document.getElementById("referralStatus");status.textContent=t("loading");try{const response=await fetch("/api/referral",{method:"GET",cache:"no-store",credentials:"same-origin"});const data=await response.json();if(!response.ok||!data.success||typeof data.referralCode!=="string"||!data.referralCode)throw new Error(data.error||"Referral API must return referralCode");referralLinkValue=window.location.origin+window.location.pathname+"?ref="+encodeURIComponent(data.referralCode);document.getElementById("referralLink").value=referralLinkValue;document.getElementById("referralCount").textContent=Number(data.user?.referrals??data.referrals??0).toLocaleString();document.getElementById("referralEarned").textContent=Number(data.user?.earned??data.earned??0).toLocaleString();renderRanking("pointsRanking",data.pointsRanking,"points");renderRanking("referralRanking",data.referralRanking,"referrals");referralLoaded=true;status.textContent=""}catch(error){status.textContent=t("refError");console.error("Referral loading failed:",error)}}
+async function copyReferralLink(){if(!referralLinkValue)await loadReferral();if(!referralLinkValue)return;try{await navigator.clipboard.writeText(referralLinkValue);document.getElementById("referralStatus").textContent=t("copied");setTimeout(()=>{document.getElementById("referralStatus").textContent=""},1800)}catch(error){const field=document.getElementById("referralLink");field.focus();field.select();document.getElementById("referralStatus").textContent=currentLanguage==="ar"?"انسخ الرابط يدويًا":"Copy the link manually"}}
+async function shareReferralLink(){if(!referralLinkValue)await loadReferral();if(!referralLinkValue)return;const shareText=currentLanguage==="ar"?"انضم إلى OXIDE HUB عبر رابط الدعوة الخاص بي واربح!":"Join OXIDE HUB using my invitation link!";if(navigator.share){try{await navigator.share({title:"OXIDE HUB",text:shareText,url:referralLinkValue})}catch(error){if(error.name!=="AbortError")copyReferralLink()}}else copyReferralLink()}
+async function registerReferralFromLink(){const params=new URLSearchParams(window.location.search),referrerId=params.get("ref");if(!referrerId)return;try{const response=await fetch("/api/referral",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({referrerId})});const data=await response.json();if(data.success&&(data.registered||data.alreadyRegistered)){const cleanUrl=new URL(window.location.href);cleanUrl.searchParams.delete("ref");window.history.replaceState({},"",cleanUrl.pathname+cleanUrl.search+cleanUrl.hash);if(data.registered)sessionStorage.setItem("oxide_referral_notice","1")}else if(["REFERRAL_NOT_ALLOWED_FOR_EXISTING_USER","INVALID_REFERRAL","SELF_REFERRAL"].includes(data.error)){const cleanUrl=new URL(window.location.href);cleanUrl.searchParams.delete("ref");window.history.replaceState({},"",cleanUrl.pathname+cleanUrl.search+cleanUrl.hash)}}catch(error){console.error("Referral registration failed; link parameter retained for retry:",error)}}
+function renderSupportLanguage(){const empty=document.getElementById("supportEmpty");if(empty&&empty.dataset.placeholder==="true")empty.textContent=supportText("empty")}
+function appendSupportMessage(message){const container=document.getElementById("supportMessages"),empty=container.querySelector(".support-empty");if(empty)empty.remove();const bubble=document.createElement("div"),isAdmin=message.sender==="admin"||message.sender==="support";bubble.className="support-message "+(isAdmin?"admin":"user");const sender=document.createElement("span");sender.className="support-sender";sender.textContent=isAdmin?supportText("admin"):supportText("you");const body=document.createElement("div");body.textContent=message.message_type&&message.message_type!=="text"?supportText("media"):String(message.message_text||"");bubble.append(sender,body);container.appendChild(bubble)}
+async function loadSupportMessages(initial=false){try{const response=await fetch("/api/support/messages?after="+(initial?0:lastSupportMessageId),{method:"GET",cache:"no-store",credentials:"same-origin"});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||"Support messages failed");const messages=Array.isArray(data.messages)?data.messages:[];if(initial&&messages.length===0){const container=document.getElementById("supportMessages");if(!container.querySelector(".support-message")){container.innerHTML="";const empty=document.createElement("div");empty.className="support-empty";empty.dataset.placeholder="true";empty.textContent=supportText("empty");container.appendChild(empty)}}messages.forEach(message=>{const id=Number(message.id)||0;if(id>lastSupportMessageId){appendSupportMessage(message);lastSupportMessageId=id}});if(messages.length){const container=document.getElementById("supportMessages");container.scrollTop=container.scrollHeight}document.getElementById("supportStatus").textContent=""}catch(error){document.getElementById("supportStatus").textContent=supportText("loadFailed")}}
+async function sendSupportMessage(event){event.preventDefault();if(supportSending)return;const input=document.getElementById("supportInput"),button=document.getElementById("supportSend"),message=input.value.trim();if(!message)return;if(message.length>2000){document.getElementById("supportStatus").textContent=currentLanguage==="ar"?"الرسالة طويلة جدًا. الحد الأقصى 2000 حرف.":"Message is too long. Maximum 2000 characters.";return}supportSending=true;button.disabled=true;document.getElementById("supportStatus").textContent=supportText("sending");try{await loadUserId();const response=await fetch("/api/support/send",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({message})});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||"Support send failed");input.value="";document.getElementById("supportStatus").textContent=supportText("sent");await loadSupportMessages(false)}catch(error){document.getElementById("supportStatus").textContent=supportText("failed")}finally{supportSending=false;button.disabled=false}}
+function startSupportChat(){if(supportPollingStarted)return;supportPollingStarted=true;document.getElementById("supportForm").addEventListener("submit",sendSupportMessage);loadUserId().finally(()=>loadSupportMessages(true));setInterval(()=>{if(!document.hidden)loadSupportMessages(false)},4000)}
+
+
+const missionTranslations = {
+  en: {
+    subtitle:"MISSION CENTER", journey:"Mission Journey", balance:"TOTAL BALANCE · PTS",
+    completed:"COMPLETED MISSIONS", available:"AVAILABLE MISSIONS", percent:"Completed",
+    left:"Missions Left", mission1:"Follow on TikTok", meta1:"SOCIAL MEDIA · MISSION #01",
+    description:"Follow our official TikTok account and upload a screenshot as proof.",
+    reward:"Reward", open:"♪ Open TikTok Account ↗", proof:"Upload follow screenshot (JPG / PNG)",
+    submit:"↑ Submit Proof", availableStatus:"AVAILABLE", pending:"PENDING REVIEW",
+    approved:"COMPLETED ✓", rejected:"REJECTED · TRY AGAIN",
+    success:"Your proof was submitted successfully. It is now pending review.",
+    pendingMessage:"Your screenshot has reached our team. Please wait for review.",
+    approvedMessage:"Mission approved. 50 points have been added to your balance.",
+    rejectedMessage:"Your proof was rejected. You can submit a clearer screenshot.",
+    choose:"Please select a screenshot first.",
+    invalid:"Choose a valid image no larger than 8 MB.",
+    sending:"⏳ Submitting proof...", wait:"Please wait...",
+    already:"This mission is already completed.",
+    alreadyPending:"You already have a submission under review.",
+    session:"Could not identify your account. Reload the page and try again.",
+    notFound:"Your account was not found. Reload the page.",
+    delivery:"Could not send proof to the review team. Try again later.",
+    failed:"Submission failed. Please try again.",
+    statusError:"Could not load mission status. Check your connection and reload.",
+    mission2:"MISSION 02", mission3:"MISSION 03", newChallenge:"NEW CHALLENGE",
+    progressSuffix:"Completed", remainingSuffix:"Missions Left"
+  },
+  fr: {
+    subtitle:"CENTRE DES MISSIONS", journey:"Progression des missions", balance:"SOLDE TOTAL · PTS",
+    completed:"MISSIONS TERMINÉES", available:"MISSIONS DISPONIBLES", percent:"Terminées",
+    left:"Missions restantes", mission1:"Suivre sur TikTok", meta1:"RÉSEAUX SOCIAUX · MISSION #01",
+    description:"Suivez notre compte TikTok officiel et envoyez une capture d’écran comme preuve.",
+    reward:"Récompense", open:"♪ Ouvrir le compte TikTok ↗", proof:"Envoyer une capture d’écran (JPG / PNG)",
+    submit:"↑ Envoyer la preuve", availableStatus:"DISPONIBLE", pending:"EN ATTENTE DE VALIDATION",
+    approved:"TERMINÉE ✓", rejected:"REFUSÉE · RÉESSAYER",
+    success:"Votre preuve a été envoyée. Elle est en attente de validation.",
+    pendingMessage:"Votre capture a été reçue. Veuillez attendre la vérification.",
+    approvedMessage:"Mission validée. 50 points ont été ajoutés à votre solde.",
+    rejectedMessage:"Votre preuve a été refusée. Vous pouvez envoyer une image plus claire.",
+    choose:"Veuillez d’abord choisir une capture d’écran.",
+    invalid:"Choisissez une image valide de 8 Mo maximum.",
+    sending:"⏳ Envoi de la preuve...", wait:"Veuillez patienter...",
+    already:"Cette mission est déjà terminée.",
+    alreadyPending:"Votre preuve est déjà en cours de vérification.",
+    session:"Impossible d’identifier votre compte. Rechargez la page et réessayez.",
+    notFound:"Compte introuvable. Rechargez la page.",
+    delivery:"Impossible d’envoyer la preuve à l’équipe. Réessayez plus tard.",
+    failed:"Échec de l’envoi. Veuillez réessayer.",
+    statusError:"Impossible de charger le statut. Vérifiez votre connexion et rechargez.",
+    mission2:"MISSION 02", mission3:"MISSION 03", newChallenge:"NOUVEAU DÉFI",
+    progressSuffix:"Terminées", remainingSuffix:"Missions restantes"
+  },
+  ar: {
+    subtitle:"مركز المهمات", journey:"تقدم المهمات", balance:"إجمالي الرصيد · نقطة",
+    completed:"المهمات المكتملة", available:"المهمات المتاحة", percent:"مكتملة",
+    left:"مهمات متبقية", mission1:"متابعة حساب TikTok", meta1:"منصات التواصل · المهمة 01",
+    description:"تابع حسابنا الرسمي على TikTok ثم ارفع لقطة شاشة واضحة لإثبات المتابعة.",
+    reward:"المكافأة", open:"♪ فتح حساب TikTok ↗", proof:"ارفع صورة إثبات المتابعة (JPG / PNG)",
+    submit:"↑ إرسال الإثبات", availableStatus:"متاحة", pending:"قيد المراجعة",
+    approved:"مكتملة ✓", rejected:"مرفوضة · حاول مجددًا",
+    success:"تم إرسال الإثبات بنجاح، وهو الآن قيد المراجعة.",
+    pendingMessage:"وصلت صورة الإثبات إلى فريقنا. يرجى انتظار المراجعة.",
+    approvedMessage:"تمت الموافقة على المهمة وإضافة 50 نقطة إلى رصيدك.",
+    rejectedMessage:"تم رفض الإثبات. يمكنك إرسال صورة أوضح والمحاولة مجددًا.",
+    choose:"اختر صورة الإثبات أولاً.",
+    invalid:"اختر صورة صالحة لا يتجاوز حجمها 8 ميغابايت.",
+    sending:"⏳ جارٍ إرسال الإثبات...", wait:"يرجى الانتظار...",
+    already:"هذه المهمة مكتملة بالفعل.",
+    alreadyPending:"لديك إثبات قيد المراجعة بالفعل.",
+    session:"تعذر تحديد حسابك. أعد تحميل الصفحة وحاول مجددًا.",
+    notFound:"لم يتم العثور على حسابك. أعد تحميل الصفحة.",
+    delivery:"تعذر إرسال الإثبات إلى فريق المراجعة. حاول لاحقًا.",
+    failed:"فشل إرسال الإثبات. حاول مرة أخرى.",
+    statusError:"تعذر تحميل حالة المهمة. تحقق من الاتصال ثم أعد المحاولة.",
+    mission2:"المهمة 02", mission3:"المهمة 03", newChallenge:"تحدٍ جديد",
+    progressSuffix:"مكتملة", remainingSuffix:"مهمات متبقية"
+  }
+};
+missionTranslations.es={...missionTranslations.en,subtitle:"CENTRO DE MISIONES",journey:"Progreso de misiones",balance:"SALDO TOTAL · PTS",completed:"MISIONES COMPLETADAS",available:"MISIONES DISPONIBLES",percent:"Completado",left:"Misiones restantes",mission1:"Seguir en TikTok",meta1:"REDES SOCIALES · MISIÓN #01",description:"Sigue nuestra cuenta oficial de TikTok y sube una captura como prueba.",reward:"Recompensa",open:"♪ Abrir cuenta de TikTok ↗",proof:"Sube una captura de seguimiento (JPG / PNG)",submit:"↑ Enviar prueba",availableStatus:"DISPONIBLE",pending:"PENDIENTE DE REVISIÓN",approved:"COMPLETADA ✓",rejected:"RECHAZADA · INTÉNTALO DE NUEVO",success:"Tu prueba se envió correctamente y está pendiente de revisión.",pendingMessage:"El equipo recibió tu captura. Espera la revisión.",approvedMessage:"Misión aprobada. Se añadieron 50 puntos a tu saldo.",rejectedMessage:"La prueba fue rechazada. Puedes enviar una captura más clara.",choose:"Selecciona primero una captura.",invalid:"Elige una imagen válida de hasta 8 MB.",sending:"⏳ Enviando prueba...",wait:"Espera, por favor...",already:"Esta misión ya está completada.",alreadyPending:"Ya tienes un envío pendiente de revisión.",session:"No se pudo identificar tu cuenta. Recarga la página.",notFound:"No se encontró tu cuenta.",delivery:"No se pudo enviar la prueba al equipo. Inténtalo más tarde.",failed:"No se pudo enviar. Inténtalo de nuevo.",statusError:"No se pudo cargar el estado de la misión.",mission2:"MISIÓN 02",mission3:"MISIÓN 03",newChallenge:"NUEVO RETO",progressSuffix:"Completadas",remainingSuffix:"Misiones restantes"};
+missionTranslations.de={...missionTranslations.en,subtitle:"MISSIONENZENTRUM",journey:"Missionsfortschritt",balance:"GESAMTGUTHABEN · PTS",completed:"ABGESCHLOSSENE MISSIONEN",available:"VERFÜGBARE MISSIONEN",percent:"Abgeschlossen",left:"Verbleibende Missionen",mission1:"Auf TikTok folgen",meta1:"SOZIALE MEDIEN · MISSION #01",description:"Folge unserem offiziellen TikTok-Konto und lade einen Screenshot als Nachweis hoch.",reward:"Belohnung",open:"♪ TikTok-Konto öffnen ↗",proof:"Screenshot hochladen (JPG / PNG)",submit:"↑ Nachweis senden",availableStatus:"VERFÜGBAR",pending:"WIRD ÜBERPRÜFT",approved:"ABGESCHLOSSEN ✓",rejected:"ABGELEHNT · ERNEUT VERSUCHEN",success:"Dein Nachweis wurde gesendet und wird überprüft.",pendingMessage:"Dein Screenshot ist eingegangen. Bitte warte auf die Prüfung.",approvedMessage:"Mission bestätigt. 50 Punkte wurden deinem Guthaben hinzugefügt.",rejectedMessage:"Der Nachweis wurde abgelehnt. Sende einen klareren Screenshot.",choose:"Bitte wähle zuerst einen Screenshot aus.",invalid:"Wähle ein gültiges Bild mit höchstens 8 MB.",sending:"⏳ Nachweis wird gesendet...",wait:"Bitte warten...",already:"Diese Mission ist bereits abgeschlossen.",alreadyPending:"Du hast bereits einen Nachweis zur Prüfung eingereicht.",session:"Dein Konto konnte nicht erkannt werden. Lade die Seite neu.",notFound:"Dein Konto wurde nicht gefunden.",delivery:"Der Nachweis konnte nicht gesendet werden. Versuche es später erneut.",failed:"Senden fehlgeschlagen. Bitte erneut versuchen.",statusError:"Missionsstatus konnte nicht geladen werden.",mission2:"MISSION 02",mission3:"MISSION 03",newChallenge:"NEUE HERAUSFORDERUNG",progressSuffix:"Abgeschlossen",remainingSuffix:"Verbleibende Missionen"};
+let missionLanguage = "ar";
+function mt(key){return missionTranslations[missionLanguage]?.[key] || missionTranslations.en[key] || key;}
+function changeMissionLanguage(language){
+  if(!missionTranslations[language]) return;
+  missionLanguage=language;
+  const select=document.getElementById("missionLanguage");
+  if(select) select.value=language;
+  const languageLabel=document.getElementById("missionLanguageLabel");if(languageLabel)languageLabel.textContent=({ar:"لغة الموقع",en:"SITE LANGUAGE",fr:"LANGUE DU SITE",es:"IDIOMA DEL SITIO",de:"SEITENSPRACHE"})[language]||"SITE LANGUAGE";
+  const rtl=language==="ar";
+  const center=document.getElementById("missionCenter");
+  center.dir=rtl?"rtl":"ltr";
+  document.getElementById("missionSubtitle").textContent=mt("subtitle");
+  document.getElementById("missionJourneyLabel").textContent=mt("journey");
+  document.getElementById("missionBalanceLabel").textContent=mt("balance");
+  document.getElementById("missionCompletedLabel").textContent=mt("completed");
+  document.getElementById("missionAvailableTitle").textContent=mt("available");
+  document.getElementById("mission1Title").textContent=mt("mission1");
+  document.getElementById("mission1Meta").textContent=mt("meta1");
+  document.getElementById("mission1Description").textContent=mt("description");
+  document.getElementById("missionRewardLabel").textContent=mt("reward");
+  document.getElementById("missionTikTokLink").textContent=mt("open");
+  document.getElementById("missionProofLabel").textContent=mt("proof");
+  document.getElementById("mission2Title").textContent=mt("mission2");
+  document.getElementById("mission3Title").textContent=mt("mission3");
+  document.getElementById("mission2Meta").textContent=mt("newChallenge");
+  document.getElementById("mission3Meta").textContent=mt("newChallenge");
+  const status=document.getElementById("mission1Status");
+  if(status.dataset.state==="approved"){status.textContent=mt("approved");status.className="mission-status-pill approved";}
+  else if(status.dataset.state==="pending"){status.textContent=mt("pending");status.className="mission-status-pill pending";}
+  else if(status.dataset.state==="rejected"){status.textContent=mt("rejected");status.className="mission-status-pill";}
+  else {status.textContent=mt("availableStatus");status.className="mission-status-pill";}
+  const button=document.getElementById("mission1Submit");
+  if(!button.disabled) button.textContent=mt("submit");
+  updateMissionProgress(Number(document.getElementById("completedMissionsCount").textContent.split("/")[0])||0);
+}
+function updateMissionProgress(completed){
+  const count=Math.max(0,Math.min(10,Number(completed)||0));
+  const percent=count*10;
+  document.getElementById("missionProgressNumber").textContent=count+" / 10";
+  document.getElementById("missionProgressFill").style.width=percent+"%";
+  document.getElementById("missionProgressPercent").textContent=percent+"% "+mt("percent");
+  document.getElementById("missionRemaining").textContent=(10-count)+" "+mt("remainingSuffix");
+}
+
+let missionSubmitting = false;
+
+async function loadMissionStatus() {
+  const statusNode = document.getElementById("mission1Status");
+  const messageNode = document.getElementById("mission1Message");
+  try {
+    const response = await fetch("/api/missions/status", {
+      method: "GET", cache: "no-store", credentials: "same-origin"
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) throw new Error(data.error || "STATUS_FAILED");
+
+    const points = Number(data.points || 0);
+    document.getElementById("missionsBalance").textContent = points.toLocaleString();
+    const completed = Math.min(10, Number(data.completedMissions || 0));
+    document.getElementById("completedMissionsCount").textContent = completed + "/10";
+    updateMissionProgress(completed);
+
+    const form = document.getElementById("mission1Form");
+    const input = document.getElementById("mission1Proof");
+    const button = document.getElementById("mission1Submit");
+
+    if (data.mission1 === "approved") {
+      statusNode.dataset.state = "approved";
+      statusNode.textContent = mt("approved");
+      statusNode.className = "mission-status-pill approved";
+      messageNode.textContent = mt("approvedMessage");
+      form.style.display = "none";
+    } else if (data.mission1 === "pending") {
+      statusNode.dataset.state = "pending";
+      statusNode.textContent = mt("pending");
+      statusNode.className = "mission-status-pill pending";
+      messageNode.textContent = mt("pendingMessage");
+      input.disabled = true;
+      button.disabled = true;
+      button.textContent = mt("pending");
+    } else {
+      statusNode.dataset.state = data.mission1 === "rejected" ? "rejected" : "available";
+      statusNode.textContent = data.mission1 === "rejected" ? mt("rejected") : mt("availableStatus");
+      statusNode.className = "mission-status-pill";
+      messageNode.textContent = data.mission1 === "rejected" ? mt("rejectedMessage") : "";
+      if (!missionSubmitting) {
+        input.disabled = false;
+        button.disabled = false;
+        button.textContent = mt("submit");
+      }
+    }
+  } catch (error) {
+    messageNode.textContent = mt("statusError");
+  }
+}
+
+async function submitMissionProof(event) {
+  event.preventDefault();
+  if (missionSubmitting) return;
+
+  const input = document.getElementById("mission1Proof");
+  const button = document.getElementById("mission1Submit");
+  const message = document.getElementById("mission1Message");
+  const file = input.files && input.files[0];
+
+  if (!file) {
+    message.textContent = mt("choose");
+    return;
+  }
+  if (!file.type.startsWith("image/") || file.size > 8 * 1024 * 1024) {
+    message.textContent = mt("invalid");
+    return;
+  }
+
+  missionSubmitting = true;
+  button.disabled = true;
+  button.textContent = mt("sending");
+  message.textContent = mt("wait");
+
+  try {
+    const formData = new FormData();
+    formData.append("proof", file, file.name);
+
+    const response = await fetch("/api/missions/submit", {
+      method: "POST",
+      body: formData,
+      credentials: "same-origin"
+    });
+    const data = await response.json();
+
+    if (response.status === 409 && data.error === "MISSION_ALREADY_COMPLETED") {
+      message.textContent = mt("already");
+      await loadMissionStatus();
+      return;
+    }
+    if (response.status === 409 && data.error === "ALREADY_PENDING") {
+      message.textContent = mt("alreadyPending");
+      await loadMissionStatus();
+      return;
+    }
+    if (!response.ok || !data.success) {
+      const errors = {
+        NO_VISITOR_SESSION: mt("session"),
+        USER_NOT_FOUND: mt("notFound"),
+        INVALID_IMAGE: mt("invalid"),
+        TELEGRAM_DELIVERY_FAILED: mt("delivery")
+      };
+      throw new Error(errors[data.error] || mt("failed"));
+    }
+
+    message.textContent = mt("success");
+    input.value = "";
+    await loadMissionStatus();
+  } catch (error) {
+    message.textContent = error.message || mt("failed");
+  } finally {
+    missionSubmitting = false;
+    if (button.isConnected && button.textContent !== mt("pending")) {
+      button.disabled = false;
+      button.textContent = mt("submit");
+    }
+  }
+}
+
+let languagePreferenceReady=false;
+async function saveLanguagePreference(language){
+ try{await fetch("/api/preferences",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({language})})}catch(error){console.warn("Language preference will remain on this device until server sync is available.",error)}
+}
+async function loadSavedLanguage(){
+ let language=localStorage.getItem("oxide_language")||"ar";
+ try{const response=await fetch("/api/preferences",{method:"GET",credentials:"same-origin",cache:"no-store"});if(response.ok){const data=await response.json();if(data.success&&translations[data.language])language=data.language}}catch(error){}
+ languagePreferenceReady=true;changeLanguage(language,false);
+}
+function renderNewsLanguage(){
+ const empty=document.getElementById("newsEmpty");if(empty)empty.textContent=t("newsEmpty");
+ const heading=document.getElementById("newsHeading");if(heading)heading.textContent="📰 "+t("newsTitle");
+}
+function shortNewsUser(id){return "OX-"+String(id||"").replace(/-/g,"").slice(0,8).toUpperCase()}
+function makeNewsElement(tag,cls,text){const el=document.createElement(tag);if(cls)el.className=cls;if(text!==undefined)el.textContent=text;return el}
+async function loadNewsPosts(){
+ const target=document.getElementById("newsPosts"),status=document.getElementById("newsStatus");
+ status.textContent=t("newsLoading");target.innerHTML="";
+ try{
+  const response=await fetch("/api/news",{credentials:"same-origin",cache:"no-store"});const data=await response.json();
+  if(!response.ok||!data.success)throw new Error(data.error||"NEWS_LOAD_FAILED");
+  const posts=Array.isArray(data.posts)?data.posts:[];
+  if(!posts.length){target.appendChild(makeNewsElement("div","news-empty",t("newsEmpty")));status.textContent="";return}
+  for(const post of posts){
+   const card=makeNewsElement("article","news-card");card.dataset.postId=post.id;
+   card.appendChild(makeNewsElement("h3","news-card-title",post.title||""));
+   const media=post.media_type==="video"?makeNewsElement("video","news-media"):makeNewsElement("img","news-media");
+   media.src="/api/news/media?id="+encodeURIComponent(post.id);if(post.media_type==="video"){media.controls=true;media.preload="metadata"}else{media.alt=post.title||"OXIDE HUB news";media.loading="lazy"}card.appendChild(media);
+   const meta=makeNewsElement("div","news-meta");meta.appendChild(makeNewsElement("span","", "👁 "+Number(post.views||0)+" "+t("views")));meta.appendChild(makeNewsElement("span","", "💬 "+Number(post.comments_count||0)+" "+t("comments")));meta.appendChild(makeNewsElement("span","",new Date(Number(post.created_at||0)*1000).toLocaleString(currentLanguage)));card.appendChild(meta);
+   const reactions=makeNewsElement("div","news-reactions");
+   const reactionItems=[["❤️","heart_count"],["😡","angry_count"],["🥺","sad_count"],["👍","like_count"],["👎","dislike_count"]];
+   for(const [emoji,key] of reactionItems){const b=makeNewsElement("button","news-reaction",emoji+" "+Number(post[key]||0));b.type="button";if(post.my_reaction===emoji)b.classList.add("active");b.addEventListener("click",()=>sendNewsReaction(post.id,emoji));reactions.appendChild(b)}
+   card.appendChild(reactions);
+   const comments=makeNewsElement("div","news-comments");comments.id="newsComments-"+post.id;
+   const list=makeNewsElement("div","news-comment-list");list.id="newsCommentList-"+post.id;comments.appendChild(list);
+   const form=makeNewsElement("form","news-comment-form");const input=makeNewsElement("input","news-comment-input");input.type="text";input.maxLength=1000;input.placeholder=t("writeComment");input.required=true;const send=makeNewsElement("button","news-comment-send",t("send"));send.type="submit";form.append(input,send);form.addEventListener("submit",e=>{e.preventDefault();sendNewsComment(post.id,input,send)});comments.appendChild(form);card.appendChild(comments);target.appendChild(card);
+   loadNewsComments(post.id);
+   fetch("/api/news",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({action:"view",postId:post.id})}).catch(()=>{});
+  }
+  status.textContent="";
+ }catch(error){status.textContent=t("newsError");target.innerHTML=""}
+}
+async function loadNewsComments(postId){
+ const target=document.getElementById("newsCommentList-"+postId);if(!target)return;
+ try{const response=await fetch("/api/news?postId="+encodeURIComponent(postId),{credentials:"same-origin",cache:"no-store"});const data=await response.json();if(!response.ok||!data.success)throw new Error();target.innerHTML="";const comments=Array.isArray(data.comments)?data.comments:[];if(!comments.length){target.appendChild(makeNewsElement("div","news-comment",t("noComments")));return}comments.forEach(item=>{const row=makeNewsElement("div","news-comment");row.appendChild(makeNewsElement("span","news-comment-user",shortNewsUser(item.user_id)));row.appendChild(document.createTextNode(item.comment||""));target.appendChild(row)})}catch(error){target.textContent=t("commentError")}
+}
+async function sendNewsComment(postId,input,button){const comment=input.value.trim();if(!comment)return;button.disabled=true;try{const response=await fetch("/api/news",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({action:"comment",postId,comment})});const data=await response.json();if(!response.ok||!data.success)throw new Error();input.value="";await loadNewsComments(postId);await loadNewsPosts()}catch(error){document.getElementById("newsStatus").textContent=t("commentError")}finally{button.disabled=false}}
+async function sendNewsReaction(postId,reaction){try{const response=await fetch("/api/news",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({action:"reaction",postId,reaction})});const data=await response.json();if(!response.ok||!data.success)throw new Error();await loadNewsPosts()}catch(error){document.getElementById("newsStatus").textContent=t("newsError")}}
+
+function activateMaintenance(message){
+ maintenanceActive=true;
+ MAINTENANCE_MODE=true;
+ document.getElementById("maintenanceMessage").textContent=message||"نعتذر عن الإزعاج، الموقع تحت الصيانة حالياً. سنعود قريباً.";
+ document.getElementById("maintenancePanel").style.display="block";
+ ["homePage","rewardsPage","referralPage","newsPage","supportPage"].forEach(id=>document.getElementById(id).style.display="none");
+ ["homeTab","rewardsTab","referralTab","newsTab"].forEach(id=>{
+  const button=document.getElementById(id);
+  button.disabled=true;
+  button.classList.add("maintenance-locked");
+  let soon=button.querySelector(".nav-soon");
+  if(!soon){soon=document.createElement("span");soon.className="nav-soon";button.appendChild(soon)}
+  soon.textContent="SOON 🔒";
+ });
+ startSupportChat();
+}
+async function initializeOxideHub(){
+ try{
+  const response=await fetch("/api/maintenance",{method:"GET",cache:"no-store",credentials:"same-origin"});
+  const data=await response.json();
+  if(response.ok&&data.success&&data.maintenance){activateMaintenance(data.message);return}
+ }catch(error){console.warn("Maintenance status could not be loaded; continuing with normal site startup.",error)}
+ await boot();
+}
+async function boot(){/* Register referral before any other endpoint can create a visitor. */await registerReferralFromLink();getActiveSession();createStages();await refreshProgress();await loadSavedLanguage();if(sessionStorage.getItem("oxide_referral_notice")==="1"){document.getElementById("referralStatus").textContent=t("refRegistered");sessionStorage.removeItem("oxide_referral_notice")}loadRewards();loadIsland();loadMissionStatus();startSupportChat();setInterval(refreshProgress,5000);window.addEventListener("focus",()=>{refreshProgress();refreshIslandAfterReturn();loadSupportMessages(false)});document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshProgress();refreshIslandAfterReturn();loadSupportMessages(false)}});window.addEventListener("pageshow",()=>{getActiveSession();refreshProgress();refreshIslandAfterReturn();loadSupportMessages(false)})}
+initializeOxideHub();
+
+// OXIDE HUB live platform availability and real download progress.
+(function(){
+ const buttons={android:document.getElementById("download"),ios:document.getElementById("iphoneButton"),beta:document.getElementById("betaButton")};
+ const box=document.getElementById("oxideDownloadProgress"),bar=document.getElementById("oxideDownloadBar"),label=document.getElementById("oxideDownloadLabel");
+ let platformData={};
+ function setProgress(percent,text){
+   if(!box)return; box.style.display="block"; bar.style.width=Math.max(0,Math.min(100,percent))+"%";
+   label.textContent=text||("Downloading "+Math.round(percent)+"%");
+ }
+ function hideProgress(){if(box)box.style.display="none";if(bar)bar.style.width="0%";}
+ async function loadPlatforms(){
+   try{
+     const res=await fetch("/api/platforms",{cache:"no-store",credentials:"same-origin"});
+     const data=await res.json(); if(!res.ok||!data.success)throw new Error("platforms");
+     platformData=data.platforms||{};
+     const map=[["android",buttons.android],["ios",buttons.ios],["beta",buttons.beta]];
+     for(const [key,el] of map){
+       const p=platformData[key]||{},enabled=!!p.enabled,ready=enabled&&progress>=REQUIRED;
+       if(!el)continue;
+       el.classList.toggle("available",ready);
+       if(key==="android"){
+         el.setAttribute("aria-disabled",String(!ready));
+         el.href=ready?DOWNLOAD_PAGE:"#";
+       }else{
+         el.disabled=!ready;
+       }
+       const soon=document.getElementById(key==="ios"?"iphoneSoon":key==="beta"?"betaSoon":"androidSoon");
+       if(soon)soon.style.display=enabled?"none":"";
+     }
+   }catch(e){console.warn("Platform status unavailable",e);}
+ }
+ async function downloadPlatform(key){
+   const p=platformData[key];
+   if(!p||!p.enabled)return;
+   if(progress<REQUIRED){alert(t("complete"));return;}
+   if(key==="ios"&&p.download_url){window.location.href=p.download_url;return;}
+   const button=buttons[key]; if(button){button.disabled=true;button.classList.remove("available");}
+   setProgress(0,"Downloading 0%");
+   try{
+     const response=await fetch("/api/download?platform="+encodeURIComponent(key),{credentials:"same-origin",cache:"no-store"});
+     if(!response.ok){
+       let message="Download unavailable";
+       try{const d=await response.json();if(d.error==="AD_PROGRESS_REQUIRED")message="Complete the required ads before downloading.";else if(d.error)message=d.error;}catch(_){}
+       throw new Error(message);
+     }
+     const total=Number(response.headers.get("Content-Length")||0),reader=response.body.getReader(),chunks=[];
+     let received=0;
+     while(true){
+       const part=await reader.read(); if(part.done)break;
+       chunks.push(part.value);received+=part.value.length;
+       if(total>0)setProgress(received/total*100,"Downloading "+Math.floor(received/total*100)+"%");
+       else setProgress(0,"Downloading "+(received/1048576).toFixed(1)+" MB");
+     }
+     const blob=new Blob(chunks,{type:response.headers.get("Content-Type")||"application/octet-stream"});
+     const url=URL.createObjectURL(blob),a=document.createElement("a");
+     a.href=url;a.download=p.file_name||((key==="beta"?"OXIDE_BETA":"OXIDE_HUB")+".apk");
+     document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+     setProgress(100,"Download 100%");
+     setTimeout(hideProgress,1800);
+   }catch(e){hideProgress();alert(e.message||"Download failed");}
+   finally{if(button){button.disabled=false;}loadPlatforms();}
+ }
+ if(buttons.android)buttons.android.addEventListener("click",e=>{e.preventDefault();downloadPlatform("android")});
+ if(buttons.beta)buttons.beta.addEventListener("click",()=>downloadPlatform("beta"));
+ if(buttons.ios)buttons.ios.addEventListener("click",()=>downloadPlatform("ios"));
+ window.addEventListener("oxide-progress-updated",loadPlatforms);
+ loadPlatforms();
+})();
+
+</script>
+</body>
+</html>
