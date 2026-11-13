@@ -99,7 +99,27 @@ body{min-height:100vh;background:linear-gradient(rgba(3,8,22,.68),rgba(3,8,22,.8
 #oxideRainCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
 .container{position:relative;z-index:1}
 @media(prefers-reduced-motion:reduce){body,.oxide-admin-stars{animation:none}}
+/* OXIDE HUB - Glass Effect */
+.admin-card,
+.stat-card,
+.panel,
+.section,
+.card,
+.table-container,
+.modal-content {
+  background: rgba(7, 15, 35, 0.58) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(120, 190, 255, 0.18);
+}
 
+button,
+input,
+select,
+textarea {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
 </style>
 </head>
 <body>
