@@ -353,6 +353,41 @@ async function completeUpload(request, env) {
     const downloadUrl =
       R2_PUBLIC_URL + "/" + session.object_key;
 
+    const now = Math.floor(Date.now() / 1000);
+    const fileId = crypto.randomUUID();
+
+    // Save the new file without deleting previous files.
+    await env.DB.prepare(`
+      INSERT INTO platform_files (
+        id,
+        platform,
+        title,
+        version,
+        description,
+        file_name,
+        file_key,
+        download_url,
+        file_size,
+        enabled,
+        created_at,
+        updated_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+    `).bind(
+      fileId,
+      platform,
+      session.title,
+      session.version,
+      session.description,
+      session.file_name,
+      session.object_key,
+      downloadUrl,
+      Number(session.file_size),
+      now,
+      now
+    ).run();
+
+    // Keep the old download record working during migration.
     await env.DB.prepare(`
       UPDATE platform_downloads
       SET
@@ -374,7 +409,7 @@ async function completeUpload(request, env) {
       session.object_key,
       downloadUrl,
       Number(session.file_size),
-      Math.floor(Date.now() / 1000),
+      now,
       platform
     ).run();
 
@@ -390,6 +425,7 @@ async function completeUpload(request, env) {
 
     return json({
       success: true,
+      file_id: fileId,
       file_name: session.file_name,
       file_size: Number(session.file_size),
       download_url: downloadUrl,
