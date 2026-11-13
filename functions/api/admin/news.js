@@ -1,4 +1,6 @@
 
+import { authorizeAdmin, adminAuthResponse } from "../_lib/admin-auth.js";
+
 const ALLOWED_IMAGE_TYPES = [
   "image/jpeg",
   "image/png",
@@ -7,98 +9,6 @@ const ALLOWED_IMAGE_TYPES = [
 
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
 const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
-
-async function verifyAdmin(request, env) {
-  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_ADMIN_ID) {
-    throw new Error("ADMIN_CONFIG_MISSING");
-  }
-
-  let initData = "";
-
-  if (request.method === "POST") {
-    const contentType = request.headers.get("content-type") || "";
-
-    if (contentType.includes("application/json")) {
-      const body = await request.clone().json();
-      initData = body.initData || "";
-    } else if (contentType.includes("multipart/form-data")) {
-      const form = await request.clone().formData();
-      initData = form.get("initData") || "";
-    }
-  }
-
-  if (!initData) throw new Error("UNAUTHORIZED");
-
-  const params = new URLSearchParams(initData);
-  const receivedHash = params.get("hash");
-
-  if (!receivedHash) throw new Error("INVALID_INIT_DATA");
-
-  params.delete("hash");
-
-  const dataCheckString = [...params.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-    .join("\n");
-
-  const encoder = new TextEncoder();
-
-  const secretKey = await crypto.subtle.importKey(
-    "raw",
-    encoder.encode("WebAppData"),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-
-  const secret = await crypto.subtle.sign(
-    "HMAC",
-    secretKey,
-    encoder.encode(env.TELEGRAM_BOT_TOKEN)
-  );
-
-  const hmacKey = await crypto.subtle.importKey(
-    "raw",
-    secret,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-
-  const calculatedHash = await crypto.subtle.sign(
-    "HMAC",
-    hmacKey,
-    encoder.encode(dataCheckString)
-  );
-
-  const calculatedHex = [...new Uint8Array(calculatedHash)]
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
-
-  if (calculatedHex !== receivedHash) {
-    throw new Error("INVALID_SIGNATURE");
-  }
-
-  const authDate = Number(params.get("auth_date") || 0);
-
-  if (!authDate || Math.floor(Date.now() / 1000) - authDate > 86400) {
-    throw new Error("SESSION_EXPIRED");
-  }
-
-  let user;
-
-  try {
-    user = JSON.parse(params.get("user") || "{}");
-  } catch {
-    throw new Error("INVALID_USER");
-  }
-
-  if (String(user.id) !== String(env.TELEGRAM_ADMIN_ID)) {
-    throw new Error("ADMIN_ONLY");
-  }
-
-  return true;
-}
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -118,8 +28,7 @@ async function uploadMedia(file, env) {
   const mime = file.type || "";
   const name = (file.name || "").toLowerCase();
 
-  const isVideo =
-    mime === "video/mp4" || name.endsWith(".mp4");
+  const isVideo = mime === "video/mp4" || name.endsWith(".mp4");
 
   const isImage =
     ALLOWED_IMAGE_TYPES.includes(mime) ||
@@ -142,7 +51,11 @@ async function uploadMedia(file, env) {
 
   const form = new FormData();
   form.append("chat_id", String(env.TELEGRAM_ADMIN_ID));
-  form.append(fieldName, file, file.name || (isVideo ? "video.mp4" : "image.jpg"));
+  form.append(
+    fieldName,
+    file,
+    file.name || (isVideo ? "video.mp4" : "image.jpg")
+  );
 
   const response = await fetch(
     `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`,
@@ -172,7 +85,9 @@ async function uploadMedia(file, env) {
       : "";
   }
 
-  if (!fileId) throw new Error("TELEGRAM_FILE_ID_MISSING");
+  if (!fileId) {
+    throw new Error("TELEGRAM_FILE_ID_MISSING");
+  }
 
   return {
     media_type: isVideo ? "video" : "photo",
@@ -190,41 +105,23 @@ async function getPosts(env) {
       p.views,
       p.created_at,
 
-      (
-        SELECT COUNT(*)
-        FROM news_comments c
-        WHERE c.post_id = p.id
-      ) AS comments_count,
+      (SELECT COUNT(*) FROM news_comments c
+       WHERE c.post_id = p.id) AS comments_count,
 
-      (
-        SELECT COUNT(*)
-        FROM news_reactions r
-        WHERE r.post_id = p.id AND r.reaction = '❤️'
-      ) AS heart_count,
+      (SELECT COUNT(*) FROM news_reactions r
+       WHERE r.post_id = p.id AND r.reaction = '❤️') AS heart_count,
 
-      (
-        SELECT COUNT(*)
-        FROM news_reactions r
-        WHERE r.post_id = p.id AND r.reaction = '😡'
-      ) AS angry_count,
+      (SELECT COUNT(*) FROM news_reactions r
+       WHERE r.post_id = p.id AND r.reaction = '😡') AS angry_count,
 
-      (
-        SELECT COUNT(*)
-        FROM news_reactions r
-        WHERE r.post_id = p.id AND r.reaction = '🥺'
-      ) AS sad_count,
+      (SELECT COUNT(*) FROM news_reactions r
+       WHERE r.post_id = p.id AND r.reaction = '🥺') AS sad_count,
 
-      (
-        SELECT COUNT(*)
-        FROM news_reactions r
-        WHERE r.post_id = p.id AND r.reaction = '👍'
-      ) AS like_count,
+      (SELECT COUNT(*) FROM news_reactions r
+       WHERE r.post_id = p.id AND r.reaction = '👍') AS like_count,
 
-      (
-        SELECT COUNT(*)
-        FROM news_reactions r
-        WHERE r.post_id = p.id AND r.reaction = '👎'
-      ) AS dislike_count
+      (SELECT COUNT(*) FROM news_reactions r
+       WHERE r.post_id = p.id AND r.reaction = '👎') AS dislike_count
 
     FROM news_posts p
     ORDER BY p.created_at DESC, p.id DESC
@@ -236,15 +133,31 @@ async function getPosts(env) {
 
 export async function onRequestPost({ request, env }) {
   try {
-    if (!env.DB) {
-      return json({ success: false, error: "DATABASE_MISSING" }, 500);
+    if (!env.DB || !env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_ADMIN_ID) {
+      return json({
+        success: false,
+        error: "SERVER_CONFIGURATION_MISSING"
+      }, 500);
     }
 
-    await verifyAdmin(request, env);
-
     const contentType = request.headers.get("content-type") || "";
+    let initData = "";
 
-    // طلبات JSON: عرض المنشورات أو حذف منشور
+    if (contentType.includes("application/json")) {
+      const body = await request.clone().json();
+      initData = String(body.initData || "");
+    } else if (contentType.includes("multipart/form-data")) {
+      const form = await request.clone().formData();
+      initData = String(form.get("initData") || "");
+    }
+
+    const auth = await authorizeAdmin(initData, env, "news");
+
+    if (!auth.ok) {
+      return adminAuthResponse(auth);
+    }
+
+    // JSON actions: list and delete
     if (contentType.includes("application/json")) {
       const body = await request.json();
       const action = body.action;
@@ -258,7 +171,10 @@ export async function onRequestPost({ request, env }) {
         const postId = Number(body.postId);
 
         if (!Number.isInteger(postId) || postId <= 0) {
-          return json({ success: false, error: "INVALID_POST_ID" }, 400);
+          return json({
+            success: false,
+            error: "INVALID_POST_ID"
+          }, 400);
         }
 
         await env.DB.batch([
@@ -278,10 +194,13 @@ export async function onRequestPost({ request, env }) {
         return json({ success: true });
       }
 
-      return json({ success: false, error: "INVALID_ACTION" }, 400);
+      return json({
+        success: false,
+        error: "INVALID_ACTION"
+      }, 400);
     }
 
-    // طلبات FormData: إضافة أو تعديل منشور
+    // FormData actions: create and update
     if (contentType.includes("multipart/form-data")) {
       const form = await request.formData();
 
@@ -292,19 +211,34 @@ export async function onRequestPost({ request, env }) {
       const media = form.get("media");
 
       if (!title || title.length > 200) {
-        return json({ success: false, error: "INVALID_TITLE" }, 400);
+        return json({
+          success: false,
+          error: "INVALID_TITLE"
+        }, 400);
       }
 
       if (!content || content.length > 10000) {
-        return json({ success: false, error: "INVALID_CONTENT" }, 400);
+        return json({
+          success: false,
+          error: "INVALID_CONTENT"
+        }, 400);
       }
 
       if (action !== "create" && action !== "update") {
-        return json({ success: false, error: "INVALID_ACTION" }, 400);
+        return json({
+          success: false,
+          error: "INVALID_ACTION"
+        }, 400);
       }
 
-      if (action === "update" && (!Number.isInteger(postId) || postId <= 0)) {
-        return json({ success: false, error: "INVALID_POST_ID" }, 400);
+      if (
+        action === "update" &&
+        (!Number.isInteger(postId) || postId <= 0)
+      ) {
+        return json({
+          success: false,
+          error: "INVALID_POST_ID"
+        }, 400);
       }
 
       let oldPost = null;
@@ -317,7 +251,10 @@ export async function onRequestPost({ request, env }) {
         `).bind(postId).first();
 
         if (!oldPost) {
-          return json({ success: false, error: "POST_NOT_FOUND" }, 404);
+          return json({
+            success: false,
+            error: "POST_NOT_FOUND"
+          }, 404);
         }
       }
 
@@ -333,7 +270,10 @@ export async function onRequestPost({ request, env }) {
       }
 
       if (!mediaData) {
-        return json({ success: false, error: "MEDIA_REQUIRED" }, 400);
+        return json({
+          success: false,
+          error: "MEDIA_REQUIRED"
+        }, 400);
       }
 
       if (action === "create") {
@@ -372,26 +312,23 @@ export async function onRequestPost({ request, env }) {
         postId
       ).run();
 
-      return json({ success: true, id: postId });
+      return json({
+        success: true,
+        id: postId
+      });
     }
 
-    return json({ success: false, error: "UNSUPPORTED_CONTENT_TYPE" }, 400);
+    return json({
+      success: false,
+      error: "UNSUPPORTED_CONTENT_TYPE"
+    }, 400);
 
   } catch (error) {
     const message = String(error?.message || "SERVER_ERROR");
 
-    const status = [
-      "UNAUTHORIZED",
-      "INVALID_INIT_DATA",
-      "INVALID_SIGNATURE",
-      "SESSION_EXPIRED",
-      "INVALID_USER",
-      "ADMIN_ONLY"
-    ].includes(message) ? 403 : 500;
-
     return json({
       success: false,
       error: message
-    }, status);
+    }, 500);
   }
 }
