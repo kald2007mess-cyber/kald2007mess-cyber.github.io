@@ -23,6 +23,7 @@ async function authorizePlatform(initData, env, platform) {
   if (!validPlatform(platform)) {
     return { ok: false, status: 400, error: "INVALID_PLATFORM" };
   }
+
   return authorizeAdmin(initData, env, platform);
 }
 
@@ -57,28 +58,57 @@ async function getAuthorizedPlatforms(initData, env) {
   };
 }
 
+/* جلب الملفات مع عدد المستخدمين الذين نزلوها */
 async function getDownloads(env, allowedPlatforms) {
-  const result = await env.DB.prepare(
-    `SELECT id, platform, title, version, description,
-            file_name, file_key, download_url,
-            file_size, enabled, created_at, updated_at
-     FROM platform_files
-     ORDER BY platform, created_at DESC`
-  ).all();
+  const result = await env.DB.prepare(`
+    SELECT
+      pf.id,
+      pf.platform,
+      pf.title,
+      pf.version,
+      pf.description,
+      pf.file_name,
+      pf.file_key,
+      pf.download_url,
+      pf.file_size,
+      pf.enabled,
+      pf.created_at,
+      pf.updated_at,
+      (
+        SELECT COUNT(*)
+        FROM platform_file_downloads d
+        WHERE d.file_id = pf.id
+      ) AS downloads_count
+    FROM platform_files pf
+    ORDER BY pf.platform, pf.created_at DESC
+  `).all();
 
-  const files = (result.results || []).filter(item =>
-    allowedPlatforms.includes(item.platform)
+  const files = (result.results || [])
+    .filter(item => allowedPlatforms.includes(item.platform))
+    .map(item => ({
+      ...item,
+      downloads_count: Number(item.downloads_count || 0)
+    }));
+
+  const legacyResult = await env.DB.prepare(`
+    SELECT
+      platform,
+      title,
+      version,
+      description,
+      file_name,
+      file_key,
+      download_url,
+      file_size,
+      enabled,
+      updated_at
+    FROM platform_downloads
+    ORDER BY platform
+  `).all();
+
+  const platformsWithFiles = new Set(
+    files.map(item => item.platform)
   );
-
-  const legacyResult = await env.DB.prepare(
-    `SELECT platform, title, version, description,
-            file_name, file_key, download_url,
-            file_size, enabled, updated_at
-     FROM platform_downloads
-     ORDER BY platform`
-  ).all();
-
-  const platformsWithFiles = new Set(files.map(item => item.platform));
 
   for (const item of legacyResult.results || []) {
     if (
@@ -89,6 +119,7 @@ async function getDownloads(env, allowedPlatforms) {
         ...item,
         id: `legacy-${item.platform}`,
         created_at: item.updated_at || 0,
+        downloads_count: 0,
         legacy: true
       });
     }
@@ -97,16 +128,88 @@ async function getDownloads(env, allowedPlatforms) {
   return files;
 }
 
+/* جلب فيديوهات الشرح */
+async function getTutorials(env, allowedPlatforms) {
+  const result = await env.DB.prepare(`
+    SELECT platform, video_url, updated_at
+    FROM platform_tutorials
+  `).all();
+
+  const tutorials = {
+    android: "",
+    ios: "",
+    beta: ""
+  };
+
+  for (const item of result.results || []) {
+    if (allowedPlatforms.includes(item.platform)) {
+      tutorials[item.platform] = item.video_url || "";
+    }
+  }
+
+  return tutorials;
+}
+
+/* حفظ فيديو شرح المنصة */
+async function saveTutorial(env, data) {
+  const platform = String(data.platform || "").trim();
+
+  if (!validPlatform(platform)) {
+    throw new Error("INVALID_PLATFORM");
+  }
+
+  const videoUrl = String(
+    data.video_url ??
+    data.tutorial_url ??
+    data.url ??
+    ""
+  ).trim();
+
+  if (videoUrl.length > 1000) {
+    throw new Error("INVALID_URL");
+  }
+
+  if (
+    videoUrl &&
+    !/^https:\/\/[^\s]+$/i.test(videoUrl)
+  ) {
+    throw new Error("INVALID_URL");
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+
+  await env.DB.prepare(`
+    INSERT INTO platform_tutorials (
+      platform, video_url, updated_at
+    )
+    VALUES (?, ?, ?)
+    ON CONFLICT(platform) DO UPDATE SET
+      video_url = excluded.video_url,
+      updated_at = excluded.updated_at
+  `).bind(platform, videoUrl, now).run();
+
+  return {
+    success: true,
+    platform,
+    video_url: videoUrl,
+    updated_at: now
+  };
+}
+
 function readEnabled(value, fallback = 1) {
   if (value === undefined || value === null) return fallback;
-  return value === true || value === 1 ||
-    value === "1" || value === "true" ? 1 : 0;
+
+  return value === true ||
+    value === 1 ||
+    value === "1" ||
+    value === "true" ? 1 : 0;
 }
 
 function validateDetails(title, version, description) {
   if (!title || title.length > 150) {
     throw new Error("INVALID_TITLE");
   }
+
   if (version.length > 50 || description.length > 1000) {
     throw new Error("INVALID_DETAILS");
   }
@@ -162,9 +265,13 @@ function getContentType(platform) {
     : "application/vnd.android.package-archive";
 }
 
+/* حفظ بيانات الملف */
 async function savePlatform(env, data) {
   const platform = String(data.platform || "");
-  if (!validPlatform(platform)) throw new Error("INVALID_PLATFORM");
+
+  if (!validPlatform(platform)) {
+    throw new Error("INVALID_PLATFORM");
+  }
 
   const id = String(data.id || "").trim();
   let current = null;
@@ -185,8 +292,14 @@ async function savePlatform(env, data) {
     if (!current) throw new Error("FILE_NOT_FOUND");
   }
 
-  const title = String(data.title ?? current?.title ?? "").trim();
-  const version = String(data.version ?? current?.version ?? "").trim();
+  const title = String(
+    data.title ?? current?.title ?? ""
+  ).trim();
+
+  const version = String(
+    data.version ?? current?.version ?? ""
+  ).trim();
+
   const description = String(
     data.description ?? current?.description ?? ""
   ).trim();
@@ -213,58 +326,79 @@ async function savePlatform(env, data) {
   const now = Math.floor(Date.now() / 1000);
 
   if (id.startsWith("legacy-")) {
-    await env.DB.prepare(
-      `UPDATE platform_downloads
-       SET title=?, version=?, description=?,
-           download_url=?, enabled=?, updated_at=?
-       WHERE platform=?`
-    ).bind(
+    await env.DB.prepare(`
+      UPDATE platform_downloads
+      SET title=?, version=?, description=?,
+          download_url=?, enabled=?, updated_at=?
+      WHERE platform=?
+    `).bind(
       title, version, description, downloadUrl,
       enabled, now, platform
     ).run();
 
     return {
-      success: true, id, platform, title, version,
-      description, download_url: downloadUrl,
-      enabled, updated_at: now, legacy: true
+      success: true,
+      id,
+      platform,
+      title,
+      version,
+      description,
+      download_url: downloadUrl,
+      enabled,
+      updated_at: now,
+      legacy: true
     };
   }
 
   if (current) {
-    await env.DB.prepare(
-      `UPDATE platform_files
-       SET title=?, version=?, description=?,
-           download_url=?, enabled=?, updated_at=?
-       WHERE id=? AND platform=?`
-    ).bind(
+    await env.DB.prepare(`
+      UPDATE platform_files
+      SET title=?, version=?, description=?,
+          download_url=?, enabled=?, updated_at=?
+      WHERE id=? AND platform=?
+    `).bind(
       title, version, description, downloadUrl,
       enabled, now, id, platform
     ).run();
 
     return {
-      success: true, id, platform, title, version,
-      description, download_url: downloadUrl,
-      enabled, updated_at: now
+      success: true,
+      id,
+      platform,
+      title,
+      version,
+      description,
+      download_url: downloadUrl,
+      enabled,
+      updated_at: now
     };
   }
 
   const newId = crypto.randomUUID();
 
-  await env.DB.prepare(
-    `INSERT INTO platform_files (
+  await env.DB.prepare(`
+    INSERT INTO platform_files (
       id, platform, title, version, description,
       file_name, file_key, download_url, file_size,
       enabled, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, '', '', ?, 0, ?, ?, ?)`
-  ).bind(
+    )
+    VALUES (?, ?, ?, ?, ?, '', '', ?, 0, ?, ?, ?)
+  `).bind(
     newId, platform, title, version, description,
     downloadUrl, enabled, now, now
   ).run();
 
   return {
-    success: true, id: newId, platform, title,
-    version, description, download_url: downloadUrl,
-    enabled, created_at: now, updated_at: now
+    success: true,
+    id: newId,
+    platform,
+    title,
+    version,
+    description,
+    download_url: downloadUrl,
+    enabled,
+    created_at: now,
+    updated_at: now
   };
 }
 
@@ -439,13 +573,14 @@ async function completeMultipartUpload(env, form) {
   const downloadUrl = `${R2_PUBLIC_URL}/${key}`;
 
   try {
-    await env.DB.prepare(
-      `INSERT INTO platform_files (
+    await env.DB.prepare(`
+      INSERT INTO platform_files (
         id, platform, title, version, description,
         file_name, file_key, download_url, file_size,
         enabled, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`
-    ).bind(
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+    `).bind(
       id, platform, title, version, description,
       fileName, key, downloadUrl, fileSize, now, now
     ).run();
@@ -455,6 +590,7 @@ async function completeMultipartUpload(env, form) {
     } catch (deleteError) {
       console.error("R2 cleanup error:", deleteError);
     }
+
     throw error;
   }
 
@@ -469,6 +605,7 @@ async function completeMultipartUpload(env, form) {
     download_url: downloadUrl,
     file_size: fileSize,
     enabled: true,
+    downloads_count: 0,
     created_at: now
   };
 }
@@ -497,6 +634,7 @@ async function abortMultipartUpload(env, form) {
   return { success: true };
 }
 
+/* حذف ملف */
 async function deleteFile(env, data) {
   const id = String(data.id || "").trim();
   const platform = String(data.platform || "");
@@ -509,16 +647,23 @@ async function deleteFile(env, data) {
     throw new Error("INVALID_PLATFORM");
   }
 
-  const file = await env.DB.prepare(
-    `SELECT id, file_key FROM platform_files
-     WHERE id=? AND platform=?`
-  ).bind(id, platform).first();
+  const file = await env.DB.prepare(`
+    SELECT id, file_key
+    FROM platform_files
+    WHERE id=? AND platform=?
+  `).bind(id, platform).first();
 
   if (!file) throw new Error("FILE_NOT_FOUND");
 
-  await env.DB.prepare(
-    `DELETE FROM platform_files WHERE id=? AND platform=?`
-  ).bind(id, platform).run();
+  await env.DB.prepare(`
+    DELETE FROM platform_file_downloads
+    WHERE file_id=?
+  `).bind(id).run();
+
+  await env.DB.prepare(`
+    DELETE FROM platform_files
+    WHERE id=? AND platform=?
+  `).bind(id, platform).run();
 
   if (file.file_key) {
     try {
@@ -539,6 +684,7 @@ export async function onRequestPost({ request, env }) {
 
     const contentType = request.headers.get("Content-Type") || "";
 
+    /* عمليات رفع الملفات */
     if (contentType.includes("multipart/form-data")) {
       const form = await request.formData();
       const platform = String(form.get("platform") || "");
@@ -569,42 +715,76 @@ export async function onRequestPost({ request, env }) {
         return json(await abortMultipartUpload(env, form));
       }
 
-      return json({ success: false, error: "INVALID_ACTION" }, 400);
+      return json({
+        success: false,
+        error: "INVALID_ACTION"
+      }, 400);
     }
 
     const body = await request.json();
     const initData = String(body.initData || "");
 
+    /* جلب الملفات والفيديوهات */
     if (body.action === "get") {
       const access = await getAuthorizedPlatforms(initData, env);
+
       if (!access.ok) return adminAuthResponse(access);
 
       return json({
         success: true,
         downloads: await getDownloads(env, access.platforms),
+        tutorials: await getTutorials(env, access.platforms),
         platforms: access.platforms
       });
     }
 
+    /* حفظ بيانات الملف */
     if (body.action === "save") {
       const auth = await authorizePlatform(
-        initData, env, String(body.platform || "")
+        initData,
+        env,
+        String(body.platform || "")
       );
+
       if (!auth.ok) return adminAuthResponse(auth);
 
       return json(await savePlatform(env, body));
     }
 
+    /* حفظ فيديو شرح المنصة */
+    if (
+      body.action === "tutorial_save" ||
+      body.action === "save_tutorial" ||
+      body.action === "saveTutorial"
+    ) {
+      const auth = await authorizePlatform(
+        initData,
+        env,
+        String(body.platform || "")
+      );
+
+      if (!auth.ok) return adminAuthResponse(auth);
+
+      return json(await saveTutorial(env, body));
+    }
+
+    /* حذف ملف */
     if (body.action === "delete") {
       const auth = await authorizePlatform(
-        initData, env, String(body.platform || "")
+        initData,
+        env,
+        String(body.platform || "")
       );
+
       if (!auth.ok) return adminAuthResponse(auth);
 
       return json(await deleteFile(env, body));
     }
 
-    return json({ success: false, error: "INVALID_ACTION" }, 400);
+    return json({
+      success: false,
+      error: "INVALID_ACTION"
+    }, 400);
 
   } catch (error) {
     console.error("Admin downloads error:", error);
@@ -634,6 +814,9 @@ export async function onRequestPost({ request, env }) {
       error.message === "SERVER_CONFIG" ? 500 :
       error.message === "FILE_NOT_FOUND" ? 404 : 400;
 
-    return json({ success: false, error: message }, status);
+    return json({
+      success: false,
+      error: message
+    }, status);
   }
 }
