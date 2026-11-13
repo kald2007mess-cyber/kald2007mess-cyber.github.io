@@ -1,14 +1,11 @@
 
-const corsHeaders = {
+const headers = {
   "Content-Type": "application/json; charset=utf-8",
   "Cache-Control": "no-store"
 };
 
 function json(data, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: corsHeaders
-  });
+  return new Response(JSON.stringify(data), { status, headers });
 }
 
 async function hmac(key, message) {
@@ -31,7 +28,7 @@ async function hmac(key, message) {
 
 function toHex(bytes) {
   return Array.from(bytes)
-    .map(byte => byte.toString(16).padStart(2, "0"))
+    .map(b => b.toString(16).padStart(2, "0"))
     .join("");
 }
 
@@ -48,10 +45,7 @@ async function verifyAdmin(initData, env) {
   if (!receivedHash || !authDate || !userText) return false;
 
   const now = Math.floor(Date.now() / 1000);
-
-  if (now - authDate > 86400 || authDate > now + 60) {
-    return false;
-  }
+  if (now - authDate > 86400 || authDate > now + 60) return false;
 
   const dataCheckString = [...params.entries()]
     .filter(([key]) => key !== "hash")
@@ -59,6 +53,7 @@ async function verifyAdmin(initData, env) {
     .map(([key, value]) => `${key}=${value}`)
     .join("\n");
 
+  // Telegram WebApp HMAC verification
   const secretKey = await hmac(
     new TextEncoder().encode("WebAppData"),
     env.TELEGRAM_BOT_TOKEN
@@ -90,10 +85,7 @@ export async function onRequestPost({ request, env }) {
       return json({ success: false, error: "UNAUTHORIZED" }, 401);
     }
 
-    const action = body.action;
-
-    // عرض المهمات والإحصائيات الحقيقية
-    if (action === "list") {
+    if (body.action === "list") {
       const result = await env.DB.prepare(`
         SELECT
           m.id,
@@ -106,34 +98,20 @@ export async function onRequestPost({ request, env }) {
           m.sort_order,
           m.created_at,
           m.updated_at,
-
-          (SELECT COUNT(*)
-           FROM mission_submissions s
-           WHERE s.mission_id = m.id
-             AND s.status = 'approved') AS completed_count,
-
-          (SELECT COUNT(*)
-           FROM mission_submissions s
-           WHERE s.mission_id = m.id
-             AND s.status = 'pending') AS pending_count,
-
-          (SELECT COUNT(*)
-           FROM mission_submissions s
-           WHERE s.mission_id = m.id
-             AND s.status = 'rejected') AS rejected_count
-
+          (SELECT COUNT(*) FROM mission_submissions s
+            WHERE s.mission_id = m.id AND s.status = 'approved') AS completed_count,
+          (SELECT COUNT(*) FROM mission_submissions s
+            WHERE s.mission_id = m.id AND s.status = 'pending') AS pending_count,
+          (SELECT COUNT(*) FROM mission_submissions s
+            WHERE s.mission_id = m.id AND s.status = 'rejected') AS rejected_count
         FROM oxide_admin_missions m
         ORDER BY m.sort_order ASC, m.id ASC
       `).all();
 
-      return json({
-        success: true,
-        tasks: result.results || []
-      });
+      return json({ success: true, tasks: result.results || [] });
     }
 
-    // إضافة مهمة أو تعديلها
-    if (action === "save") {
+    if (body.action === "save") {
       const id = Number(body.id || 0);
       const title = String(body.title || "").trim();
       const platform = String(body.platform || "").trim().toLowerCase();
@@ -160,33 +138,25 @@ export async function onRequestPost({ request, env }) {
       }
 
       if (id > 0) {
-        await env.DB.prepare(`
+        const result = await env.DB.prepare(`
           UPDATE oxide_admin_missions
-          SET
-            title = ?,
-            platform = ?,
-            description = ?,
-            target_url = ?,
-            reward_points = ?,
-            enabled = ?,
-            sort_order = ?,
-            updated_at = unixepoch()
+          SET title = ?, platform = ?, description = ?, target_url = ?,
+              reward_points = ?, enabled = ?, sort_order = ?,
+              updated_at = unixepoch()
           WHERE id = ?
         `).bind(
-          title,
-          platform,
-          description,
-          targetUrl,
-          rewardPoints,
-          enabled,
-          sortOrder,
-          id
+          title, platform, description, targetUrl,
+          rewardPoints, enabled, sortOrder, id
         ).run();
+
+        if (!result.meta.changes) {
+          return json({ success: false, error: "TASK_NOT_FOUND" }, 404);
+        }
 
         return json({ success: true, message: "TASK_UPDATED" });
       }
 
-      const nextId = await env.DB.prepare(`
+      const next = await env.DB.prepare(`
         SELECT COALESCE(MAX(id), 0) + 1 AS next_id
         FROM oxide_admin_missions
       `).first();
@@ -197,25 +167,18 @@ export async function onRequestPost({ request, env }) {
          reward_points, enabled, sort_order)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
-        nextId.next_id,
-        title,
-        platform,
-        description,
-        targetUrl,
-        rewardPoints,
-        enabled,
-        sortOrder
+        next.next_id, title, platform, description,
+        targetUrl, rewardPoints, enabled, sortOrder
       ).run();
 
       return json({
         success: true,
-        id: nextId.next_id,
+        id: next.next_id,
         message: "TASK_CREATED"
       });
     }
 
-    // تفعيل أو إيقاف مهمة
-    if (action === "toggle") {
+    if (body.action === "toggle") {
       const id = Number(body.id);
       const enabled = Number(body.enabled) === 1 ? 1 : 0;
 
@@ -236,8 +199,7 @@ export async function onRequestPost({ request, env }) {
       return json({ success: true, message: "TASK_STATUS_UPDATED" });
     }
 
-    // حذف مهمة بشرط عدم وجود طلبات مرتبطة بها
-    if (action === "delete") {
+    if (body.action === "delete") {
       const id = Number(body.id);
 
       if (!Number.isInteger(id) || id < 1) {
@@ -258,8 +220,7 @@ export async function onRequestPost({ request, env }) {
       }
 
       const result = await env.DB.prepare(`
-        DELETE FROM oxide_admin_missions
-        WHERE id = ?
+        DELETE FROM oxide_admin_missions WHERE id = ?
       `).bind(id).run();
 
       if (!result.meta.changes) {
@@ -269,8 +230,7 @@ export async function onRequestPost({ request, env }) {
       return json({ success: true, message: "TASK_DELETED" });
     }
 
-    // عرض المستخدمين الذين أكملوا مهمة معينة
-    if (action === "completed") {
+    if (body.action === "completed") {
       const missionId = Number(body.missionId);
       const page = Math.max(1, Number(body.page) || 1);
       const limit = 50;
@@ -283,20 +243,14 @@ export async function onRequestPost({ request, env }) {
       const total = await env.DB.prepare(`
         SELECT COUNT(*) AS total
         FROM mission_submissions
-        WHERE mission_id = ?
-          AND status = 'approved'
+        WHERE mission_id = ? AND status = 'approved'
       `).bind(missionId).first();
 
       const users = await env.DB.prepare(`
-        SELECT
-          s.user_id,
-          s.created_at,
-          s.reviewed_at,
-          v.points
+        SELECT s.user_id, s.created_at, s.reviewed_at, v.points
         FROM mission_submissions s
         LEFT JOIN visitors v ON v.user_id = s.user_id
-        WHERE s.mission_id = ?
-          AND s.status = 'approved'
+        WHERE s.mission_id = ? AND s.status = 'approved'
         ORDER BY s.reviewed_at DESC
         LIMIT ? OFFSET ?
       `).bind(missionId, limit, offset).all();
