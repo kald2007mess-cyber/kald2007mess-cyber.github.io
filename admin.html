@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>OXIDE HUB | ADMIN</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#080d18;color:#fff;font-family:Arial,sans-serif;padding:20px}
@@ -17,15 +18,29 @@ h1{color:#35d7ff;letter-spacing:2px}
 button{width:100%;padding:14px;border:0;border-radius:10px;background:#087eaa;color:white;font-size:16px;font-weight:bold;margin-top:10px;cursor:pointer}
 button:disabled{opacity:.5;cursor:not-allowed}
 .status{color:#35d7ff;text-align:center;white-space:pre-wrap;line-height:1.7}
-.hidden{display:none}
+.hidden{display:none!important}
 .maintenance-state{padding:12px;border-radius:10px;text-align:center;margin:12px 0;font-weight:bold}
 .state-on{background:#492326;color:#ff9b9b;border:1px solid #a74747}
 .state-off{background:#123d30;color:#73f0b4;border:1px solid #23875e}
 .note{color:#9eb2c9;font-size:13px;line-height:1.7;text-align:center}
+.field{margin:13px 0}
+.field label{display:block;color:#9ebbd4;margin-bottom:7px;font-size:14px}
+.field input,.field textarea{width:100%;padding:13px;border-radius:9px;border:1px solid #294661;background:#091525;color:white;font-size:15px;outline:none}
+.field textarea{min-height:85px;resize:vertical}
+.field input:focus,.field textarea:focus{border-color:#35d7ff}
+.platform-status{padding:10px;text-align:center;border-radius:9px;margin:12px 0;background:#17283c;color:#35d7ff}
+.platform-actions{display:flex;gap:8px}
+.platform-actions button{flex:1}
+.secondary{background:#344a63}
+.danger{background:#873c46}
+.back{background:#344a63;margin-bottom:10px}
+.file-input{border:1px dashed #35d7ff!important;padding:18px!important}
 </style>
 </head>
+
 <body>
 <div class="container">
+
 <header>
 <h1>OXIDE HUB</h1>
 <div class="subtitle">ADMIN CONTROL CENTER</div>
@@ -36,6 +51,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
 </div>
 
 <div id="panel" class="hidden">
+
+<div id="mainMenu">
 
 <div class="card">
 <h3>🛠️ إدارة الموقع</h3>
@@ -59,9 +76,10 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 <div class="card">
 <h3>📦 إدارة التنزيلات</h3>
-<button onclick="action('android')">إدارة Android APK</button>
-<button onclick="action('ios')">إدارة iOS</button>
-<button onclick="action('beta')">إدارة BETA</button>
+<button onclick="openPlatform('android')">إدارة Android APK</button>
+<button onclick="openPlatform('ios')">إدارة iOS</button>
+<button onclick="openPlatform('beta')">إدارة BETA</button>
+<p class="note">إدارة الإصدارات والملفات وروابط التنزيل.</p>
 </div>
 
 <div class="card">
@@ -80,6 +98,64 @@ button:disabled{opacity:.5;cursor:not-allowed}
 </div>
 
 </div>
+
+<div id="platformPage" class="hidden">
+<div class="card">
+<button class="back" onclick="backToMenu()">⬅ العودة إلى لوحة الإدارة</button>
+<h3 id="platformHeading">إدارة التنزيلات</h3>
+
+<div class="platform-status" id="platformStatus">جارٍ تحميل البيانات...</div>
+
+<div class="field">
+<label>اسم التطبيق</label>
+<input id="appTitle" maxlength="150" placeholder="اسم التطبيق">
+</div>
+
+<div class="field">
+<label>رقم الإصدار</label>
+<input id="appVersion" maxlength="50" placeholder="مثال: 2.1.2">
+</div>
+
+<div class="field">
+<label>الوصف</label>
+<textarea id="appDescription" maxlength="1000" placeholder="وصف الإصدار"></textarea>
+</div>
+
+<div id="fileSection">
+<div class="field">
+<label>اختر ملف APK من هاتفك</label>
+<input class="file-input" id="apkFile" type="file" accept=".apk,application/vnd.android.package-archive">
+<p class="note">الحد الأقصى لحجم الملف 100 ميغابايت.</p>
+</div>
+</div>
+
+<div id="iosSection" class="hidden">
+<div class="field">
+<label>رابط تنزيل iOS أو TestFlight</label>
+<input id="iosUrl" type="url" placeholder="https://...">
+</div>
+</div>
+
+<div class="platform-status" id="currentFile">لا توجد بيانات ملف.</div>
+
+<div class="field">
+<label>حالة التنزيل</label>
+<select id="enabled" style="width:100%;padding:13px;border-radius:9px;background:#091525;color:white;border:1px solid #294661">
+<option value="1">مفعّل</option>
+<option value="0">متوقف</option>
+</select>
+</div>
+
+<button id="saveButton" onclick="savePlatform()">💾 حفظ الإعدادات</button>
+<button id="uploadButton" onclick="uploadPlatform()">📤 رفع APK وتحديث الإصدار</button>
+
+<p class="note" id="platformInfo">
+تأكد من صحة البيانات قبل الحفظ.
+</p>
+</div>
+</div>
+
+</div>
 </div>
 
 <script>
@@ -90,6 +166,10 @@ let maintenanceEnabled = false;
 let maintenanceMessage = "";
 let maintenanceReady = false;
 let maintenanceBusy = false;
+
+let downloads = {};
+let currentPlatform = "";
+let platformBusy = false;
 
 async function apiMaintenance(data) {
   const response = await fetch("/api/admin/maintenance", {
@@ -235,6 +315,254 @@ async function editMaintenanceMessage() {
   }
 }
 
+async function apiDownloads(data) {
+  const response = await fetch("/api/admin/downloads", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    credentials: "same-origin",
+    cache: "no-store",
+    body: JSON.stringify({
+      ...data,
+      initData: tg.initData
+    })
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.error || "DOWNLOADS_ERROR");
+  }
+
+  return result;
+}
+
+async function loadDownloads() {
+  const result = await apiDownloads({action:"get"});
+
+  downloads = {};
+
+  for (const item of result.downloads || []) {
+    downloads[item.platform] = item;
+  }
+}
+
+function openPlatform(platform) {
+  currentPlatform = platform;
+
+  const names = {
+    android: "Android APK",
+    ios: "iOS",
+    beta: "BETA"
+  };
+
+  document.getElementById("mainMenu").classList.add("hidden");
+  document.getElementById("platformPage").classList.remove("hidden");
+
+  document.getElementById("platformHeading").textContent =
+    "إدارة " + names[platform];
+
+  document.getElementById("fileSection").classList.toggle(
+    "hidden", platform === "ios"
+  );
+
+  document.getElementById("iosSection").classList.toggle(
+    "hidden", platform !== "ios"
+  );
+
+  document.getElementById("uploadButton").classList.toggle(
+    "hidden", platform === "ios"
+  );
+
+  document.getElementById("apkFile").value = "";
+  document.getElementById("platformStatus").textContent =
+    "جارٍ تحميل بيانات المنصة...";
+
+  fillPlatform();
+}
+
+function fillPlatform() {
+  const item = downloads[currentPlatform];
+
+  if (!item) {
+    document.getElementById("platformStatus").textContent =
+      "لم يتم العثور على بيانات هذه المنصة.";
+    return;
+  }
+
+  document.getElementById("appTitle").value = item.title || "";
+  document.getElementById("appVersion").value = item.version || "";
+  document.getElementById("appDescription").value = item.description || "";
+  document.getElementById("iosUrl").value = item.download_url || "";
+  document.getElementById("enabled").value = String(item.enabled || 0);
+
+  document.getElementById("currentFile").textContent =
+    item.file_name
+      ? "📦 الملف الحالي: " + item.file_name +
+        "\nالحجم: " + formatSize(item.file_size)
+      : item.download_url
+        ? "🔗 الرابط الحالي: " + item.download_url
+        : "لا يوجد ملف أو رابط مسجل حالياً.";
+
+  document.getElementById("platformStatus").textContent =
+    "تم تحميل بيانات " + currentPlatform.toUpperCase();
+}
+
+function formatSize(bytes) {
+  const size = Number(bytes || 0);
+
+  if (size < 1024) return size + " B";
+  if (size < 1024 * 1024) return (size / 1024).toFixed(1) + " KB";
+
+  return (size / (1024 * 1024)).toFixed(2) + " MB";
+}
+
+function platformData() {
+  return {
+    platform: currentPlatform,
+    title: document.getElementById("appTitle").value.trim(),
+    version: document.getElementById("appVersion").value.trim(),
+    description: document.getElementById("appDescription").value.trim(),
+    download_url: currentPlatform === "ios"
+      ? document.getElementById("iosUrl").value.trim()
+      : (downloads[currentPlatform]?.download_url || ""),
+    enabled: document.getElementById("enabled").value === "1"
+  };
+}
+
+async function savePlatform() {
+  if (platformBusy) return;
+
+  platformBusy = true;
+  const button = document.getElementById("saveButton");
+  button.disabled = true;
+  button.textContent = "جارٍ الحفظ...";
+
+  try {
+    const data = platformData();
+
+    const result = await apiDownloads({
+      action: "save",
+      ...data
+    });
+
+    downloads[currentPlatform] = {
+      ...downloads[currentPlatform],
+      ...result
+    };
+
+    document.getElementById("platformStatus").textContent =
+      "✅ تم حفظ الإعدادات بنجاح.";
+
+    alert("تم حفظ إعدادات المنصة بنجاح.");
+  } catch (error) {
+    document.getElementById("platformStatus").textContent =
+      "تعذر الحفظ: " + error.message;
+
+    alert("خطأ: " + error.message);
+  } finally {
+    platformBusy = false;
+    button.disabled = false;
+    button.textContent = "💾 حفظ الإعدادات";
+  }
+}
+
+async function uploadPlatform() {
+  if (platformBusy) return;
+
+  const file = document.getElementById("apkFile").files[0];
+
+  if (!file) {
+    alert("اختر ملف APK أولاً.");
+    return;
+  }
+
+  if (!file.name.toLowerCase().endsWith(".apk")) {
+    alert("الرجاء اختيار ملف APK فقط.");
+    return;
+  }
+
+  if (file.size > 100 * 1024 * 1024) {
+    alert("حجم الملف أكبر من 100 ميغابايت.");
+    return;
+  }
+
+  if (!confirm(
+    "هل تريد رفع هذا الملف وتحديث الإصدار؟\n" +
+    file.name + "\n" + formatSize(file.size)
+  )) return;
+
+  platformBusy = true;
+
+  const button = document.getElementById("uploadButton");
+  const saveButton = document.getElementById("saveButton");
+
+  button.disabled = true;
+  saveButton.disabled = true;
+  button.textContent = "جارٍ رفع الملف...";
+
+  document.getElementById("platformStatus").textContent =
+    "يتم الآن إرسال الملف إلى Cloudflare R2. لا تغلق الصفحة.";
+
+  try {
+    const form = new FormData();
+
+    form.append("action", "upload");
+    form.append("platform", currentPlatform);
+    form.append("initData", tg.initData);
+    form.append("title", document.getElementById("appTitle").value.trim());
+    form.append("version", document.getElementById("appVersion").value.trim());
+    form.append("description", document.getElementById("appDescription").value.trim());
+    form.append("file", file);
+
+    const response = await fetch("/api/admin/downloads", {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+      body: form
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || !result.success) {
+      throw new Error(result.error || "UPLOAD_FAILED");
+    }
+
+    await loadDownloads();
+    fillPlatform();
+
+    document.getElementById("apkFile").value = "";
+
+    document.getElementById("platformStatus").textContent =
+      "✅ تم رفع الملف وتحديث بيانات المنصة بنجاح.";
+
+    alert("تم رفع APK وتحديث الإصدار بنجاح.");
+  } catch (error) {
+    document.getElementById("platformStatus").textContent =
+      "فشل الرفع: " + error.message;
+
+    alert("تعذر رفع الملف: " + error.message);
+  } finally {
+    platformBusy = false;
+    button.disabled = false;
+    saveButton.disabled = false;
+    button.textContent = "📤 رفع APK وتحديث الإصدار";
+  }
+}
+
+function backToMenu() {
+  document.getElementById("platformPage").classList.add("hidden");
+  document.getElementById("mainMenu").classList.remove("hidden");
+}
+
+function action(name) {
+  const messages = {
+    stats:"إحصائيات الموقع",
+    news:"إدارة الأخبار والإعلانات"
+  };
+
+  alert(messages[name] + "\nهذه الوظيفة لم يتم ربطها بعد.");
+}
+
 async function start() {
   if (!tg || !tg.initData) {
     statusBox.textContent =
@@ -265,21 +593,15 @@ async function start() {
 
     await loadMaintenance();
 
+    try {
+      await loadDownloads();
+    } catch (error) {
+      console.error("Downloads loading error:", error);
+    }
+
   } catch {
     statusBox.textContent = "تعذر الاتصال بالخادم. حاول مجدداً.";
   }
-}
-
-function action(name) {
-  const messages = {
-    android:"إدارة Android APK",
-    ios:"إدارة iOS",
-    beta:"إدارة BETA",
-    stats:"إحصائيات الموقع",
-    news:"إدارة الأخبار والإعلانات"
-  };
-
-  alert(messages[name] + "\nهذه الوظيفة لم يتم ربطها بعد.");
 }
 
 start();
