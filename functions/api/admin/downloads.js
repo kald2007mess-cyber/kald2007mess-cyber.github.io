@@ -1,7 +1,9 @@
 
 import { json } from "../_lib/session.js";
-
-const encoder = new TextEncoder();
+import {
+  authorizeAdmin,
+  adminAuthResponse
+} from "../_lib/admin-auth.js";
 
 const PLATFORMS = ["android", "ios", "beta"];
 const MAX_FILE_SIZE = 100 * 1024 * 1024;
@@ -9,109 +11,77 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024;
 const R2_PUBLIC_URL =
   "https://pub-052cdf3a8da44cd2bb81e3b138ebcb45.r2.dev";
 
-function hex(bytes) {
-  return [...bytes]
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-async function verifyTelegram(initData, botToken, adminId) {
-  try {
-    const params = new URLSearchParams(initData);
-    const receivedHash = params.get("hash");
-
-    if (!receivedHash || !/^[a-f0-9]{64}$/i.test(receivedHash)) {
-      return false;
-    }
-
-    const authDate = Number(params.get("auth_date"));
-
-    if (
-      !Number.isFinite(authDate) ||
-      Math.abs(Date.now() / 1000 - authDate) > 300
-    ) {
-      return false;
-    }
-
-    params.delete("hash");
-
-    const dataCheckString = [...params.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, value]) => `${key}=${value}`)
-      .join("\n");
-
-    const secretKey = await crypto.subtle.importKey(
-      "raw",
-      encoder.encode("WebAppData"),
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
-
-    const secret = new Uint8Array(
-      await crypto.subtle.sign(
-        "HMAC",
-        secretKey,
-        encoder.encode(botToken)
-      )
-    );
-
-    const hmacKey = await crypto.subtle.importKey(
-      "raw",
-      secret,
-      { name: "HMAC", hash: "SHA-256" },
-      false,
-      ["sign"]
-    );
-
-    const calculated = hex(
-      new Uint8Array(
-        await crypto.subtle.sign(
-          "HMAC",
-          hmacKey,
-          encoder.encode(dataCheckString)
-        )
-      )
-    );
-
-    if (calculated !== receivedHash.toLowerCase()) {
-      return false;
-    }
-
-    const user = JSON.parse(params.get("user") || "{}");
-
-    return String(user.id || "") === String(adminId);
-  } catch {
-    return false;
-  }
-}
-
-async function authorize(initData, env) {
-  if (
-    !env.DB ||
-    !env.DOWNLOADS_BUCKET ||
-    !env.TELEGRAM_BOT_TOKEN ||
-    !env.TELEGRAM_ADMIN_ID
-  ) {
-    throw new Error("SERVER_CONFIG");
-  }
-
-  if (!initData || initData.length > 10000) {
-    return false;
-  }
-
-  return verifyTelegram(
-    initData,
-    env.TELEGRAM_BOT_TOKEN,
-    env.TELEGRAM_ADMIN_ID
-  );
-}
-
 function validPlatform(platform) {
   return PLATFORMS.includes(platform);
 }
 
-async function getDownloads(env) {
+function permissionForPlatform(platform) {
+  if (!validPlatform(platform)) return null;
+  return platform;
+}
+
+async function authorizePlatform(initData, env, platform) {
+  const permission = permissionForPlatform(platform);
+
+  if (!permission) {
+    return {
+      ok: false,
+      status: 400,
+      error: "INVALID_PLATFORM"
+    };
+  }
+
+  return authorizeAdmin(initData, env, permission);
+}
+
+async function getAuthorizedPlatforms(initData, env) {
+  const allowed = [];
+  let lastAuth = null;
+
+  for (const platform of PLATFORMS) {
+    const auth = await authorizeAdmin(
+      initData,
+      env,
+      platform
+    );
+
+    if (auth.ok && auth.owner) {
+      return {
+        ok: true,
+        owner: true,
+        platforms: PLATFORMS
+      };
+    }
+
+    if (auth.ok) {
+      allowed.push(platform);
+      lastAuth = auth;
+      continue;
+    }
+
+    if (auth.status >= 500) {
+      return auth;
+    }
+
+    lastAuth = auth;
+  }
+
+  if (allowed.length > 0) {
+    return {
+      ok: true,
+      owner: false,
+      platforms: allowed
+    };
+  }
+
+  return lastAuth || {
+    ok: false,
+    status: 403,
+    error: "PERMISSION_DENIED"
+  };
+}
+
+async function getDownloads(env, allowedPlatforms) {
   const result = await env.DB.prepare(
     `SELECT platform, title, version, description,
             file_name, file_key, download_url,
@@ -120,7 +90,9 @@ async function getDownloads(env) {
      ORDER BY platform`
   ).all();
 
-  return result.results || [];
+  return (result.results || []).filter(item =>
+    allowedPlatforms.includes(item.platform)
+  );
 }
 
 async function savePlatform(env, data) {
@@ -319,23 +291,36 @@ async function uploadFile(env, form) {
 
 export async function onRequestPost({ request, env }) {
   try {
-    const contentType = request.headers.get("Content-Type") || "";
+    if (!env.DB || !env.DOWNLOADS_BUCKET) {
+      return json({
+        success: false,
+        error: "SERVER_CONFIG"
+      }, 500);
+    }
 
-    let body;
+    const contentType =
+      request.headers.get("Content-Type") || "";
 
     if (contentType.includes("multipart/form-data")) {
       const form = await request.formData();
 
-      const authorized = await authorize(
-        String(form.get("initData") || ""),
-        env
-      );
+      const platform = String(form.get("platform") || "");
 
-      if (!authorized) {
+      if (!["android", "beta"].includes(platform)) {
         return json({
           success: false,
-          error: "UNAUTHORIZED"
-        }, 403);
+          error: "INVALID_UPLOAD_PLATFORM"
+        }, 400);
+      }
+
+      const auth = await authorizePlatform(
+        String(form.get("initData") || ""),
+        env,
+        platform
+      );
+
+      if (!auth.ok) {
+        return adminAuthResponse(auth);
       }
 
       const action = String(form.get("action") || "");
@@ -350,31 +335,42 @@ export async function onRequestPost({ request, env }) {
       return json(await uploadFile(env, form));
     }
 
-    body = await request.json();
-
-    const authorized = await authorize(
-      String(body.initData || ""),
-      env
-    );
-
-    if (!authorized) {
-      return json({
-        success: false,
-        error: "UNAUTHORIZED"
-      }, 403);
-    }
+    const body = await request.json();
+    const initData = String(body.initData || "");
 
     if (body.action === "get") {
+      const access = await getAuthorizedPlatforms(
+        initData,
+        env
+      );
+
+      if (!access.ok) {
+        return adminAuthResponse(access);
+      }
+
       return json({
         success: true,
-        downloads: await getDownloads(env)
+        downloads: await getDownloads(
+          env,
+          access.platforms
+        )
       });
     }
 
     if (body.action === "save") {
-      return json(
-        await savePlatform(env, body)
+      const platform = String(body.platform || "");
+
+      const auth = await authorizePlatform(
+        initData,
+        env,
+        platform
       );
+
+      if (!auth.ok) {
+        return adminAuthResponse(auth);
+      }
+
+      return json(await savePlatform(env, body));
     }
 
     return json({
@@ -399,7 +395,8 @@ export async function onRequestPost({ request, env }) {
       APK_ONLY: "APK_ONLY"
     };
 
-    const message = messages[error.message] || "DOWNLOADS_FAILED";
+    const message =
+      messages[error.message] || "DOWNLOADS_FAILED";
 
     return json({
       success: false,
