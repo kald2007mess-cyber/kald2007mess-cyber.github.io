@@ -67,15 +67,23 @@ export async function onRequestPost({ request, env }) {
     const now = Math.floor(Date.now() / 1000);
 
     const submission = await env.DB.prepare(`
-      SELECT id, user_id, mission_id, status
-      FROM mission_submissions
-      WHERE id = ?
+      SELECT
+        s.id,
+        s.user_id,
+        s.mission_id,
+        s.status,
+        m.title,
+        m.reward_points
+      FROM mission_submissions s
+      LEFT JOIN oxide_admin_missions m
+        ON m.id = s.mission_id
+      WHERE s.id = ?
     `).bind(submissionId).first();
 
-    if (!submission || submission.mission_id !== 1) {
+    if (!submission || !submission.title) {
       await telegram(env, "answerCallbackQuery", {
         callback_query_id: callback.id,
-        text: "الطلب غير موجود"
+        text: "الطلب أو المهمة غير موجودة"
       });
 
       return json({ success: true });
@@ -93,10 +101,15 @@ export async function onRequestPost({ request, env }) {
     let resultText = "";
 
     if (action === "approve") {
+      const reward = Math.max(
+        0,
+        Math.floor(Number(submission.reward_points) || 0)
+      );
+
       const results = await env.DB.batch([
         env.DB.prepare(`
           UPDATE visitors
-          SET points = points + 50
+          SET points = points + ?
           WHERE user_id = ?
             AND EXISTS (
               SELECT 1
@@ -104,7 +117,7 @@ export async function onRequestPost({ request, env }) {
               WHERE id = ?
                 AND status = 'pending'
             )
-        `).bind(submission.user_id, submissionId),
+        `).bind(reward, submission.user_id, submissionId),
 
         env.DB.prepare(`
           UPDATE mission_submissions
@@ -117,10 +130,15 @@ export async function onRequestPost({ request, env }) {
       const updated = Number(results[1]?.meta?.changes || 0);
 
       if (awarded !== 1 || updated !== 1) {
-        return json({ success: true, message: "Already reviewed" });
+        return json({
+          success: true,
+          message: "Already reviewed"
+        });
       }
 
-      resultText = "✅ تمت الموافقة وإضافة 50 نقطة للمستخدم.";
+      resultText =
+        `✅ تمت الموافقة على مهمة ${submission.title}\n` +
+        `🎁 تمت إضافة ${reward} نقطة للمستخدم.`;
     } else {
       const rejected = await env.DB.prepare(`
         UPDATE mission_submissions
@@ -129,10 +147,15 @@ export async function onRequestPost({ request, env }) {
       `).bind(now, submissionId).run();
 
       if (Number(rejected.meta?.changes || 0) !== 1) {
-        return json({ success: true, message: "Already reviewed" });
+        return json({
+          success: true,
+          message: "Already reviewed"
+        });
       }
 
-      resultText = "❌ تم رفض المهمة. يمكن للمستخدم المحاولة مجدداً.";
+      resultText =
+        `❌ تم رفض مهمة ${submission.title}.\n` +
+        "يمكن للمستخدم المحاولة مجدداً.";
     }
 
     await telegram(env, "answerCallbackQuery", {
