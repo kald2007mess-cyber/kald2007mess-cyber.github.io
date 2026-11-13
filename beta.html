@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OXIDE HUB - BETA</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;padding:25px 15px;font-family:Arial,sans-serif;color:#fff;text-align:center;background:linear-gradient(rgba(3,8,22,.72),rgba(3,8,22,.92)),url("background.png") center/cover fixed}
+.container{max-width:430px;margin:auto}.language-box{display:flex;justify-content:flex-end}
+select{background:#0c1930;color:white;border:1px solid #176caa;border-radius:8px;padding:9px}
+.logo{font-size:34px;font-weight:900;letter-spacing:3px;color:white;text-shadow:0 0 15px #00aaff;margin:25px 0 8px}
+.subtitle{color:#b8c9dd;margin-bottom:25px}.section{background:rgba(12,25,48,.9);border:1px solid #176caa;border-radius:14px;padding:18px;margin:16px 0}
+.section h2{color:#00b7ff;font-size:19px;margin-top:0}.file-info{color:#c5d5e8;font-size:13px;margin:12px 0;line-height:1.7;overflow-wrap:anywhere}
+.download-btn{display:block;width:100%;padding:14px;background:#087ed0;color:white;text-decoration:none;border:0;border-radius:10px;font-size:16px;font-weight:bold;margin-top:12px;cursor:pointer}
+.download-btn:disabled{opacity:.5;cursor:not-allowed}.video-frame{width:min(100%,320px);aspect-ratio:9/16;margin:15px auto 0;border:1px solid #176caa;border-radius:12px;background:#000;overflow:hidden;box-shadow:0 0 18px rgba(0,183,255,.15);display:flex;align-items:center;justify-content:center;color:#9fb5cc;padding:18px}
+.back-btn{display:block;padding:14px;margin-top:22px;border:1px solid #176caa;border-radius:10px;color:white;text-decoration:none;background:rgba(12,25,48,.9)}
+footer{margin-top:30px;color:#879bb2;font-size:12px}.progress-box{display:none;margin-top:12px;padding:12px;background:rgba(3,12,28,.75);border:1px solid #176caa;border-radius:10px}
+.progress-track{width:100%;height:12px;overflow:hidden;background:#071326;border-radius:20px;border:1px solid rgba(0,183,255,.35)}.progress-fill{width:0%;height:100%;background:linear-gradient(90deg,#087ed0,#00d4ff);border-radius:20px;transition:width .15s linear}.progress-label{display:block;margin-top:8px;color:#c5d5e8;font-size:13px}
+@media(max-width:360px){.video-frame{width:min(100%,280px)}}
+</style>
+</head>
+<body>
+<main class="container">
+ <div class="language-box"><select id="language" onchange="changeLanguage(this.value)"><option value="ar">🇩🇿 العربية</option><option value="en">🇬🇧 English</option><option value="ru">🇷🇺 Русский</option></select></div>
+ <div class="logo">OXIDE HUB</div><div class="subtitle">SURVIVE • EXPLORE • DOMINATE</div>
+ <section class="section">
+  <h2 id="fileTitle">📦 ملف BETA</h2>
+  <div class="file-info" id="fileInfo">جاري تحميل معلومات الملف...</div>
+  <button class="download-btn" id="downloadButton" disabled>⬇️ <span id="downloadText">تحميل ملف BETA</span></button>
+  <div class="progress-box" id="progressBox"><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div><span class="progress-label" id="progressLabel">0%</span></div>
+ </section>
+ <section class="section">
+  <h2 id="videoTitle">🎬 فيديو الشرح</h2>
+  <div class="file-info" id="videoInfo">شاهد الشرح هنا دون مغادرة الموقع.</div>
+  <div class="video-frame" id="videoFrame">مكان فيديو شرح BETA</div>
+ </section>
+ <a href="index.html" class="back-btn" id="backButton">↩ العودة إلى OXIDE HUB</a>
+ <footer>OXIDE HUB © 2026<br>Created by SKIMI_17</footer>
+</main>
+<script>
+const REQUIRED=3;
+const translations={
+ ar:{fileTitle:'📦 ملف BETA',fileInfo:'اسم الملف',download:'تحميل ملف BETA',videoTitle:'🎬 فيديو الشرح',videoInfo:'شاهد الشرح هنا دون مغادرة الموقع.',videoPlaceholder:'مكان فيديو شرح BETA',back:'↩ العودة إلى OXIDE HUB',needAds:'يجب إكمال 3 إعلانات لفتح التنزيل.',ready:'اكتمل شرط الإعلانات. اضغط لتحميل الملف.',unavailable:'ملف BETA غير متاح حاليًا.',loading:'جاري تحميل معلومات الملف...',downloading:'جارٍ تحميل الملف...',done:'اكتمل التنزيل 100% — جارٍ حفظ الملف',failed:'تعذر التنزيل. حاول مرة أخرى.'},
+ en:{fileTitle:'📦 BETA FILE',fileInfo:'File name',download:'DOWNLOAD BETA FILE',videoTitle:'🎬 VIDEO TUTORIAL',videoInfo:'Watch the tutorial here without leaving the website.',videoPlaceholder:'BETA tutorial video will appear here',back:'↩ BACK TO OXIDE HUB',needAds:'Complete 3 ads to unlock the download.',ready:'Ad requirement completed. Press to download.',unavailable:'BETA file is currently unavailable.',loading:'Loading file information...',downloading:'Downloading file...',done:'Download complete 100% — saving file',failed:'Download failed. Please try again.'},
+ ru:{fileTitle:'📦 ФАЙЛ BETA',fileInfo:'Имя файла',download:'СКАЧАТЬ ФАЙЛ BETA',videoTitle:'🎬 ВИДЕОИНСТРУКЦИЯ',videoInfo:'Смотрите инструкцию здесь, не покидая сайт.',videoPlaceholder:'Здесь будет видео BETA',back:'↩ НАЗАД В OXIDE HUB',needAds:'Завершите 3 рекламы, чтобы открыть загрузку.',ready:'Требование выполнено. Нажмите для загрузки.',unavailable:'Файл BETA сейчас недоступен.',loading:'Загрузка информации о файле...',downloading:'Загрузка файла...',done:'Загрузка завершена на 100% — сохранение файла',failed:'Не удалось загрузить файл. Попробуйте снова.'}
+};
+let lang='ar',beta=null,allowed=false;
+const $=id=>document.getElementById(id);
+function changeLanguage(value){lang=translations[value]?value:'ar';document.documentElement.lang=lang;document.documentElement.dir=lang==='ar'?'rtl':'ltr';const t=translations[lang];$('fileTitle').textContent=t.fileTitle;$('downloadText').textContent=t.download;$('videoTitle').textContent=t.videoTitle;$('videoInfo').textContent=t.videoInfo;$('backButton').textContent=t.back;$('videoFrame').textContent=t.videoPlaceholder;if(beta)$('fileInfo').textContent=beta.file_name||t.loading;}
+async function loadPage(){changeLanguage($('language').value);try{const [pr,gr]=await Promise.all([fetch('/api/platforms',{cache:'no-store',credentials:'same-origin'}),fetch('/api/progress',{cache:'no-store',credentials:'same-origin'})]);if(!pr.ok||!gr.ok)throw new Error('API');const pd=await pr.json(),gd=await gr.json();if(!pd.success)throw new Error('platforms');beta=(pd.platforms||{}).beta||{};allowed=Number(gd.progress||0)>=REQUIRED;$('fileInfo').textContent=beta.file_name||'غير محدد';const enabled=!!beta.enabled;$('downloadButton').disabled=!(allowed&&enabled);$('fileInfo').textContent=beta.file_name||'غير محدد';$('downloadButton').title=!enabled?translations[lang].unavailable:!allowed?translations[lang].needAds:translations[lang].ready;$('videoFrame').textContent=translations[lang].videoPlaceholder;if(!enabled)$('fileInfo').textContent=(beta.file_name||'غير محدد')+' — '+translations[lang].unavailable;else if(!allowed)$('fileInfo').textContent=(beta.file_name||'غير محدد')+' — '+translations[lang].needAds;}catch(e){$('fileInfo').textContent=translations[lang].failed;$('downloadButton').disabled=true;}}
+async function downloadBeta(){if(!beta||!beta.enabled||!allowed){alert(translations[lang].needAds);return;}const button=$('downloadButton'),box=$('progressBox'),fill=$('progressFill'),label=$('progressLabel');button.disabled=true;box.style.display='block';fill.style.width='0%';label.textContent='0%';try{const response=await fetch('/api/download?platform=beta',{cache:'no-store',credentials:'same-origin'});if(!response.ok){let msg=translations[lang].failed;try{const d=await response.json();if(d.error==='AD_PROGRESS_REQUIRED')msg=translations[lang].needAds;}catch(_){}throw new Error(msg);}const total=Number(response.headers.get('Content-Length')||0);if(!response.body)throw new Error(translations[lang].failed);const reader=response.body.getReader(),chunks=[];let received=0;while(true){const part=await reader.read();if(part.done)break;chunks.push(part.value);received+=part.value.length;if(total>0){const pct=Math.min(100,received/total*100);fill.style.width=pct+'%';label.textContent=Math.floor(pct)+'%';}}const blob=new Blob(chunks,{type:response.headers.get('Content-Type')||'application/octet-stream'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=beta.file_name||'OXIDE_BETA.apk';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);fill.style.width='100%';label.textContent=translations[lang].done;}catch(e){alert(e.message||translations[lang].failed);box.style.display='none';}finally{button.disabled=!(allowed&&beta&&beta.enabled);}}
+$('downloadButton').addEventListener('click',downloadBeta);loadPage();
+</script>
+</body>
+</html>
