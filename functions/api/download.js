@@ -1,37 +1,86 @@
-import { getVisitor, json } from "./_lib/session.js";
+
+import { json, getVisitor } from "./_lib/session.js";
 
 export async function onRequestGet({ request, env }) {
   try {
-    if (!env.DB || !env.SESSION_SECRET) {
-      return json({ error: "Server configuration missing" }, 500);
+    const visitorId = await getVisitor(request, env);
+
+    if (!visitorId) {
+      return json({ success: false, error: "VISITOR_NOT_FOUND" }, 401);
     }
 
-    const userId = await getVisitor(request, env);
-
-    if (!userId) {
-      return json({ error: "Visitor session missing" }, 401);
-    }
-
-    const row = await env.DB.prepare(
+    // التحقق من إكمال 3 إعلانات
+    const visitor = await env.DB.prepare(
       "SELECT progress FROM visitors WHERE user_id = ?"
-    ).bind(userId).first();
+    ).bind(visitorId).first();
 
-    const progress = Number(row?.progress || 0);
-
-    if (progress < 5) {
+    if (!visitor || Number(visitor.progress || 0) < 3) {
       return json({
-        error: "Complete all 5 rewarded actions first",
-        progress,
-        required: 5
+        success: false,
+        error: "AD_PROGRESS_REQUIRED",
+        required: 3
       }, 403);
     }
 
-    // التحميل معطّل حتى نجهّز الملف الحقيقي ونربطه بتخزين آمن.
-    return json({
-      error: "Download is not configured yet"
-    }, 503);
+    const url = new URL(request.url);
+    const platform = (url.searchParams.get("platform") || "").toLowerCase();
+
+    if (!["android", "ios", "beta"].includes(platform)) {
+      return json({ success: false, error: "INVALID_PLATFORM" }, 400);
+    }
+
+    const item = await env.DB.prepare(
+      "SELECT * FROM platform_downloads WHERE platform = ? AND enabled = 1"
+    ).bind(platform).first();
+
+    if (!item) {
+      return json({ success: false, error: "NOT_AVAILABLE" }, 404);
+    }
+
+    // iOS: تحويل إلى رابط خارجي
+    if (platform === "ios") {
+      if (!item.download_url) {
+        return json({ success: false, error: "DOWNLOAD_URL_MISSING" }, 404);
+      }
+
+      return Response.redirect(item.download_url, 302);
+    }
+
+    // Android و BETA: تحميل الملف من R2
+    if (!item.file_key) {
+      return json({ success: false, error: "FILE_NOT_FOUND" }, 404);
+    }
+
+    const file = await env.DOWNLOADS_BUCKET.get(item.file_key);
+
+    if (!file) {
+      return json({ success: false, error: "FILE_NOT_FOUND" }, 404);
+    }
+
+    const headers = new Headers();
+    headers.set(
+      "Content-Type",
+      file.httpMetadata?.contentType || "application/vnd.android.package-archive"
+    );
+    headers.set(
+      "Content-Disposition",
+      `attachment; filename="${item.file_name || "OXIDE-HUB.apk"}"`
+    );
+    headers.set("Cache-Control", "no-store");
+
+    if (file.size) {
+      headers.set("Content-Length", String(file.size));
+    }
+
+    return new Response(file.body, {
+      status: 200,
+      headers
+    });
 
   } catch (error) {
-    return json({ error: "Download failed" }, 500);
+    return json({
+      success: false,
+      error: "SERVER_ERROR"
+    }, 500);
   }
 }
