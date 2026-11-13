@@ -1,4 +1,9 @@
 
+import {
+  authorizeAdmin,
+  adminAuthResponse
+} from "../_lib/admin-auth.js";
+
 const headers = {
   "Content-Type": "application/json; charset=utf-8",
   "Cache-Control": "no-store"
@@ -8,81 +13,25 @@ function json(data, status = 200) {
   return new Response(JSON.stringify(data), { status, headers });
 }
 
-async function hmac(key, message) {
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    key,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-
-  return new Uint8Array(
-    await crypto.subtle.sign(
-      "HMAC",
-      cryptoKey,
-      new TextEncoder().encode(message)
-    )
-  );
-}
-
-function toHex(bytes) {
-  return Array.from(bytes)
-    .map(b => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-async function verifyAdmin(initData, env) {
-  if (!initData || !env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_ADMIN_ID) {
-    return false;
-  }
-
-  const params = new URLSearchParams(initData);
-  const receivedHash = params.get("hash");
-  const authDate = Number(params.get("auth_date"));
-  const userText = params.get("user");
-
-  if (!receivedHash || !authDate || !userText) return false;
-
-  const now = Math.floor(Date.now() / 1000);
-  if (now - authDate > 86400 || authDate > now + 60) return false;
-
-  const dataCheckString = [...params.entries()]
-    .filter(([key]) => key !== "hash")
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-    .join("\n");
-
-  // Telegram WebApp HMAC verification
-  const secretKey = await hmac(
-    new TextEncoder().encode("WebAppData"),
-    env.TELEGRAM_BOT_TOKEN
-  );
-
-  const calculatedHash = toHex(
-    await hmac(secretKey, dataCheckString)
-  );
-
-  if (calculatedHash !== receivedHash) return false;
-
-  try {
-    const user = JSON.parse(userText);
-    return String(user.id) === String(env.TELEGRAM_ADMIN_ID);
-  } catch {
-    return false;
-  }
-}
-
 export async function onRequestPost({ request, env }) {
   try {
     if (!env.DB) {
-      return json({ success: false, error: "DATABASE_NOT_CONFIGURED" }, 500);
+      return json({
+        success: false,
+        error: "DATABASE_NOT_CONFIGURED"
+      }, 500);
     }
 
     const body = await request.json();
 
-    if (!(await verifyAdmin(body.initData, env))) {
-      return json({ success: false, error: "UNAUTHORIZED" }, 401);
+    const auth = await authorizeAdmin(
+      String(body.initData || ""),
+      env,
+      "tasks"
+    );
+
+    if (!auth.ok) {
+      return adminAuthResponse(auth);
     }
 
     if (body.action === "list") {
@@ -108,7 +57,10 @@ export async function onRequestPost({ request, env }) {
         ORDER BY m.sort_order ASC, m.id ASC
       `).all();
 
-      return json({ success: true, tasks: result.results || [] });
+      return json({
+        success: true,
+        tasks: result.results || []
+      });
     }
 
     if (body.action === "save") {
@@ -122,19 +74,35 @@ export async function onRequestPost({ request, env }) {
       const sortOrder = Number(body.sort_order || 0);
 
       if (!title || title.length > 120) {
-        return json({ success: false, error: "INVALID_TITLE" }, 400);
+        return json({
+          success: false,
+          error: "INVALID_TITLE"
+        }, 400);
       }
 
       if (!["tiktok", "telegram"].includes(platform)) {
-        return json({ success: false, error: "INVALID_PLATFORM" }, 400);
+        return json({
+          success: false,
+          error: "INVALID_PLATFORM"
+        }, 400);
       }
 
-      if (!Number.isInteger(rewardPoints) || rewardPoints < 0 || rewardPoints > 100000) {
-        return json({ success: false, error: "INVALID_REWARD" }, 400);
+      if (
+        !Number.isInteger(rewardPoints) ||
+        rewardPoints < 0 ||
+        rewardPoints > 100000
+      ) {
+        return json({
+          success: false,
+          error: "INVALID_REWARD"
+        }, 400);
       }
 
       if (targetUrl && !/^https:\/\/\S+$/i.test(targetUrl)) {
-        return json({ success: false, error: "INVALID_URL" }, 400);
+        return json({
+          success: false,
+          error: "INVALID_URL"
+        }, 400);
       }
 
       if (id > 0) {
@@ -145,15 +113,27 @@ export async function onRequestPost({ request, env }) {
               updated_at = unixepoch()
           WHERE id = ?
         `).bind(
-          title, platform, description, targetUrl,
-          rewardPoints, enabled, sortOrder, id
+          title,
+          platform,
+          description,
+          targetUrl,
+          rewardPoints,
+          enabled,
+          sortOrder,
+          id
         ).run();
 
         if (!result.meta.changes) {
-          return json({ success: false, error: "TASK_NOT_FOUND" }, 404);
+          return json({
+            success: false,
+            error: "TASK_NOT_FOUND"
+          }, 404);
         }
 
-        return json({ success: true, message: "TASK_UPDATED" });
+        return json({
+          success: true,
+          message: "TASK_UPDATED"
+        });
       }
 
       const next = await env.DB.prepare(`
@@ -167,8 +147,14 @@ export async function onRequestPost({ request, env }) {
          reward_points, enabled, sort_order)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `).bind(
-        next.next_id, title, platform, description,
-        targetUrl, rewardPoints, enabled, sortOrder
+        next.next_id,
+        title,
+        platform,
+        description,
+        targetUrl,
+        rewardPoints,
+        enabled,
+        sortOrder
       ).run();
 
       return json({
@@ -183,7 +169,10 @@ export async function onRequestPost({ request, env }) {
       const enabled = Number(body.enabled) === 1 ? 1 : 0;
 
       if (!Number.isInteger(id) || id < 1) {
-        return json({ success: false, error: "INVALID_ID" }, 400);
+        return json({
+          success: false,
+          error: "INVALID_ID"
+        }, 400);
       }
 
       const result = await env.DB.prepare(`
@@ -193,17 +182,26 @@ export async function onRequestPost({ request, env }) {
       `).bind(enabled, id).run();
 
       if (!result.meta.changes) {
-        return json({ success: false, error: "TASK_NOT_FOUND" }, 404);
+        return json({
+          success: false,
+          error: "TASK_NOT_FOUND"
+        }, 404);
       }
 
-      return json({ success: true, message: "TASK_STATUS_UPDATED" });
+      return json({
+        success: true,
+        message: "TASK_STATUS_UPDATED"
+      });
     }
 
     if (body.action === "delete") {
       const id = Number(body.id);
 
       if (!Number.isInteger(id) || id < 1) {
-        return json({ success: false, error: "INVALID_ID" }, 400);
+        return json({
+          success: false,
+          error: "INVALID_ID"
+        }, 400);
       }
 
       const submissions = await env.DB.prepare(`
@@ -224,10 +222,16 @@ export async function onRequestPost({ request, env }) {
       `).bind(id).run();
 
       if (!result.meta.changes) {
-        return json({ success: false, error: "TASK_NOT_FOUND" }, 404);
+        return json({
+          success: false,
+          error: "TASK_NOT_FOUND"
+        }, 404);
       }
 
-      return json({ success: true, message: "TASK_DELETED" });
+      return json({
+        success: true,
+        message: "TASK_DELETED"
+      });
     }
 
     if (body.action === "completed") {
@@ -237,7 +241,10 @@ export async function onRequestPost({ request, env }) {
       const offset = (page - 1) * limit;
 
       if (!Number.isInteger(missionId) || missionId < 1) {
-        return json({ success: false, error: "INVALID_MISSION_ID" }, 400);
+        return json({
+          success: false,
+          error: "INVALID_MISSION_ID"
+        }, 400);
       }
 
       const total = await env.DB.prepare(`
@@ -253,7 +260,11 @@ export async function onRequestPost({ request, env }) {
         WHERE s.mission_id = ? AND s.status = 'approved'
         ORDER BY s.reviewed_at DESC
         LIMIT ? OFFSET ?
-      `).bind(missionId, limit, offset).all();
+      `).bind(
+        missionId,
+        limit,
+        offset
+      ).all();
 
       return json({
         success: true,
@@ -263,7 +274,10 @@ export async function onRequestPost({ request, env }) {
       });
     }
 
-    return json({ success: false, error: "INVALID_ACTION" }, 400);
+    return json({
+      success: false,
+      error: "INVALID_ACTION"
+    }, 400);
 
   } catch (error) {
     return json({
