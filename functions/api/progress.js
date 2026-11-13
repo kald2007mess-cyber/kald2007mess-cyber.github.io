@@ -5,6 +5,8 @@ import {
   createVisitorCookie
 } from "./_lib/session.js";
 
+const CYCLE_SECONDS = 1800;
+
 async function notifyTelegram(env, message) {
   try {
     if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_ADMIN_ID) return;
@@ -20,9 +22,7 @@ async function notifyTelegram(env, message) {
         })
       }
     );
-  } catch {
-    // Telegram errors must not affect the website
-  }
+  } catch {}
 }
 
 export async function onRequestGet({ request, env }) {
@@ -53,7 +53,6 @@ export async function onRequestGet({ request, env }) {
       VALUES (?, 0, ?, ?)
     `).bind(userId, now, now).run();
 
-    // Notify only when a new visitor ID is registered
     if (inserted.meta?.changes > 0) {
       await notifyTelegram(
         env,
@@ -86,7 +85,7 @@ export async function onRequestGet({ request, env }) {
       startedAt = now;
     }
 
-    if (now - startedAt >= 7200) {
+    if (now - startedAt >= CYCLE_SECONDS) {
       await env.DB.prepare(`
         UPDATE visitors
         SET progress = 0,
@@ -120,7 +119,7 @@ export async function onRequestGet({ request, env }) {
       headers
     });
 
-  } catch (error) {
+  } catch {
     return json({ error: "Could not load progress" }, 500);
   }
 }
