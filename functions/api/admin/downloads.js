@@ -6,7 +6,7 @@ import {
 } from "../_lib/admin-auth.js";
 
 const PLATFORMS = ["android", "ios", "beta"];
-const UPLOAD_PLATFORMS = ["android", "beta"];
+const UPLOAD_PLATFORMS = ["android", "ios", "beta"];
 
 const MAX_FILE_SIZE = 2.5 * 1024 * 1024 * 1024;
 const MIN_PART_SIZE = 5 * 1024 * 1024;
@@ -139,6 +139,29 @@ function validateUploadKey(platform, key) {
   }
 }
 
+/* التحقق من امتداد الملف حسب المنصة */
+function validateFileExtension(platform, fileName) {
+  const name = fileName.toLowerCase();
+
+  if (platform === "ios" && !name.endsWith(".ipa")) {
+    throw new Error("IPA_ONLY");
+  }
+
+  if (
+    (platform === "android" || platform === "beta") &&
+    !name.endsWith(".apk")
+  ) {
+    throw new Error("APK_ONLY");
+  }
+}
+
+/* نوع الملف عند التخزين في R2 */
+function getContentType(platform) {
+  return platform === "ios"
+    ? "application/octet-stream"
+    : "application/vnd.android.package-archive";
+}
+
 async function savePlatform(env, data) {
   const platform = String(data.platform || "");
   if (!validPlatform(platform)) throw new Error("INVALID_PLATFORM");
@@ -253,9 +276,7 @@ async function createMultipartUpload(env, form) {
   const fileName = safeFileName(form.get("fileName"));
   const fileSize = Number(form.get("fileSize"));
 
-  if (!fileName.toLowerCase().endsWith(".apk")) {
-    throw new Error("APK_ONLY");
-  }
+  validateFileExtension(platform, fileName);
 
   if (
     !Number.isSafeInteger(fileSize) ||
@@ -276,7 +297,7 @@ async function createMultipartUpload(env, form) {
 
   const upload = await env.DOWNLOADS_BUCKET.createMultipartUpload(key, {
     httpMetadata: {
-      contentType: "application/vnd.android.package-archive",
+      contentType: getContentType(platform),
       contentDisposition: `attachment; filename="${fileName}"`
     }
   });
@@ -353,6 +374,7 @@ async function completeMultipartUpload(env, form) {
   const fileSize = Number(form.get("fileSize"));
 
   validateUploadKey(platform, key);
+  validateFileExtension(platform, fileName);
 
   if (
     !uploadId ||
@@ -596,6 +618,7 @@ export async function onRequestPost({ request, env }) {
       INVALID_URL: "INVALID_URL",
       IOS_URL_REQUIRED: "IOS_URL_REQUIRED",
       APK_ONLY: "APK_ONLY",
+      IPA_ONLY: "IPA_ONLY",
       FILE_NOT_FOUND: "FILE_NOT_FOUND",
       INVALID_FILE_ID: "INVALID_FILE_ID",
       INVALID_UPLOAD: "INVALID_UPLOAD",
