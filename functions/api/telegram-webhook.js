@@ -75,12 +75,12 @@ export async function onRequestPost({ request, env }) {
         m.title,
         m.reward_points
       FROM mission_submissions s
-      LEFT JOIN oxide_admin_missions m
+      INNER JOIN oxide_admin_missions m
         ON m.id = s.mission_id
       WHERE s.id = ?
     `).bind(submissionId).first();
 
-    if (!submission || !submission.title) {
+    if (!submission) {
       await telegram(env, "answerCallbackQuery", {
         callback_query_id: callback.id,
         text: "الطلب أو المهمة غير موجودة"
@@ -106,6 +106,21 @@ export async function onRequestPost({ request, env }) {
         Math.floor(Number(submission.reward_points) || 0)
       );
 
+      const user = await env.DB.prepare(`
+        SELECT user_id
+        FROM visitors
+        WHERE user_id = ?
+      `).bind(submission.user_id).first();
+
+      if (!user) {
+        await telegram(env, "answerCallbackQuery", {
+          callback_query_id: callback.id,
+          text: "المستخدم غير موجود"
+        });
+
+        return json({ success: true });
+      }
+
       const results = await env.DB.batch([
         env.DB.prepare(`
           UPDATE visitors
@@ -121,8 +136,10 @@ export async function onRequestPost({ request, env }) {
 
         env.DB.prepare(`
           UPDATE mission_submissions
-          SET status = 'approved', reviewed_at = ?
-          WHERE id = ? AND status = 'pending'
+          SET status = 'approved',
+              reviewed_at = ?
+          WHERE id = ?
+            AND status = 'pending'
         `).bind(now, submissionId)
       ]);
 
@@ -139,11 +156,14 @@ export async function onRequestPost({ request, env }) {
       resultText =
         `✅ تمت الموافقة على مهمة ${submission.title}\n` +
         `🎁 تمت إضافة ${reward} نقطة للمستخدم.`;
+
     } else {
       const rejected = await env.DB.prepare(`
         UPDATE mission_submissions
-        SET status = 'rejected', reviewed_at = ?
-        WHERE id = ? AND status = 'pending'
+        SET status = 'rejected',
+            reviewed_at = ?
+        WHERE id = ?
+          AND status = 'pending'
       `).bind(now, submissionId).run();
 
       if (Number(rejected.meta?.changes || 0) !== 1) {
@@ -160,7 +180,9 @@ export async function onRequestPost({ request, env }) {
 
     await telegram(env, "answerCallbackQuery", {
       callback_query_id: callback.id,
-      text: action === "approve" ? "تمت الموافقة ✅" : "تم الرفض ❌"
+      text: action === "approve"
+        ? "تمت الموافقة ✅"
+        : "تم الرفض ❌"
     });
 
     const oldCaption = message.caption || "";
