@@ -329,7 +329,7 @@ export async function onRequestPost({ request, env }) {
         now
       ).run();
 
-      if (result.meta.changes > 0 && offerType === "ptc") {
+      if (result.meta?.changes > 0 && offerType === "ptc") {
         await env.DB.prepare(`
           UPDATE visitors
           SET
@@ -377,7 +377,7 @@ export async function onRequestPost({ request, env }) {
         WHERE trans_id = ? AND user_id = ?
       `).bind(transId, subId).first();
 
-      if (existing && existing.status === 1) {
+      if (existing && Number(existing.status) === 1) {
         await env.DB.prepare(`
           UPDATE offerwall_events
           SET status = 2
@@ -391,9 +391,13 @@ export async function onRequestPost({ request, env }) {
             UPDATE visitors
             SET progress = MAX(0, progress - 1)
             WHERE user_id = ?
-              AND cycle_started_at = ?
+              AND cycle_started_at <= ?
               AND ? - cycle_started_at < 1800
-          `).bind(subId, Number(existing.created_at), now).run();
+          `).bind(
+            subId,
+            Number(existing.created_at),
+            now
+          ).run();
         }
 
       } else if (!existing) {
