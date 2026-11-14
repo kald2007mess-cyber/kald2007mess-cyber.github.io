@@ -2,6 +2,28 @@
 import { json, getVisitor } from "./_lib/session.js";
 
 const CYCLE_SECONDS = 1800;
+const R2_PUBLIC_URL =
+  "https://pub-052cdf3a8da44cd2bb81e3b138ebcb45.r2.dev";
+
+function r2KeyFromPublicUrl(value, platform) {
+  try {
+    const url = new URL(String(value || ""));
+    if (url.origin !== R2_PUBLIC_URL) return null;
+
+    const key = decodeURIComponent(url.pathname.replace(/^\\/+/, ""));
+    if (
+      !key.startsWith(platform + "/") ||
+      key.includes("..") ||
+      key.includes("\\\\")
+    ) {
+      return null;
+    }
+
+    return key;
+  } catch {
+    return null;
+  }
+}
 
 function parseRange(rangeHeader, size) {
   if (!rangeHeader) return null;
@@ -201,7 +223,12 @@ export async function onRequestGet({ request, env }) {
       }, 404);
     }
 
-    /* Files stored in R2 are streamed here; external links redirect only after ad verification. */
+    /* Recover legacy R2 keys from stored public URLs so private buckets remain compatible. */
+    if (!item.file_key) {
+      item.file_key = r2KeyFromPublicUrl(item.download_url, platform) || "";
+    }
+
+    /* R2 files are streamed here; external links redirect only after ad verification. */
     if (!item.file_key) {
       if (!item.download_url) {
         return json({
