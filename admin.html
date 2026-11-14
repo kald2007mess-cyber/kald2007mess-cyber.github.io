@@ -300,8 +300,9 @@ function renderPlatformFiles(){
    continue;
   }
   const id=String(item.id||""),enabled=Number(item.enabled)===1;
-  const fileLabel=item.file_name||(item.download_url?"رابط خارجي":"لا يوجد ملف مرفق");
-  const link=item.download_url?'<a class="platform-file-link" href="'+escapeHtml(item.download_url)+'" target="_blank" rel="noopener">فتح رابط التنزيل ↗</a>':"";
+  const isR2File=String(item.download_url||"").startsWith("https://pub-052cdf3a8da44cd2bb81e3b138ebcb45.r2.dev/");
+  const fileLabel=item.file_name||(isR2File?"ملف محفوظ في R2":item.download_url?"رابط خارجي":"لا يوجد ملف مرفق");
+  const link=item.download_url&&!isR2File?'<a class="platform-file-link" href="'+escapeHtml(item.download_url)+'" target="_blank" rel="noopener">فتح رابط التنزيل ↗</a>':"";
   cards.push(`<article class="platform-slot-card ${enabled?'':'is-disabled'}"><div class="platform-slot-top"><span class="platform-slot-title">📦 ${slot===1?'الملف الأول':'الملف الثاني'}</span><span class="platform-slot-state ${enabled?'':'off'}">${enabled?'● مفعّل':'● متوقف'}</span></div><div class="platform-app-name">${escapeHtml(item.title||"ملف بلا اسم")}</div><div class="platform-file-meta"><span>الإصدار: ${escapeHtml(item.version||"—")}</span><span>الحجم: ${formatSize(item.file_size)}</span><span>التنزيلات: ${Number(item.downloads_count||0)}</span></div><div class="platform-file-meta"><span>${escapeHtml(fileLabel)}</span></div>${item.description?`<p class="platform-file-description">${escapeHtml(item.description)}</p>`:''}${link}<div class="platform-card-actions"><button class="secondary" onclick="editPlatformFile('${encodeURIComponent(id)}')">✏️ تعديل</button><button onclick="togglePlatformFile('${encodeURIComponent(id)}',${enabled?0:1})">${enabled?'⏸ إيقاف':'▶️ تفعيل'}</button><button class="danger" onclick="deletePlatformFile('${encodeURIComponent(id)}')">🗑 حذف</button></div></article>`);
  }
  list.innerHTML=cards.join("");
