@@ -330,11 +330,11 @@ function renderFiles() {
 
     info.textContent = [title, ...details].join(" — ");
 
-    const url = String(file.download_url || "").trim();
-    if (url && /^https:\/\/[^\s]+$/i.test(url)) {
-      link.href = url;
+    const fileId = String(file.id || "").trim();
+    if (fileId) {
+      link.href = "/api/download?platform=android&id=" + encodeURIComponent(fileId);
       link.hidden = false;
-      link.dataset.fileId = file.id || "";
+      link.dataset.fileId = fileId;
       link.dataset.fileName = file.file_name || title;
       button.textContent = currentText(`file${slot}Button`);
     } else {
@@ -351,9 +351,17 @@ async function loadPlatformData() {
   info2.textContent = currentText("loading");
 
   try {
+    // Ensure the visitor session cookie exists before a protected download is requested.
+    await fetch("/api/progress", {
+      method: "GET",
+      cache: "no-store",
+      credentials: "same-origin"
+    }).catch(() => null);
+
     const response = await fetch("/api/platforms", {
       method: "GET",
-      cache: "no-store"
+      cache: "no-store",
+      credentials: "same-origin"
     });
 
     if (!response.ok) throw new Error("Platforms API HTTP " + response.status);
@@ -363,7 +371,7 @@ async function loadPlatformData() {
     renderFiles();
 
     const videoUrl = data && data.tutorials && data.tutorials.android;
-    if (typeof videoUrl === "string" && /^https:\/\/[^\s]+$/i.test(videoUrl)) {
+    if (typeof videoUrl === "string" && (videoUrl.startsWith("/api/tutorial?") || /^https:\/\/[^\s]+$/i.test(videoUrl))) {
       const video = document.getElementById("tutorialVideo");
       video.src = videoUrl;
       document.getElementById("videoSection").hidden = false;
@@ -398,7 +406,7 @@ async function startDownload(fileNumber) {
   label.textContent = "0%";
 
   try {
-    const response = await fetch(url, { method: "GET", mode: "cors" });
+    const response = await fetch(url, { method: "GET", credentials: "same-origin", cache: "no-store" });
     if (!response.ok) throw new Error("HTTP " + response.status);
 
     const total = Number(response.headers.get("Content-Length")) || 0;

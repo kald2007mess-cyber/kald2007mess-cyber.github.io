@@ -1,4 +1,7 @@
-const encoder = new TextEncoder();
+import {
+  authorizeAdmin,
+  adminAuthResponse
+} from "../_lib/admin-auth.js";
 
 const ALLOWED_PERMISSIONS = [
   "users",
@@ -21,82 +24,6 @@ function json(data, status = 200) {
   });
 }
 
-function toHex(buffer) {
-  return [...new Uint8Array(buffer)]
-    .map(byte => byte.toString(16).padStart(2, "0"))
-    .join("");
-}
-
-async function hmac(keyBytes, message) {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    keyBytes,
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-
-  return new Uint8Array(
-    await crypto.subtle.sign("HMAC", key, encoder.encode(message))
-  );
-}
-
-async function verifyOwner(initData, env) {
-  if (!initData || !env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_ADMIN_ID) {
-    return false;
-  }
-
-  const params = new URLSearchParams(initData);
-  const receivedHash = params.get("hash");
-
-  if (!receivedHash) return false;
-
-  params.delete("hash");
-
-  const authDate = Number(params.get("auth_date"));
-
-  if (
-    !Number.isFinite(authDate) ||
-    Math.abs(Date.now() / 1000 - authDate) > 86400
-  ) {
-    return false;
-  }
-
-  const dataCheckString = [...params.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-    .join("\n");
-
-  const secretKey = await hmac(
-    encoder.encode("WebAppData"),
-    env.TELEGRAM_BOT_TOKEN
-  );
-
-  const calculatedHash = toHex(
-    await hmac(secretKey, dataCheckString)
-  );
-
-  if (calculatedHash.length !== receivedHash.length) return false;
-
-  let difference = 0;
-
-  for (let i = 0; i < calculatedHash.length; i++) {
-    difference |= calculatedHash.charCodeAt(i) ^ receivedHash.charCodeAt(i);
-  }
-
-  if (difference !== 0) return false;
-
-  let user;
-
-  try {
-    user = JSON.parse(params.get("user") || "{}");
-  } catch {
-    return false;
-  }
-
-  return String(user.id) === String(env.TELEGRAM_ADMIN_ID);
-}
-
 function validTelegramId(value) {
   return /^\d{5,20}$/.test(String(value || ""));
 }
@@ -105,11 +32,15 @@ export async function onRequestPost({ request, env }) {
   try {
     const body = await request.json();
 
-    // المالك فقط يستطيع الوصول إلى هذا API
-    const owner = await verifyOwner(body.initData, env);
+    // التحقق الموحد من Telegram initData، والمالك فقط يدير النواب.
+    const auth = await authorizeAdmin(
+      String(body.initData || ""),
+      env,
+      "security"
+    );
 
-    if (!owner) {
-      return json({ success: false, error: "UNAUTHORIZED" }, 403);
+    if (!auth.ok) {
+      return adminAuthResponse(auth);
     }
 
     const action = String(body.action || "");

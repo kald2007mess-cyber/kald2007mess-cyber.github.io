@@ -2,7 +2,28 @@
 import { json, getVisitor } from "./_lib/session.js";
 
 const CYCLE_SECONDS = 1800;
+const R2_PUBLIC_URL =
+  "https://pub-052cdf3a8da44cd2bb81e3b138ebcb45.r2.dev";
 
+function r2KeyFromPublicUrl(value, platform) {
+  try {
+    const url = new URL(String(value || ""));
+    if (url.origin !== R2_PUBLIC_URL) return null;
+
+    const key = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
+    if (
+      !key.startsWith(platform + "/") ||
+      key.includes("..") ||
+      key.includes("\\")
+    ) {
+      return null;
+    }
+
+    return key;
+  } catch {
+    return null;
+  }
+}
 function parseRange(rangeHeader, size) {
   if (!rangeHeader) return null;
 
@@ -62,6 +83,18 @@ function attachmentHeader(fileName) {
 }
 
 async function findFile(env, platform, fileId) {
+  if (fileId && fileId.startsWith("legacy-")) {
+    if (fileId !== "legacy-" + platform) return null;
+
+    return await env.DB.prepare(`
+      SELECT *
+      FROM platform_downloads
+      WHERE platform = ?
+        AND enabled = 1
+      LIMIT 1
+    `).bind(platform).first();
+  }
+
   if (fileId) {
     return await env.DB.prepare(`
       SELECT *
@@ -189,8 +222,27 @@ export async function onRequestGet({ request, env }) {
       }, 404);
     }
 
-    /* iOS */
-    if (platform === "ios") {
+    /* Recover legacy R2 keys from stored public URLs so private buckets remain compatible. */
+    if (!item.file_key) {
+      item.file_key = r2KeyFromPublicUrl(item.download_url, platform) || "";
+    }
+
+    if (
+      item.file_key &&
+      (
+        !String(item.file_key).startsWith(platform + "/") ||
+        String(item.file_key).includes("..") ||
+        String(item.file_key).includes("\\")
+      )
+    ) {
+      return json({
+        success: false,
+        error: "INVALID_FILE_KEY"
+      }, 500);
+    }
+
+    /* R2 files are streamed here; external links redirect only after ad verification. */
+    if (!item.file_key) {
       if (!item.download_url) {
         return json({
           success: false,
@@ -198,18 +250,29 @@ export async function onRequestGet({ request, env }) {
         }, 404);
       }
 
-      if (fileId) {
+      let externalUrl;
+
+      try {
+        externalUrl = new URL(String(item.download_url));
+      } catch {
+        return json({
+          success: false,
+          error: "INVALID_DOWNLOAD_URL"
+        }, 500);
+      }
+
+      if (externalUrl.protocol !== "https:") {
+        return json({
+          success: false,
+          error: "INVALID_DOWNLOAD_URL"
+        }, 500);
+      }
+
+      if (fileId && !fileId.startsWith("legacy-")) {
         await recordUniqueDownload(env, item.id, visitorId);
       }
 
-      return Response.redirect(item.download_url, 302);
-    }
-
-    if (!item.file_key) {
-      return json({
-        success: false,
-        error: "FILE_NOT_FOUND"
-      }, 404);
+      return Response.redirect(externalUrl.toString(), 302);
     }
 
     const info = await env.DOWNLOADS_BUCKET.head(item.file_key);
@@ -234,7 +297,9 @@ export async function onRequestGet({ request, env }) {
 
     headers.set(
       "Content-Type",
-      "application/vnd.android.package-archive"
+      platform === "ios"
+        ? "application/octet-stream"
+        : "application/vnd.android.package-archive"
     );
 
     headers.set(
@@ -276,7 +341,7 @@ export async function onRequestGet({ request, env }) {
         }, 404);
       }
 
-      await recordUniqueDownload(env, fileId ? item.id : null, visitorId);
+      await recordUniqueDownload(env, fileId && !fileId.startsWith("legacy-") ? item.id : null, visitorId);
 
       headers.set("Content-Length", String(range.length));
 
@@ -300,7 +365,7 @@ export async function onRequestGet({ request, env }) {
       }, 404);
     }
 
-    await recordUniqueDownload(env, fileId ? item.id : null, visitorId);
+    await recordUniqueDownload(env, fileId && !fileId.startsWith("legacy-") ? item.id : null, visitorId);
 
     headers.set("Content-Length", String(fileSize));
 

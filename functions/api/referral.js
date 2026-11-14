@@ -175,6 +175,33 @@ export async function onRequestPost({ request, env }) {
       }, 404);
     }
 
+    // اكتشاف ما إذا كان Trigger موجودًا ويضيف نقاط الإحالة بالفعل.
+    // إذا لم يوجد، سنضيف النقاط من التطبيق دون مضاعفتها.
+    let triggerCreditsPoints = false;
+
+    try {
+      const triggers = await env.DB.prepare(`
+        SELECT sql
+        FROM sqlite_master
+        WHERE type = 'trigger'
+          AND tbl_name = 'referrals'
+      `).all();
+
+      triggerCreditsPoints = (triggers.results || []).some(row => {
+        const sql = String(row.sql || "");
+        return /UPDATE\s+(?:main\.)?["'`]?visitors["'`]?/i.test(sql) &&
+          /\bpoints\b/i.test(sql) &&
+          /referrer_id/i.test(sql) &&
+          (/points_awarded/i.test(sql) || /\b15\b/.test(sql));
+      });
+    } catch (error) {
+      console.error("Referral trigger inspection failed:", error);
+      return json({
+        success: false,
+        error: "REFERRAL_TRIGGER_CHECK_FAILED"
+      }, 500);
+    }
+
     // إنشاء حساب جديد
     const cookie = await createVisitorCookie(env);
 
@@ -211,22 +238,48 @@ export async function onRequestPost({ request, env }) {
       }, cookie, 409);
     }
 
-    // تسجيل الإحالة: Trigger قاعدة البيانات يضيف 15 نقطة
-    const result = await env.DB.prepare(`
-      INSERT OR IGNORE INTO referrals
-      (referrer_id, referred_id, points_awarded, created_at)
-      VALUES (?, ?, 15, ?)
-    `).bind(
-      referrerId,
-      userId,
-      Math.floor(Date.now() / 1000)
-    ).run();
+    // تسجيل الإحالة وإضافة المكافأة داخل Batch واحد.
+    const now = Math.floor(Date.now() / 1000);
+    const statements = [
+      env.DB.prepare(`
+        INSERT OR IGNORE INTO referrals
+          (referrer_id, referred_id, points_awarded, created_at)
+        VALUES (?, ?, 15, ?)
+      `).bind(referrerId, userId, now)
+    ];
 
-    if (result.meta?.changes !== 1) {
+    if (!triggerCreditsPoints) {
+      statements.push(
+        env.DB.prepare(`
+          UPDATE visitors
+          SET points = COALESCE(points, 0) + 15
+          WHERE user_id = ?
+            AND EXISTS (
+              SELECT 1
+              FROM referrals
+              WHERE referrer_id = ?
+                AND referred_id = ?
+                AND created_at = ?
+                AND points_awarded = 15
+            )
+        `).bind(referrerId, referrerId, userId, now)
+      );
+    }
+
+    const results = await env.DB.batch(statements);
+
+    if (Number(results[0]?.meta?.changes || 0) !== 1) {
       return response({
         success: false,
         error: "REFERRAL_NOT_REGISTERED"
       }, cookie, 409);
+    }
+
+    if (
+      !triggerCreditsPoints &&
+      Number(results[1]?.meta?.changes || 0) !== 1
+    ) {
+      throw new Error("REFERRAL_POINTS_NOT_AWARDED");
     }
 
     return response({

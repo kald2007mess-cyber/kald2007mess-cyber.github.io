@@ -150,6 +150,8 @@ button,input,select,textarea{backdrop-filter:blur(8px);-webkit-backdrop-filter:b
 <p class="menu-heading">CONTROL CENTER</p>
 <div class="menu-grid">
 <button class="menu-tile blue" data-admin-permission="users" onclick="action('users')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><span>معلومات المستخدمين</span></button>
+<button class="menu-tile green" data-admin-permission="users" onclick="action('rewards')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M20 7h-9M14 17H5M20 12H5"/><circle cx="17" cy="7" r="2"/><circle cx="7" cy="17" r="2"/></svg></div><span>طلبات المكافآت</span></button>
+<button class="menu-tile purple" data-admin-permission="stats" onclick="action('stats')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-5 5"/></svg></div><span>الإحصائيات</span></button>
 <button class="menu-tile yellow" data-admin-permission="news" onclick="action('news')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><span>إدارة الأخبار</span></button>
 <button class="menu-tile green" data-admin-permission="tasks" onclick="action('tasks')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="m9 11 3 3L22 4"/><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"/></svg></div><span>إدارة المهمات</span></button>
 <button class="menu-tile blue" data-admin-permission="android" onclick="openPlatform('android')"><div class="tile-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/></svg></div><span>ANDROID</span></button>
@@ -161,6 +163,8 @@ button,input,select,textarea{backdrop-filter:blur(8px);-webkit-backdrop-filter:b
 <div class="card" id="maintenanceCard" data-admin-permission="maintenance" style="margin-top:18px"><h3>🛠️ إدارة صيانة الموقع</h3><div id="maintenanceState" class="maintenance-state">جارٍ تحميل حالة الصيانة...</div><button id="maintenanceButton" onclick="toggleMaintenance()" disabled>حالة الصيانة</button><button id="messageButton" onclick="editMaintenanceMessage()" disabled>رسالة الصيانة</button><p class="note" id="maintenanceInfo">يتم حفظ إعدادات الصيانة لجميع زوار الموقع.</p></div>
 </div>
 <div id="usersPage" class="hidden"><div class="card"><button class="back" onclick="closeUsers()">⬅ العودة إلى لوحة الإدارة</button><h3>👥 معلومات المستخدمين</h3><div class="users-summary"><div class="users-stat">إجمالي المستخدمين<strong id="usersTotal">—</strong></div><div class="users-stat">الصفحة الحالية<strong id="usersPageNumber">1</strong></div></div><div class="users-toolbar"><input id="usersSearch" type="search" placeholder="بحث بواسطة User ID" maxlength="80"><button style="width:auto;min-width:76px;margin:0" onclick="searchUsers()">بحث</button></div><div class="platform-status" id="usersStatus">جارٍ تحميل المستخدمين...</div><div id="usersList"></div><div class="users-pagination"><button class="secondary" id="usersPrev" onclick="changeUsersPage(-1)" disabled>السابق</button><button class="secondary" id="usersNext" onclick="changeUsersPage(1)" disabled>التالي</button></div><p class="note">تعرض هذه الصفحة بيانات المستخدمين المسجلة في قاعدة بيانات الموقع.</p></div></div>
+<div id="rewardOrdersPage" class="hidden"><div class="card"><button class="back" onclick="closeRewardOrders()">⬅ العودة إلى لوحة الإدارة</button><h3>🎁 طلبات المكافآت</h3><div class="field"><label>حالة الطلبات</label><select id="rewardOrderFilter" onchange="changeRewardOrderFilter()"><option value="pending">طلبات معلّقة</option><option value="completed">مكتملة</option><option value="rejected">مرفوضة</option><option value="all">جميع الطلبات</option></select></div><div class="platform-status" id="rewardOrdersStatus">جارٍ تحميل الطلبات...</div><div id="rewardOrdersList"></div><div class="users-pagination"><button class="secondary" id="rewardOrdersPrev" onclick="changeRewardOrdersPage(-1)" disabled>السابق</button><span id="rewardOrdersPageNumber">1</span><button class="secondary" id="rewardOrdersNext" onclick="changeRewardOrdersPage(1)" disabled>التالي</button></div></div></div>
+<div id="statsPage" class="hidden"><div class="card"><button class="back" onclick="closeStats()">⬅ العودة إلى لوحة الإدارة</button><h3>📊 إحصائيات OXIDE HUB</h3><div class="platform-status" id="statsStatus">جارٍ تحميل الإحصائيات...</div><div class="users-summary"><div class="users-stat">إجمالي المستخدمين<strong id="statVisitors">—</strong></div><div class="users-stat">مستخدمون اليوم<strong id="statVisitorsToday">—</strong></div><div class="users-stat">إعلانات مؤكدة<strong id="statConfirmedAds">—</strong></div><div class="users-stat">إعلانات PTC<strong id="statPtcAds">—</strong></div><div class="users-stat">إجمالي النقاط<strong id="statTotalPoints">—</strong></div><div class="users-stat">الإحالات<strong id="statReferrals">—</strong></div><div class="users-stat">طلبات مكافآت معلّقة<strong id="statPendingRewards">—</strong></div><div class="users-stat">مهمات تنتظر المراجعة<strong id="statPendingMissions">—</strong></div><div class="users-stat">التنزيلات المسجلة<strong id="statDownloads">—</strong></div></div><button class="secondary" onclick="loadAdminStats()">🔄 تحديث الإحصائيات</button></div></div>
 <div id="newsPage" class="hidden"><div class="card"><button class="back" onclick="closeNews()">⬅ العودة إلى لوحة الإدارة</button><h3>📰 إدارة الأخبار</h3><div class="platform-status" id="newsStatus">جارٍ تحميل المنشورات...</div><h3 id="newsFormHeading">إضافة منشور جديد</h3><div class="field"><label>عنوان المنشور</label><input id="newsTitle" maxlength="180" placeholder="اكتب عنوان المنشور"></div><div class="field"><label>نص المنشور</label><textarea id="newsContent" maxlength="5000" placeholder="اكتب تفاصيل المنشور"></textarea></div><div class="field"><label>إضافة صورة أو فيديو</label><input class="file-input" id="newsMedia" type="file" accept="image/jpeg,image/png,image/webp,video/mp4"></div><p class="note">الصيغ المقبولة: JPG / PNG / WEBP / MP4. عند تعديل منشور يمكنك ترك الملف فارغًا للاحتفاظ بالوسائط الحالية.</p><div id="newsPreview" class="news-preview">معاينة الوسائط المختارة ستظهر هنا.</div><button id="publishNewsButton" onclick="saveNews()">📢 نشر المنشور</button><button id="cancelNewsEditButton" class="secondary hidden" onclick="resetNewsForm()">إلغاء التعديل</button><hr style="border:0;border-top:1px solid #294661;margin:22px 0"><h3>المنشورات القديمة</h3><div id="newsPosts"><div class="news-empty">جارٍ تحميل المنشورات...</div></div></div></div>
 <div id="tasksPage" class="hidden"><div class="card"><button class="back" onclick="closeTasks()">⬅ العودة إلى لوحة الإدارة</button><h3>🎯 إدارة المهمات</h3><div class="platform-status" id="tasksStatus">جارٍ تحميل المهمات...</div><div class="tasks-summary"><div class="task-stat">إجمالي المهمات<strong id="tasksTotal">—</strong></div><div class="task-stat">المهمات المفعّلة<strong id="tasksEnabled">—</strong></div><div class="task-stat">إجمالي الإكمالات<strong id="tasksCompleted">—</strong></div></div><div class="task-form"><h3 id="taskFormHeading">إضافة مهمة</h3><div class="field"><label>اسم المهمة</label><input id="taskTitle" maxlength="120" placeholder="مثال: متابعة حساب TikTok"></div><div class="field"><label>المنصة</label><select id="taskPlatform" style="width:100%;padding:13px;border-radius:9px;background:#091525;color:white;border:1px solid #294661"><option value="tiktok">TikTok</option><option value="telegram">Telegram</option></select></div><div class="field"><label>وصف المهمة</label><textarea id="taskDescription" maxlength="1000" placeholder="اشرح المطلوب من المستخدم"></textarea></div><div class="field"><label>رابط المهمة (HTTPS)</label><input id="taskUrl" type="url" placeholder="https://..."></div><div class="field"><label>النقاط عند القبول</label><input id="taskReward" type="number" min="0" max="100000" value="50"></div><div class="field"><label>ترتيب المهمة</label><input id="taskOrder" type="number" min="0" value="1"></div><div class="field"><label>الحالة</label><select id="taskEnabled" style="width:100%;padding:13px;border-radius:9px;background:#091525;color:white;border:1px solid #294661"><option value="1">مفعّلة</option><option value="0">متوقفة</option></select></div><button id="taskSaveButton" onclick="saveTask()">💾 حفظ المهمة</button><button id="taskCancelButton" class="secondary hidden" onclick="resetTaskForm()">إلغاء التعديل</button></div><h3>المهمات الحالية</h3><div id="tasksList"><div class="task-empty">جارٍ التحميل...</div></div><div id="taskCompletedPanel" class="hidden"><hr style="border:0;border-top:1px solid #294661;margin:20px 0"><h3 id="taskCompletedHeading">المستخدمون الذين أكملوا المهمة</h3><div class="platform-status" id="taskCompletedStatus"></div><div id="taskCompletedUsers"></div><button class="secondary" onclick="closeCompletedUsers()">إغلاق قائمة المستخدمين</button></div><p class="note">عدد الإكمالات يعرض الطلبات التي تمت الموافقة عليها فقط. لا يمكن حذف مهمة لها طلبات محفوظة؛ أوقفها بدلًا من ذلك للحفاظ على السجل.</p></div></div>
 <div id="securityPage" class="hidden"><div class="card"><button class="back" onclick="closeSecurity()">⬅ العودة إلى لوحة الإدارة</button><h3>🛡️ الأمان والصلاحيات</h3><p class="note">هذا القسم خاص بالمالك فقط. يمكنك إضافة نائب ومنحه صلاحيات محددة أو سحبها في أي وقت.</p><div class="platform-status" id="securityStatus">جارٍ تحميل النواب...</div><div class="task-form"><h3>إضافة نائب جديد</h3><div class="field"><label>Telegram ID للنائب</label><input id="deputyTelegramId" inputmode="numeric" maxlength="20" placeholder="مثال: 123456789"></div><button id="addDeputyButton" onclick="addDeputy()">➕ إضافة النائب</button></div><h3>النواب الحاليون</h3><div id="deputiesList"><div class="task-empty">جارٍ التحميل...</div></div><p class="note">لا يمكن للنائب دخول قسم الأمان والصلاحيات. المالك وحده يستطيع إدارة النواب. صلاحيات الأقسام ستُفرض من الخادم عند ربط حماية كل قسم.</p></div></div>
@@ -296,8 +300,9 @@ function renderPlatformFiles(){
    continue;
   }
   const id=String(item.id||""),enabled=Number(item.enabled)===1;
-  const fileLabel=item.file_name||(item.download_url?"رابط خارجي":"لا يوجد ملف مرفق");
-  const link=item.download_url?'<a class="platform-file-link" href="'+escapeHtml(item.download_url)+'" target="_blank" rel="noopener">فتح رابط التنزيل ↗</a>':"";
+  const isR2File=String(item.download_url||"").startsWith("https://pub-052cdf3a8da44cd2bb81e3b138ebcb45.r2.dev/");
+  const fileLabel=item.file_name||(isR2File?"ملف محفوظ في R2":item.download_url?"رابط خارجي":"لا يوجد ملف مرفق");
+  const link=item.download_url&&!isR2File?'<a class="platform-file-link" href="'+escapeHtml(item.download_url)+'" target="_blank" rel="noopener">فتح رابط التنزيل ↗</a>':"";
   cards.push(`<article class="platform-slot-card ${enabled?'':'is-disabled'}"><div class="platform-slot-top"><span class="platform-slot-title">📦 ${slot===1?'الملف الأول':'الملف الثاني'}</span><span class="platform-slot-state ${enabled?'':'off'}">${enabled?'● مفعّل':'● متوقف'}</span></div><div class="platform-app-name">${escapeHtml(item.title||"ملف بلا اسم")}</div><div class="platform-file-meta"><span>الإصدار: ${escapeHtml(item.version||"—")}</span><span>الحجم: ${formatSize(item.file_size)}</span><span>التنزيلات: ${Number(item.downloads_count||0)}</span></div><div class="platform-file-meta"><span>${escapeHtml(fileLabel)}</span></div>${item.description?`<p class="platform-file-description">${escapeHtml(item.description)}</p>`:''}${link}<div class="platform-card-actions"><button class="secondary" onclick="editPlatformFile('${encodeURIComponent(id)}')">✏️ تعديل</button><button onclick="togglePlatformFile('${encodeURIComponent(id)}',${enabled?0:1})">${enabled?'⏸ إيقاف':'▶️ تفعيل'}</button><button class="danger" onclick="deletePlatformFile('${encodeURIComponent(id)}')">🗑 حذف</button></div></article>`);
  }
  list.innerHTML=cards.join("");
@@ -560,6 +565,91 @@ function closeUsers(){document.getElementById("usersPage").classList.add("hidden
 function searchUsers(){usersQuery=document.getElementById("usersSearch").value.trim();usersPage=1;loadUsers();}
 function changeUsersPage(direction){const next=usersPage+direction;if(next<1||next>usersTotalPages)return;usersPage=next;loadUsers();}
 
+/* إدارة طلبات المكافآت */
+let rewardOrdersBusy=false,rewardOrdersPage=1,rewardOrdersTotalPages=1;
+async function rewardOrdersRequest(data){
+ const response=await fetch("/api/admin/rewards",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({...data,initData:tg.initData})});
+ const result=await response.json();
+ if(!response.ok||!result.success)throw new Error(result.error||"REWARD_ORDERS_FAILED");
+ return result;
+}
+function openRewardOrders(){
+ document.getElementById("mainMenu").classList.add("hidden");
+ document.getElementById("rewardOrdersPage").classList.remove("hidden");
+ loadRewardOrders();
+}
+function closeRewardOrders(){
+ document.getElementById("rewardOrdersPage").classList.add("hidden");
+ document.getElementById("mainMenu").classList.remove("hidden");
+}
+function changeRewardOrderFilter(){rewardOrdersPage=1;loadRewardOrders();}
+function changeRewardOrdersPage(delta){
+ const next=rewardOrdersPage+delta;
+ if(next<1||next>rewardOrdersTotalPages)return;
+ rewardOrdersPage=next;loadRewardOrders();
+}
+async function loadRewardOrders(){
+ if(rewardOrdersBusy)return;
+ rewardOrdersBusy=true;
+ const status=document.getElementById("rewardOrdersStatus"),list=document.getElementById("rewardOrdersList");
+ status.textContent="جارٍ تحميل الطلبات...";
+ list.innerHTML="";
+ try{
+  const result=await rewardOrdersRequest({action:"list",status:document.getElementById("rewardOrderFilter").value,page:rewardOrdersPage});
+  if(!result.orders.length){list.innerHTML='<div class="task-empty">لا توجد طلبات في هذا القسم.</div>';}
+  else{
+   list.innerHTML=result.orders.map(order=>{
+    const id=Number(order.id),date=order.created_at?new Date(order.created_at*1000).toLocaleString("ar-DZ"):"—";
+    const statusLabel=order.status==="pending"?"🟡 معلّق":order.status==="completed"?"🟢 مكتمل":"🔴 مرفوض";
+    const actions=order.status==="pending"?'<div class="task-actions"><button onclick="updateRewardOrder('+id+',\'complete\')">✅ تأكيد التسليم</button><button class="danger" onclick="updateRewardOrder('+id+',\'reject\')">↩ رفض وإرجاع النقاط</button></div>':"";
+    return '<article class="task-item"><h4>طلب #'+id+' · '+escapeHtml(order.offer_name)+'</h4><div class="task-meta"><span>المستخدم: '+escapeHtml(order.user_id)+'</span><span>التكلفة: '+Number(order.points_cost||0).toLocaleString("en-US")+' نقطة</span><span>الحالة: '+statusLabel+'</span><span>التاريخ: '+escapeHtml(date)+'</span></div>'+actions+'</article>';
+   }).join("");
+  }
+  rewardOrdersTotalPages=Math.max(1,Math.ceil(Number(result.total||0)/50));
+  document.getElementById("rewardOrdersPageNumber").textContent=rewardOrdersPage+" / "+rewardOrdersTotalPages;
+  document.getElementById("rewardOrdersPrev").disabled=rewardOrdersPage<=1;
+  document.getElementById("rewardOrdersNext").disabled=rewardOrdersPage>=rewardOrdersTotalPages;
+  status.textContent="إجمالي الطلبات: "+Number(result.total||0);
+ }catch(error){
+  status.textContent="تعذر تحميل الطلبات: "+error.message;
+  list.innerHTML='<div class="task-empty">تحقق من نشر functions/api/admin/rewards.js ووجود جدول reward_orders.</div>';
+ }finally{rewardOrdersBusy=false;}
+}
+async function updateRewardOrder(id,action){
+ const question=action==="reject"?"رفض الطلب وإرجاع النقاط إلى رصيد المستخدم؟":"تأكيد تسليم المكافأة؟";
+ if(!confirm(question))return;
+ try{
+  await rewardOrdersRequest({action,orderId:Number(id)});
+  await loadRewardOrders();
+ }catch(error){alert("تعذر تحديث الطلب: "+error.message);}
+}
+
+/* إحصائيات لوحة الإدارة */
+async function statsRequest(){
+ const response=await fetch("/api/admin/stats",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({initData:tg.initData})});
+ const result=await response.json();
+ if(!response.ok||!result.success)throw new Error(result.error||"STATS_LOAD_FAILED");
+ return result.stats;
+}
+function openStats(){
+ document.getElementById("mainMenu").classList.add("hidden");
+ document.getElementById("statsPage").classList.remove("hidden");
+ loadAdminStats();
+}
+function closeStats(){
+ document.getElementById("statsPage").classList.add("hidden");
+ document.getElementById("mainMenu").classList.remove("hidden");
+}
+async function loadAdminStats(){
+ const status=document.getElementById("statsStatus");status.textContent="جارٍ تحميل الإحصائيات...";
+ try{
+  const stats=await statsRequest();
+  const fields={visitors:"statVisitors",visitorsToday:"statVisitorsToday",confirmedAds:"statConfirmedAds",ptcAds:"statPtcAds",totalPoints:"statTotalPoints",referrals:"statReferrals",pendingRewards:"statPendingRewards",pendingMissions:"statPendingMissions",downloads:"statDownloads"};
+  Object.entries(fields).forEach(([key,id])=>{document.getElementById(id).textContent=Number(stats[key]||0).toLocaleString("en-US");});
+  status.textContent="تم تحديث الإحصائيات.";
+ }catch(error){status.textContent="تعذر تحميل الإحصائيات: "+error.message;}
+}
+
 /* إدارة الأخبار */
 let newsPosts=[],newsBusy=false,editingNewsId=null,newsPreviewUrl="";
 function openNews(){document.getElementById("mainMenu").classList.add("hidden");document.getElementById("newsPage").classList.remove("hidden");resetNewsForm();loadNews();}
@@ -633,7 +723,7 @@ async function toggleDeputy(telegramId,active){if(securityBusy)return;if(!confir
 async function deleteDeputy(telegramId){if(securityBusy)return;if(!confirm("حذف هذا النائب نهائيًا مع جميع صلاحياته؟"))return;securityBusy=true;try{await securityRequest({action:"delete",telegram_id:telegramId});await loadDeputies(true);}catch(error){alert("تعذر حذف النائب: "+error.message);}finally{securityBusy=false;}}
 
 /* بقية أقسام الإدارة */
-function action(name){if(name==="security"){if(!adminOwner){alert("قسم الأمان والصلاحيات خاص بالمالك.");return;}openSecurity();return;}if(["users","news","tasks"].includes(name)&&!hasAdminPermission(name)){alert("ليس لديك صلاحية لهذا القسم.");return;}if(name==="users"){openUsers();return;}if(name==="news"){openNews();return;}if(name==="tasks"){openTasks();return;}const messages={stats:"إحصائيات الموقع"};alert((messages[name]||"هذا القسم")+"\\nهذه الوظيفة لم يتم ربطها بعد.");}
+function action(name){if(name==="security"){if(!adminOwner){alert("قسم الأمان والصلاحيات خاص بالمالك.");return;}openSecurity();return;}if(["users","news","tasks"].includes(name)&&!hasAdminPermission(name)){alert("ليس لديك صلاحية لهذا القسم.");return;}if(name==="users"){openUsers();return;}if(name==="rewards"){if(!hasAdminPermission("users")){alert("ليس لديك صلاحية لهذا القسم.");return;}openRewardOrders();return;}if(name==="stats"){if(!hasAdminPermission("stats")){alert("ليس لديك صلاحية لهذا القسم.");return;}openStats();return;}if(name==="news"){openNews();return;}if(name==="tasks"){openTasks();return;}const messages={stats:"إحصائيات الموقع"};alert((messages[name]||"هذا القسم")+"\\nهذه الوظيفة لم يتم ربطها بعد.");}
 
 /* التحقق من المدير */
 async function start(){

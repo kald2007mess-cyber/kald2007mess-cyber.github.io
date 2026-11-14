@@ -156,8 +156,9 @@ export async function onRequestGet({ request, env }) {
       return response({ error: "PTC API request failed" }, user.cookie, 502);
     }
 
-    const ads = (result.data || [])
+    const ads = (Array.isArray(result.data) ? result.data : [])
       .filter(ad =>
+        [0, 1].includes(Number(ad.type)) &&
         typeof ad.url === "string" &&
         ad.url.startsWith("https://") &&
         Number.isFinite(Number(ad.duration)) &&

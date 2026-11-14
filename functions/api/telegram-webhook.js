@@ -124,7 +124,7 @@ export async function onRequestPost({ request, env }) {
       const results = await env.DB.batch([
         env.DB.prepare(`
           UPDATE visitors
-          SET points = points + ?
+          SET points = COALESCE(points, 0) + ?
           WHERE user_id = ?
             AND EXISTS (
               SELECT 1
@@ -140,7 +140,10 @@ export async function onRequestPost({ request, env }) {
               reviewed_at = ?
           WHERE id = ?
             AND status = 'pending'
-        `).bind(now, submissionId)
+            AND EXISTS (
+              SELECT 1 FROM visitors WHERE user_id = ?
+            )
+        `).bind(now, submissionId, submission.user_id)
       ]);
 
       const awarded = Number(results[0]?.meta?.changes || 0);

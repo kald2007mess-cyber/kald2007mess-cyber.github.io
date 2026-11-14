@@ -1,11 +1,28 @@
 import { json } from "./_lib/session.js";
 
+const R2_PUBLIC_URL =
+  "https://pub-052cdf3a8da44cd2bb81e3b138ebcb45.r2.dev";
+
+function publicTutorialUrl(platform, value) {
+  if (!value) return "";
+
+  try {
+    const url = new URL(String(value));
+    if (url.origin === R2_PUBLIC_URL) {
+      return "/api/tutorial?platform=" + encodeURIComponent(platform);
+    }
+    return url.protocol === "https:" ? url.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
 export async function onRequestGet({ env }) {
   try {
     const result = await env.DB.prepare(`
       SELECT
         id, platform, title, version, description,
-        file_name, download_url, file_size,
+        file_name, file_size,
         enabled, created_at, updated_at, slot
       FROM platform_files
       ORDER BY platform, slot ASC, created_at DESC
@@ -32,8 +49,7 @@ export async function onRequestGet({ env }) {
         version: row.version || "",
         description: row.description || "",
         file_name: row.file_name || "",
-        download_url: row.download_url || "",
-        file_size: Number(row.file_size || 0),
+                file_size: Number(row.file_size || 0),
         enabled: Number(row.enabled) === 1,
         created_at: Number(row.created_at || 0),
         updated_at: Number(row.updated_at || 0)
@@ -43,7 +59,7 @@ export async function onRequestGet({ env }) {
     const legacy = await env.DB.prepare(`
       SELECT
         platform, title, version, description,
-        file_name, download_url, file_size,
+        file_name, file_size,
         enabled, updated_at
       FROM platform_downloads
       ORDER BY platform
@@ -54,7 +70,7 @@ export async function onRequestGet({ env }) {
 
       if (
         Object.prototype.hasOwnProperty.call(platforms, key) &&
-        platforms[key].length === 0
+        !platforms[key].some(file => file.enabled)
       ) {
         platforms[key].push({
           id: "legacy-" + key,
@@ -64,8 +80,7 @@ export async function onRequestGet({ env }) {
           version: row.version || "",
           description: row.description || "",
           file_name: row.file_name || "",
-          download_url: row.download_url || "",
-          file_size: Number(row.file_size || 0),
+                    file_size: Number(row.file_size || 0),
           enabled: Number(row.enabled) === 1,
           created_at: 0,
           updated_at: Number(row.updated_at || 0),
@@ -89,7 +104,7 @@ export async function onRequestGet({ env }) {
       const key = String(row.platform || "").toLowerCase();
 
       if (Object.prototype.hasOwnProperty.call(tutorials, key)) {
-        tutorials[key] = row.video_url || "";
+        tutorials[key] = publicTutorialUrl(key, row.video_url);
       }
     }
 
