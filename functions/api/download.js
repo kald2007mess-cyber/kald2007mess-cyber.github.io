@@ -82,6 +82,26 @@ async function findFile(env, platform, fileId) {
   `).bind(platform).first();
 }
 
+/* تسجيل المستخدم مرة واحدة لكل ملف */
+async function recordUniqueDownload(env, fileId, visitorId) {
+  if (!fileId || !visitorId) return;
+
+  try {
+    await env.DB.prepare(`
+      INSERT OR IGNORE INTO platform_file_downloads
+        (file_id, user_id, downloaded_at)
+      VALUES (?, ?, ?)
+    `).bind(
+      String(fileId),
+      String(visitorId),
+      Math.floor(Date.now() / 1000)
+    ).run();
+  } catch (error) {
+    // لا نوقف التنزيل إذا تعذر تسجيل الإحصائية
+    console.error("Download statistics error:", error);
+  }
+}
+
 export async function onRequestGet({ request, env }) {
   try {
     if (!env.DB || !env.DOWNLOADS_BUCKET) {
@@ -170,12 +190,17 @@ export async function onRequestGet({ request, env }) {
       }, 404);
     }
 
+    /* iOS: تسجيل التنزيل ثم التحويل للرابط */
     if (platform === "ios") {
       if (!item.download_url) {
         return json({
           success: false,
           error: "DOWNLOAD_URL_MISSING"
         }, 404);
+      }
+
+      if (fileId) {
+        await recordUniqueDownload(env, item.id, visitorId);
       }
 
       return Response.redirect(item.download_url, 302);
@@ -252,6 +277,8 @@ export async function onRequestGet({ request, env }) {
         }, 404);
       }
 
+      await recordUniqueDownload(env, fileId ? item.id : null, visitorId);
+
       headers.set("Content-Length", String(range.length));
 
       headers.set(
@@ -273,6 +300,8 @@ export async function onRequestGet({ request, env }) {
         error: "FILE_NOT_FOUND"
       }, 404);
     }
+
+    await recordUniqueDownload(env, fileId ? item.id : null, visitorId);
 
     headers.set("Content-Length", String(fileSize));
 
