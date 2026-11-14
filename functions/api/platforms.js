@@ -1,5 +1,22 @@
 import { json } from "./_lib/session.js";
 
+const R2_PUBLIC_URL =
+  "https://pub-052cdf3a8da44cd2bb81e3b138ebcb45.r2.dev";
+
+function publicTutorialUrl(platform, value) {
+  if (!value) return "";
+
+  try {
+    const url = new URL(String(value));
+    if (url.origin === R2_PUBLIC_URL) {
+      return "/api/tutorial?platform=" + encodeURIComponent(platform);
+    }
+    return url.protocol === "https:" ? url.toString() : "";
+  } catch {
+    return "";
+  }
+}
+
 export async function onRequestGet({ env }) {
   try {
     const result = await env.DB.prepare(`
@@ -87,7 +104,7 @@ export async function onRequestGet({ env }) {
       const key = String(row.platform || "").toLowerCase();
 
       if (Object.prototype.hasOwnProperty.call(tutorials, key)) {
-        tutorials[key] = row.video_url || "";
+        tutorials[key] = publicTutorialUrl(key, row.video_url);
       }
     }
 
