@@ -69,11 +69,7 @@ export async function onRequestGet({ request, env }) {
       identitySignature: signature
     }).toString();
 
-    const response = await fetch(apiUrl.toString(), {
-      method: "GET",
-      cache: "no-store"
-    });
-
+    const response = await fetch(apiUrl.toString());
     const result = await response.json();
 
     if (!response.ok || result.status !== 200) {
@@ -85,16 +81,14 @@ export async function onRequestGet({ request, env }) {
         [0, 1].includes(Number(ad.type)) &&
         Number.isFinite(Number(ad.duration)) &&
         Number(ad.duration) > 0 &&
-        Number.isFinite(Number(ad.reward)) &&
-        Number(ad.reward) > 0 &&
         typeof ad.url === "string" &&
         ad.url.startsWith("https://")
       )
       .map(ad => ({
-        title: ad.title || "PTC Advertisement",
-        duration: Number(ad.duration),
-        reward: Number(ad.reward),
         type: Number(ad.type),
+        title: ad.title || "PTC Ad",
+        duration: Number(ad.duration),
+        reward: ad.reward,
         url: ad.url
       }));
 
