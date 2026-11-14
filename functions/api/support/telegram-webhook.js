@@ -149,7 +149,7 @@ async function handleMissionCallback(callback, env) {
 
 // نشر الأخبار: المسؤول فقط
 async function handleNewsMessage(message, env) {
-  if (!message) return false;
+  if (!message || message.reply_to_message) return false;
 
   if (
     String(message.chat?.id) !== String(env.TELEGRAM_ADMIN_ID)
@@ -257,8 +257,8 @@ async function handleNewsMessage(message, env) {
 
     await env.DB.prepare(`
       INSERT INTO news_posts
-      (title, media_type, media_file_id, created_at)
-      VALUES (?, ?, ?, ?)
+      (title, content, media_type, media_file_id, created_at)
+      VALUES (?, '', ?, ?, ?)
     `).bind(
       draft.title,
       photo ? "photo" : "video",
