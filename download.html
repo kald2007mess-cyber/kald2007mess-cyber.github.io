@@ -351,9 +351,17 @@ async function loadPlatformData() {
   info2.textContent = currentText("loading");
 
   try {
+    // Ensure the visitor session cookie exists before a protected download is requested.
+    await fetch("/api/progress", {
+      method: "GET",
+      cache: "no-store",
+      credentials: "same-origin"
+    }).catch(() => null);
+
     const response = await fetch("/api/platforms", {
       method: "GET",
-      cache: "no-store"
+      cache: "no-store",
+      credentials: "same-origin"
     });
 
     if (!response.ok) throw new Error("Platforms API HTTP " + response.status);
