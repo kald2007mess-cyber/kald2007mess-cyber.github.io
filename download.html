@@ -363,7 +363,7 @@ async function loadPlatformData() {
     renderFiles();
 
     const videoUrl = data && data.tutorials && data.tutorials.android;
-    if (typeof videoUrl === "string" && /^https:\/\/[^\s]+$/i.test(videoUrl)) {
+    if (typeof videoUrl === "string" && (videoUrl.startsWith("/api/tutorial?") || /^https:\/\/[^\s]+$/i.test(videoUrl))) {
       const video = document.getElementById("tutorialVideo");
       video.src = videoUrl;
       document.getElementById("videoSection").hidden = false;
