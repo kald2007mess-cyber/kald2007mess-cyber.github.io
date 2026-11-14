@@ -143,33 +143,35 @@ async function handleIslandPostback({
       VALUES (?, 0, ?)
     `).bind(userId, now).run();
 
-    let cycle = await env.DB.prepare(`
-      SELECT completed_ads, cycle_started_at
-      FROM reward_ad_cycles
-      WHERE user_id = ?
-    `).bind(userId).first();
-
-    let startedAt = Number(cycle?.cycle_started_at || now);
-
-    if (now - startedAt >= 18000) {
-      await env.DB.prepare(`
-        UPDATE reward_ad_cycles
-        SET completed_ads = 0, cycle_started_at = ?
-        WHERE user_id = ?
-      `).bind(now, userId).run();
-
-      startedAt = now;
-    }
-
+    // Update the cycle in one conditional statement so simultaneous callbacks
+    // cannot reset a newly-started cycle and lose another completed ad.
     const updated = await env.DB.prepare(`
       UPDATE reward_ad_cycles
-      SET completed_ads = completed_ads + 1
+      SET completed_ads = CASE
+            WHEN cycle_started_at IS NULL OR (? - cycle_started_at) >= 18000
+            THEN 1
+            ELSE completed_ads + 1
+          END,
+          cycle_started_at = CASE
+            WHEN cycle_started_at IS NULL OR (? - cycle_started_at) >= 18000
+            THEN ?
+            ELSE cycle_started_at
+          END
       WHERE user_id = ?
-        AND cycle_started_at = ?
-        AND completed_ads < 10
-    `).bind(userId, startedAt).run();
+        AND (
+          cycle_started_at IS NULL
+          OR (? - cycle_started_at) >= 18000
+          OR completed_ads < 10
+        )
+    `).bind(now, now, now, userId, now).run();
 
     if (updated.meta?.changes === 1) {
+      const cycle = await env.DB.prepare(`
+        SELECT cycle_started_at
+        FROM reward_ad_cycles
+        WHERE user_id = ?
+      `).bind(userId).first();
+      const startedAt = Number(cycle?.cycle_started_at || now);
       await env.DB.prepare(`
         UPDATE visitors
         SET points = points + 5
