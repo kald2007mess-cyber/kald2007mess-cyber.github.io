@@ -210,11 +210,29 @@ export async function onRequestGet({ request, env }) {
         }, 404);
       }
 
+      let externalUrl;
+
+      try {
+        externalUrl = new URL(String(item.download_url));
+      } catch {
+        return json({
+          success: false,
+          error: "INVALID_DOWNLOAD_URL"
+        }, 500);
+      }
+
+      if (externalUrl.protocol !== "https:") {
+        return json({
+          success: false,
+          error: "INVALID_DOWNLOAD_URL"
+        }, 500);
+      }
+
       if (fileId && !fileId.startsWith("legacy-")) {
         await recordUniqueDownload(env, item.id, visitorId);
       }
 
-      return Response.redirect(item.download_url, 302);
+      return Response.redirect(externalUrl.toString(), 302);
     }
 
     const info = await env.DOWNLOADS_BUCKET.head(item.file_key);
