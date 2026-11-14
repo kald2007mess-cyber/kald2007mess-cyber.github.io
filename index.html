@@ -1053,6 +1053,10 @@ async function loadNewsPosts(){
   for(const post of posts){
    const card=makeNewsElement("article","news-card");card.dataset.postId=post.id;
    card.appendChild(makeNewsElement("h3","news-card-title",post.title||""));
+   if(post.content){
+    const content=makeNewsElement("p","news-card-content",post.content);
+    card.appendChild(content);
+   }
    const media=post.media_type==="video"?makeNewsElement("video","news-media"):makeNewsElement("img","news-media");
    media.src="/api/news/media?id="+encodeURIComponent(post.id);if(post.media_type==="video"){media.controls=true;media.preload="metadata"}else{media.alt=post.title||"OXIDE HUB news";media.loading="lazy"}card.appendChild(media);
    const meta=makeNewsElement("div","news-meta");meta.appendChild(makeNewsElement("span","", "👁 "+Number(post.views||0)+" "+t("views")));meta.appendChild(makeNewsElement("span","", "💬 "+Number(post.comments_count||0)+" "+t("comments")));meta.appendChild(makeNewsElement("span","",new Date(Number(post.created_at||0)*1000).toLocaleString(currentLanguage)));card.appendChild(meta);
