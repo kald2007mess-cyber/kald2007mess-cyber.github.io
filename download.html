@@ -330,11 +330,11 @@ function renderFiles() {
 
     info.textContent = [title, ...details].join(" — ");
 
-    const url = String(file.download_url || "").trim();
-    if (url && /^https:\/\/[^\s]+$/i.test(url)) {
-      link.href = url;
+    const fileId = String(file.id || "").trim();
+    if (fileId) {
+      link.href = "/api/download?platform=android&id=" + encodeURIComponent(fileId);
       link.hidden = false;
-      link.dataset.fileId = file.id || "";
+      link.dataset.fileId = fileId;
       link.dataset.fileName = file.file_name || title;
       button.textContent = currentText(`file${slot}Button`);
     } else {
@@ -398,7 +398,7 @@ async function startDownload(fileNumber) {
   label.textContent = "0%";
 
   try {
-    const response = await fetch(url, { method: "GET", mode: "cors" });
+    const response = await fetch(url, { method: "GET", credentials: "same-origin", cache: "no-store" });
     if (!response.ok) throw new Error("HTTP " + response.status);
 
     const total = Number(response.headers.get("Content-Length")) || 0;
