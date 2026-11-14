@@ -69,26 +69,31 @@ export async function onRequestGet({ request, env }) {
       identitySignature: signature
     }).toString();
 
-    const response = await fetch(apiUrl.toString());
+    const response = await fetch(apiUrl.toString(), {
+      method: "GET",
+      cache: "no-store"
+    });
+
     const result = await response.json();
 
     if (!response.ok || result.status !== 200) {
       return json({ error: "PTC API request failed" }, 502);
     }
 
-    const ads = (result.data || [])
+    const ads = (Array.isArray(result.data) ? result.data : [])
       .filter(ad =>
-        typeof ad.url === "string" &&
-        ad.url.startsWith("https://") &&
+        [0, 1].includes(Number(ad.type)) &&
         Number.isFinite(Number(ad.duration)) &&
         Number(ad.duration) > 0 &&
         Number.isFinite(Number(ad.reward)) &&
-        Number(ad.reward) > 0
+        Number(ad.reward) > 0 &&
+        typeof ad.url === "string" &&
+        ad.url.startsWith("https://")
       )
       .map(ad => ({
         title: ad.title || "PTC Advertisement",
         duration: Number(ad.duration),
-        reward: ad.reward,
+        reward: Number(ad.reward),
         type: Number(ad.type),
         url: ad.url
       }));
@@ -99,7 +104,7 @@ export async function onRequestGet({ request, env }) {
       ads
     });
 
-  } catch {
+  } catch (error) {
     return json({ error: "PTC service error" }, 500);
   }
 }
