@@ -47,12 +47,21 @@ async function handleMissionCallback(callback, env) {
   const now = Math.floor(Date.now() / 1000);
 
   const submission = await env.DB.prepare(`
-    SELECT id, user_id, mission_id, status
-    FROM mission_submissions
-    WHERE id = ?
+    SELECT
+      s.id,
+      s.user_id,
+      s.mission_id,
+      s.status,
+      m.title,
+      m.reward_points
+    FROM mission_submissions s
+    INNER JOIN oxide_admin_missions m
+      ON m.id = s.mission_id
+    WHERE s.id = ?
+    LIMIT 1
   `).bind(submissionId).first();
 
-  if (!submission || Number(submission.mission_id) !== 1) {
+  if (!submission) {
     await telegram(env, "answerCallbackQuery", {
       callback_query_id: callback.id,
       text: "الطلب غير موجود"
@@ -71,17 +80,22 @@ async function handleMissionCallback(callback, env) {
   let resultText = "";
 
   if (action === "approve") {
+    const reward = Math.max(
+      0,
+      Math.floor(Number(submission.reward_points) || 0)
+    );
+
     const results = await env.DB.batch([
       env.DB.prepare(`
         UPDATE visitors
-        SET points = points + 50
+        SET points = points + ?
         WHERE user_id = ?
           AND EXISTS (
             SELECT 1
             FROM mission_submissions
             WHERE id = ? AND status = 'pending'
           )
-      `).bind(submission.user_id, submissionId),
+      `).bind(reward, submission.user_id, submissionId),
 
       env.DB.prepare(`
         UPDATE mission_submissions
@@ -101,7 +115,7 @@ async function handleMissionCallback(callback, env) {
       return;
     }
 
-    resultText = "✅ تمت الموافقة وإضافة 50 نقطة للمستخدم.";
+    resultText = "✅ تمت الموافقة على: " + String(submission.title || "المهمة") + "\n🎁 تمت إضافة " + reward + " نقطة للمستخدم.";
   } else {
     const rejected = await env.DB.prepare(`
       UPDATE mission_submissions
