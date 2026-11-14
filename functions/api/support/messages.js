@@ -27,10 +27,10 @@ export async function onRequestGet({ request, env }) {
     }
 
     const url = new URL(request.url);
-    const afterId = Math.max(
-      0,
-      Number(url.searchParams.get("after") || 0)
-    );
+    const requestedAfter = Number(url.searchParams.get("after") || 0);
+    const afterId = Number.isSafeInteger(requestedAfter) && requestedAfter > 0
+      ? requestedAfter
+      : 0;
 
     const result = await env.DB.prepare(`
       SELECT
