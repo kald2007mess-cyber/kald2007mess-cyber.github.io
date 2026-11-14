@@ -166,6 +166,18 @@ export async function onRequestPost({ request, env }) {
         return json({ success: false, error: "INVALID_COMMENT" }, 400);
       }
 
+      const now = Math.floor(Date.now() / 1000);
+      const recent = await env.DB.prepare(`
+        SELECT COUNT(*) AS total
+        FROM news_comments
+        WHERE user_id = ?
+          AND created_at >= ?
+      `).bind(userId, now - 60).first();
+
+      if (Number(recent?.total || 0) >= 5) {
+        return json({ success: false, error: "COMMENT_RATE_LIMITED" }, 429);
+      }
+
       await env.DB.prepare(`
         INSERT INTO news_comments
           (post_id, user_id, comment, created_at)
@@ -186,6 +198,18 @@ export async function onRequestPost({ request, env }) {
 
       if (!ALLOWED_REACTIONS.includes(reaction)) {
         return json({ success: false, error: "INVALID_REACTION" }, 400);
+      }
+
+      const now = Math.floor(Date.now() / 1000);
+      const previous = await env.DB.prepare(`
+        SELECT created_at
+        FROM news_reactions
+        WHERE post_id = ? AND user_id = ?
+        LIMIT 1
+      `).bind(postId, userId).first();
+
+      if (previous && now - Number(previous.created_at || 0) < 2) {
+        return json({ success: false, error: "REACTION_RATE_LIMITED" }, 429);
       }
 
       await env.DB.prepare(`
