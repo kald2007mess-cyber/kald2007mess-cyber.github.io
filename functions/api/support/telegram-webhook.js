@@ -88,7 +88,7 @@ async function handleMissionCallback(callback, env) {
     const results = await env.DB.batch([
       env.DB.prepare(`
         UPDATE visitors
-        SET points = points + ?
+        SET points = COALESCE(points, 0) + ?
         WHERE user_id = ?
           AND EXISTS (
             SELECT 1
