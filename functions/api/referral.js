@@ -191,7 +191,8 @@ export async function onRequestPost({ request, env }) {
         const sql = String(row.sql || "");
         return /UPDATE\s+(?:main\.)?["'`]?visitors["'`]?/i.test(sql) &&
           /\bpoints\b/i.test(sql) &&
-          /referrer_id/i.test(sql);
+          /referrer_id/i.test(sql) &&
+          (/points_awarded/i.test(sql) || /\b15\b/.test(sql));
       });
     } catch (error) {
       console.error("Referral trigger inspection failed:", error);
