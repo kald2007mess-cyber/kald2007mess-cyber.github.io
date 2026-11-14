@@ -201,8 +201,8 @@ export async function onRequestGet({ request, env }) {
       }, 404);
     }
 
-    /* iOS external links redirect; uploaded IPA files are served through R2. */
-    if (platform === "ios" && !item.file_key) {
+    /* Files stored in R2 are streamed here; external links redirect only after ad verification. */
+    if (!item.file_key) {
       if (!item.download_url) {
         return json({
           success: false,
@@ -215,13 +215,6 @@ export async function onRequestGet({ request, env }) {
       }
 
       return Response.redirect(item.download_url, 302);
-    }
-
-    if (!item.file_key) {
-      return json({
-        success: false,
-        error: "FILE_NOT_FOUND"
-      }, 404);
     }
 
     const info = await env.DOWNLOADS_BUCKET.head(item.file_key);
