@@ -474,8 +474,7 @@ async function uploadPart(env, form) {
     !chunk ||
     typeof chunk.size !== "number" ||
     chunk.size <= 0 ||
-    chunk.size > MAX_PART_SIZE ||
-    (partNumber > 1 && chunk.size < MIN_PART_SIZE)
+    chunk.size > MAX_PART_SIZE
   ) {
     throw new Error("INVALID_PART_SIZE");
   }
