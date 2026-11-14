@@ -222,7 +222,8 @@ const translations = {
     backButton: "↩ العودة إلى OXIDE HUB",
     version: "الإصدار",
     description: "الوصف",
-    fileName: "الملف"
+    fileName: "الملف",
+    largeDownload: "الملف كبير؛ سيُدار التنزيل عبر مدير تنزيلات الهاتف."
   },
   en: {
     file1Title: "📦 FILE 1",
@@ -239,7 +240,8 @@ const translations = {
     backButton: "↩ BACK TO OXIDE HUB",
     version: "Version",
     description: "Description",
-    fileName: "File"
+    fileName: "File",
+    largeDownload: "Large file; your browser download manager will handle it."
   },
   ru: {
     file1Title: "📦 ФАЙЛ 1",
@@ -256,7 +258,8 @@ const translations = {
     backButton: "↩ НАЗАД В OXIDE HUB",
     version: "Версия",
     description: "Описание",
-    fileName: "Файл"
+    fileName: "Файл",
+    largeDownload: "Большой файл; загрузкой будет управлять менеджер загрузок."
   }
 };
 
@@ -336,6 +339,7 @@ function renderFiles() {
       link.hidden = false;
       link.dataset.fileId = fileId;
       link.dataset.fileName = file.file_name || title;
+      link.dataset.fileSize = String(Number(file.file_size || 0));
       button.textContent = currentText(`file${slot}Button`);
     } else {
       link.hidden = true;
@@ -404,6 +408,14 @@ async function startDownload(fileNumber) {
   box.style.display = "block";
   fill.style.width = "0%";
   label.textContent = "0%";
+
+  // Avoid buffering very large APKs in phone memory. Let the browser stream them.
+  const fileSize = Number(link.dataset.fileSize || 0);
+  if (fileSize > 100 * 1024 * 1024) {
+    label.textContent = currentText("largeDownload");
+    window.location.assign(url);
+    return;
+  }
 
   try {
     const response = await fetch(url, { method: "GET", credentials: "same-origin", cache: "no-store" });
