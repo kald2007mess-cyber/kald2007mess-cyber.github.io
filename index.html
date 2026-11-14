@@ -1068,7 +1068,13 @@ async function loadNewsPosts(){
    const list=makeNewsElement("div","news-comment-list");list.id="newsCommentList-"+post.id;comments.appendChild(list);
    const form=makeNewsElement("form","news-comment-form");const input=makeNewsElement("input","news-comment-input");input.type="text";input.maxLength=1000;input.placeholder=t("writeComment");input.required=true;const send=makeNewsElement("button","news-comment-send",t("send"));send.type="submit";form.append(input,send);form.addEventListener("submit",e=>{e.preventDefault();sendNewsComment(post.id,input,send)});comments.appendChild(form);card.appendChild(comments);target.appendChild(card);
    loadNewsComments(post.id);
-   fetch("/api/news",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({action:"view",postId:post.id})}).catch(()=>{});
+   const viewKey="oxide_news_view_"+post.id;
+   try{
+    if(!sessionStorage.getItem(viewKey)){
+     sessionStorage.setItem(viewKey,"1");
+     fetch("/api/news",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({action:"view",postId:post.id})}).catch(()=>{});
+    }
+   }catch(_){}
   }
   status.textContent="";
  }catch(error){status.textContent=t("newsError");target.innerHTML=""}
