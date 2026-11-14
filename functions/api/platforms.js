@@ -5,17 +5,9 @@ export async function onRequestGet({ env }) {
   try {
     const result = await env.DB.prepare(`
       SELECT
-        id,
-        platform,
-        title,
-        version,
-        description,
-        file_name,
-        download_url,
-        file_size,
-        enabled,
-        created_at,
-        updated_at
+        id, platform, title, version, description,
+        file_name, download_url, file_size,
+        enabled, created_at, updated_at
       FROM platform_files
       ORDER BY platform, created_at DESC
     `).all();
@@ -48,18 +40,11 @@ export async function onRequestGet({ env }) {
       });
     }
 
-    // Keep legacy files visible when no new files exist.
     const legacy = await env.DB.prepare(`
       SELECT
-        platform,
-        title,
-        version,
-        description,
-        file_name,
-        download_url,
-        file_size,
-        enabled,
-        updated_at
+        platform, title, version, description,
+        file_name, download_url, file_size,
+        enabled, updated_at
       FROM platform_downloads
       ORDER BY platform
     `).all();
@@ -67,11 +52,10 @@ export async function onRequestGet({ env }) {
     for (const row of (legacy.results || [])) {
       const key = String(row.platform || "").toLowerCase();
 
-      if (!Object.prototype.hasOwnProperty.call(platforms, key)) {
-        continue;
-      }
-
-      if (platforms[key].length === 0) {
+      if (
+        Object.prototype.hasOwnProperty.call(platforms, key) &&
+        platforms[key].length === 0
+      ) {
         platforms[key].push({
           id: "legacy-" + key,
           platform: key,
@@ -89,12 +73,34 @@ export async function onRequestGet({ env }) {
       }
     }
 
+    const tutorialResult = await env.DB.prepare(`
+      SELECT platform, video_url, updated_at
+      FROM platform_tutorials
+    `).all();
+
+    const tutorials = {
+      android: "",
+      ios: "",
+      beta: ""
+    };
+
+    for (const row of (tutorialResult.results || [])) {
+      const key = String(row.platform || "").toLowerCase();
+
+      if (Object.prototype.hasOwnProperty.call(tutorials, key)) {
+        tutorials[key] = row.video_url || "";
+      }
+    }
+
     return json({
       success: true,
-      platforms
+      platforms,
+      tutorials
     });
 
   } catch (error) {
+    console.error("Platforms API error:", error);
+
     return json({
       success: false,
       error: "PLATFORM_STATUS_UNAVAILABLE"
