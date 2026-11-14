@@ -101,7 +101,10 @@ async function handleMissionCallback(callback, env) {
         UPDATE mission_submissions
         SET status = 'approved', reviewed_at = ?
         WHERE id = ? AND status = 'pending'
-      `).bind(now, submissionId)
+          AND EXISTS (
+            SELECT 1 FROM visitors WHERE user_id = ?
+          )
+      `).bind(now, submissionId, submission.user_id)
     ]);
 
     const awarded = Number(results[0]?.meta?.changes || 0);
