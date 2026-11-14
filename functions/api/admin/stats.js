@@ -14,7 +14,10 @@ function json(data, status = 200) {
 }
 
 async function count(env, sql, ...values) {
-  const row = await env.DB.prepare(sql).bind(...values).first();
+  const statement = env.DB.prepare(sql);
+  const row = values.length
+    ? await statement.bind(...values).first()
+    : await statement.first();
   return Number(row?.total || 0);
 }
 
