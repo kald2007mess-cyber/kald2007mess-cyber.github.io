@@ -227,6 +227,20 @@ export async function onRequestGet({ request, env }) {
       item.file_key = r2KeyFromPublicUrl(item.download_url, platform) || "";
     }
 
+    if (
+      item.file_key &&
+      (
+        !String(item.file_key).startsWith(platform + "/") ||
+        String(item.file_key).includes("..") ||
+        String(item.file_key).includes("\\")
+      )
+    ) {
+      return json({
+        success: false,
+        error: "INVALID_FILE_KEY"
+      }, 500);
+    }
+
     /* R2 files are streamed here; external links redirect only after ad verification. */
     if (!item.file_key) {
       if (!item.download_url) {
