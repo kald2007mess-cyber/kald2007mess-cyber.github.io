@@ -10,11 +10,11 @@ function r2KeyFromPublicUrl(value, platform) {
     const url = new URL(String(value || ""));
     if (url.origin !== R2_PUBLIC_URL) return null;
 
-    const key = decodeURIComponent(url.pathname.replace(/^\\/+/, ""));
+    const key = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
     if (
       !key.startsWith(platform + "/") ||
       key.includes("..") ||
-      key.includes("\\\\")
+      key.includes("\\")
     ) {
       return null;
     }
@@ -24,7 +24,6 @@ function r2KeyFromPublicUrl(value, platform) {
     return null;
   }
 }
-
 function parseRange(rangeHeader, size) {
   if (!rangeHeader) return null;
 
