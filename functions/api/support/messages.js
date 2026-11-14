@@ -49,7 +49,12 @@ export async function onRequestGet({ request, env }) {
 
     return json({
       success: true,
-      messages: result.results || []
+      messages: (result.results || []).map(message => ({
+        ...message,
+        media_url: message.media_file_id
+          ? "/api/support/media?id=" + encodeURIComponent(message.id)
+          : null
+      }))
     });
 
   } catch {
