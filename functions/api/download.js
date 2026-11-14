@@ -62,6 +62,18 @@ function attachmentHeader(fileName) {
 }
 
 async function findFile(env, platform, fileId) {
+  if (fileId && fileId.startsWith("legacy-")) {
+    if (fileId !== "legacy-" + platform) return null;
+
+    return await env.DB.prepare(`
+      SELECT *
+      FROM platform_downloads
+      WHERE platform = ?
+        AND enabled = 1
+      LIMIT 1
+    `).bind(platform).first();
+  }
+
   if (fileId) {
     return await env.DB.prepare(`
       SELECT *
@@ -198,7 +210,7 @@ export async function onRequestGet({ request, env }) {
         }, 404);
       }
 
-      if (fileId) {
+      if (fileId && !fileId.startsWith("legacy-")) {
         await recordUniqueDownload(env, item.id, visitorId);
       }
 
@@ -276,7 +288,7 @@ export async function onRequestGet({ request, env }) {
         }, 404);
       }
 
-      await recordUniqueDownload(env, fileId ? item.id : null, visitorId);
+      await recordUniqueDownload(env, fileId && !fileId.startsWith("legacy-") ? item.id : null, visitorId);
 
       headers.set("Content-Length", String(range.length));
 
@@ -300,7 +312,7 @@ export async function onRequestGet({ request, env }) {
       }, 404);
     }
 
-    await recordUniqueDownload(env, fileId ? item.id : null, visitorId);
+    await recordUniqueDownload(env, fileId && !fileId.startsWith("legacy-") ? item.id : null, visitorId);
 
     headers.set("Content-Length", String(fileSize));
 
