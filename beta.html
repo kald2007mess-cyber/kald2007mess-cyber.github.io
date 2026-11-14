@@ -207,7 +207,7 @@ async function loadPage(){
   const tutorial=platformData.tutorials && platformData.tutorials[PLATFORM]
    ? String(platformData.tutorials[PLATFORM]).trim() : '';
 
-  if(tutorial && /^https:\/\//i.test(tutorial)){
+  if(tutorial && (tutorial.startsWith('/api/tutorial?') || /^https:\/\//i.test(tutorial))){
    const video=document.createElement('video');
    video.controls=true;
    video.playsInline=true;
