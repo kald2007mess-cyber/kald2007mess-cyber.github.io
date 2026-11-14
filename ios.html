@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#071326">
+<title>OXIDE HUB - iOS</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;padding:25px 15px;font-family:Arial,sans-serif;color:#fff;text-align:center;background:linear-gradient(rgba(3,8,22,.72),rgba(3,8,22,.92)),url("background.png") center/cover fixed}
+.container{max-width:430px;margin:auto}.language-box{display:flex;justify-content:flex-end}
+select{background:#0c1930;color:white;border:1px solid #176caa;border-radius:8px;padding:9px}
+.logo{font-size:34px;font-weight:900;letter-spacing:3px;color:white;text-shadow:0 0 15px #00aaff;margin:25px 0 8px}
+.subtitle{color:#b8c9dd;margin-bottom:25px}
+.section{background:rgba(12,25,48,.9);border:1px solid #176caa;border-radius:14px;padding:18px;margin:16px 0}
+.section h2{color:#00b7ff;font-size:19px;margin-top:0}
+.file-info{color:#c5d5e8;font-size:13px;margin:12px 0;line-height:1.7;overflow-wrap:anywhere}
+.download-btn{display:block;width:100%;padding:14px;background:#087ed0;color:white;text-decoration:none;border:0;border-radius:10px;font-size:16px;font-weight:bold;margin-top:12px;cursor:pointer}
+.download-btn:disabled{opacity:.5;cursor:not-allowed}
+.video-frame{width:min(100%,320px);aspect-ratio:9/16;margin:15px auto 0;border:1px solid #176caa;border-radius:12px;background:#000;overflow:hidden;box-shadow:0 0 18px rgba(0,183,255,.15)}
+.video-frame video{width:100%;height:100%;object-fit:contain;background:#000}
+.back-btn{display:block;padding:14px;margin-top:22px;border:1px solid #176caa;border-radius:10px;color:white;text-decoration:none;background:rgba(12,25,48,.9)}
+footer{margin-top:30px;color:#879bb2;font-size:12px}
+@media(max-width:360px){.video-frame{width:min(100%,280px)}}
+</style>
+</head>
+<body>
+<main class="container">
+ <div class="language-box">
+  <select id="language">
+   <option value="ar">🇩🇿 العربية</option><option value="en">🇬🇧 English</option><option value="ru">🇷🇺 Русский</option>
+  </select>
+ </div>
+ <div class="logo">OXIDE HUB</div>
+ <div class="subtitle">SURVIVE • EXPLORE • DOMINATE</div>
+ <div id="filesContainer"></div>
+ <section class="section" id="videoSection" hidden>
+  <h2 id="videoTitle">🎬 فيديو الشرح</h2>
+  <div class="file-info" id="videoInfo">شاهد الشرح هنا دون مغادرة الموقع.</div>
+  <div class="video-frame"><video id="tutorialVideo" controls playsinline preload="metadata"></video></div>
+ </section>
+ <a href="index.html" class="back-btn" id="backButton">↩ العودة إلى OXIDE HUB</a>
+ <footer>OXIDE HUB © 2026<br>Created by SKIMI_17</footer>
+</main>
+<script>
+const PLATFORM="ios",REQUIRED=3;
+const text={
+ ar:{file1:"📦 الملف الأول",file2:"📦 الملف الثاني",download1:"تحميل الملف الأول",download2:"تحميل الملف الثاني",loading:"جارٍ تحميل معلومات الملفات...",none:"لا يوجد ملف متاح حاليًا.",need:"يجب إكمال 3 إعلانات لفتح التنزيل.",ready:"اكتمل شرط الإعلانات. اضغط للتنزيل.",tutorial:"🎬 فيديو الشرح",videoInfo:"شاهد الشرح هنا دون مغادرة الموقع.",back:"↩ العودة إلى OXIDE HUB",failed:"تعذر فتح رابط التنزيل."},
+ en:{file1:"📦 FILE 1",file2:"📦 FILE 2",download1:"DOWNLOAD FILE 1",download2:"DOWNLOAD FILE 2",loading:"Loading file information...",none:"No file is currently available.",need:"Complete 3 ads to unlock downloads.",ready:"Ad requirement completed. Tap to download.",tutorial:"🎬 VIDEO TUTORIAL",videoInfo:"Watch the tutorial here without leaving the website.",back:"↩ BACK TO OXIDE HUB",failed:"Unable to open the download link."},
+ ru:{file1:"📦 ФАЙЛ 1",file2:"📦 ФАЙЛ 2",download1:"СКАЧАТЬ ФАЙЛ 1",download2:"СКАЧАТЬ ФАЙЛ 2",loading:"Загрузка информации о файлах...",none:"Файл сейчас недоступен.",need:"Завершите 3 рекламы, чтобы открыть загрузку.",ready:"Требование выполнено. Нажмите для загрузки.",tutorial:"🎬 ВИДЕОИНСТРУКЦИЯ",videoInfo:"Смотрите инструкцию здесь, не покидая сайт.",back:"↩ НАЗАД В OXIDE HUB",failed:"Не удалось открыть ссылку для загрузки."}
+};
+let lang="ar",files=[],allowed=false;
+const $=id=>document.getElementById(id);
+function t(key){return text[lang][key]||text.ar[key]||key}
+function changeLanguage(value){
+ if(!text[value])return;lang=value;
+ document.documentElement.lang=lang;document.documentElement.dir=lang==="ar"?"rtl":"ltr";
+ $("videoTitle").textContent=t("tutorial");$("videoInfo").textContent=t("videoInfo");$("backButton").textContent=t("back");
+ renderFiles();
+}
+function renderFiles(){
+ const box=$("filesContainer");box.replaceChildren();
+ for(let slot=1;slot<=2;slot++){
+  const file=files.find(item=>Number(item.slot||1)===slot);
+  const section=document.createElement("section");section.className="section";
+  const heading=document.createElement("h2");heading.textContent=t(slot===1?"file1":"file2");
+  const info=document.createElement("div");info.className="file-info";
+  const button=document.createElement("button");button.className="download-btn";button.type="button";
+  button.textContent=t(slot===1?"download1":"download2");
+  if(!file||!file.id){info.textContent=t("none");button.disabled=true;}
+  else{
+   info.textContent=[file.title||file.file_name||"",file.version?"— "+file.version:"",file.description?"— "+file.description:"",file.file_name?"— "+file.file_name:""].filter(Boolean).join(" ");
+   button.disabled=!allowed;button.title=allowed?t("ready"):t("need");
+   button.addEventListener("click",()=>downloadFile(file));
+  }
+  section.append(heading,info,button);box.appendChild(section);
+ }
+}
+function downloadFile(file){
+ if(!file||!file.id||!allowed){alert(t("need"));return;}
+ window.location.href="/api/download?platform=ios&id="+encodeURIComponent(file.id);
+}
+async function loadPage(){
+ $("language").value=lang;changeLanguage(lang);
+ try{
+  const [p,r]=await Promise.all([
+   fetch("/api/platforms",{cache:"no-store",credentials:"same-origin"}),
+   fetch("/api/progress",{cache:"no-store",credentials:"same-origin"})
+  ]);
+  if(!p.ok||!r.ok)throw new Error("load");
+  const pd=await p.json(),rd=await r.json();
+  if(!pd.success)throw new Error("platforms");
+  files=Array.isArray(pd.platforms?.ios)?pd.platforms.ios.filter(f=>f&&(f.enabled===true||Number(f.enabled)===1)).sort((a,b)=>Number(a.slot||1)-Number(b.slot||1)):[];
+  allowed=Number(rd.progress||0)>=REQUIRED;renderFiles();
+  const tutorial=String(pd.tutorials?.ios||"").trim();
+  if(/^https:\/\//i.test(tutorial)){
+   $("tutorialVideo").src=tutorial;$("videoSection").hidden=false;$("tutorialVideo").load();
+  }else $("videoSection").hidden=true;
+ }catch(error){files=[];allowed=false;renderFiles();$("videoSection").hidden=true;console.error("iOS page load failed",error);}
+}
+$("language").addEventListener("change",e=>changeLanguage(e.target.value));
+loadPage();
+</script>
+</body>
+</html>
