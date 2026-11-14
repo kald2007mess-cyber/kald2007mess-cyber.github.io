@@ -465,7 +465,32 @@ async function copyReferralLink(){if(!referralLinkValue)await loadReferral();if(
 async function shareReferralLink(){if(!referralLinkValue)await loadReferral();if(!referralLinkValue)return;const shareText=currentLanguage==="ar"?"انضم إلى OXIDE HUB عبر رابط الدعوة الخاص بي واربح!":"Join OXIDE HUB using my invitation link!";if(navigator.share){try{await navigator.share({title:"OXIDE HUB",text:shareText,url:referralLinkValue})}catch(error){if(error.name!=="AbortError")copyReferralLink()}}else copyReferralLink()}
 async function registerReferralFromLink(){const params=new URLSearchParams(window.location.search),referrerId=params.get("ref");if(!referrerId)return;try{const response=await fetch("/api/referral",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({referrerId})});const data=await response.json();if(data.success&&(data.registered||data.alreadyRegistered)){const cleanUrl=new URL(window.location.href);cleanUrl.searchParams.delete("ref");window.history.replaceState({},"",cleanUrl.pathname+cleanUrl.search+cleanUrl.hash);if(data.registered)sessionStorage.setItem("oxide_referral_notice","1")}else if(["REFERRAL_NOT_ALLOWED_FOR_EXISTING_USER","INVALID_REFERRAL","SELF_REFERRAL"].includes(data.error)){const cleanUrl=new URL(window.location.href);cleanUrl.searchParams.delete("ref");window.history.replaceState({},"",cleanUrl.pathname+cleanUrl.search+cleanUrl.hash)}}catch(error){console.error("Referral registration failed; link parameter retained for retry:",error)}}
 function renderSupportLanguage(){const empty=document.getElementById("supportEmpty");if(empty&&empty.dataset.placeholder==="true")empty.textContent=supportText("empty")}
-function appendSupportMessage(message){const container=document.getElementById("supportMessages"),empty=container.querySelector(".support-empty");if(empty)empty.remove();const bubble=document.createElement("div"),isAdmin=message.sender==="admin"||message.sender==="support";bubble.className="support-message "+(isAdmin?"admin":"user");const sender=document.createElement("span");sender.className="support-sender";sender.textContent=isAdmin?supportText("admin"):supportText("you");const body=document.createElement("div");body.textContent=message.message_type&&message.message_type!=="text"?supportText("media"):String(message.message_text||"");bubble.append(sender,body);container.appendChild(bubble)}
+function appendSupportMessage(message){
+ const container=document.getElementById("supportMessages"),empty=container.querySelector(".support-empty");
+ if(empty)empty.remove();
+ const bubble=document.createElement("div"),isAdmin=message.sender==="admin"||message.sender==="support";
+ bubble.className="support-message "+(isAdmin?"admin":"user");
+ const sender=document.createElement("span");sender.className="support-sender";sender.textContent=isAdmin?supportText("admin"):supportText("you");
+ const body=document.createElement("div");
+ const type=String(message.message_type||"text");
+ if(message.media_url&&type==="photo"){
+  const media=document.createElement("img");
+  media.src=message.media_url;media.alt="Support attachment";media.loading="lazy";
+  media.style.maxWidth="100%";media.style.maxHeight="320px";media.style.borderRadius="10px";media.style.display="block";
+  body.appendChild(media);
+ }else if(message.media_url&&type==="video"){
+  const media=document.createElement("video");
+  media.src=message.media_url;media.controls=true;media.playsInline=true;media.preload="metadata";
+  media.style.maxWidth="100%";media.style.maxHeight="360px";media.style.borderRadius="10px";media.style.display="block";
+  body.appendChild(media);
+ }
+ if(message.message_text){
+  const text=document.createElement("div");text.textContent=String(message.message_text);body.appendChild(text);
+ }else if(!message.media_url){
+  body.textContent=supportText("media");
+ }
+ bubble.append(sender,body);container.appendChild(bubble);
+}
 async function loadSupportMessages(initial=false){try{const response=await fetch("/api/support/messages?after="+(initial?0:lastSupportMessageId),{method:"GET",cache:"no-store",credentials:"same-origin"});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||"Support messages failed");const messages=Array.isArray(data.messages)?data.messages:[];if(initial&&messages.length===0){const container=document.getElementById("supportMessages");if(!container.querySelector(".support-message")){container.innerHTML="";const empty=document.createElement("div");empty.className="support-empty";empty.dataset.placeholder="true";empty.textContent=supportText("empty");container.appendChild(empty)}}messages.forEach(message=>{const id=Number(message.id)||0;if(id>lastSupportMessageId){appendSupportMessage(message);lastSupportMessageId=id}});if(messages.length){const container=document.getElementById("supportMessages");container.scrollTop=container.scrollHeight}document.getElementById("supportStatus").textContent=""}catch(error){document.getElementById("supportStatus").textContent=supportText("loadFailed")}}
 async function sendSupportMessage(event){event.preventDefault();if(supportSending)return;const input=document.getElementById("supportInput"),button=document.getElementById("supportSend"),message=input.value.trim();if(!message)return;if(message.length>2000){document.getElementById("supportStatus").textContent=currentLanguage==="ar"?"الرسالة طويلة جدًا. الحد الأقصى 2000 حرف.":"Message is too long. Maximum 2000 characters.";return}supportSending=true;button.disabled=true;document.getElementById("supportStatus").textContent=supportText("sending");try{await loadUserId();const response=await fetch("/api/support/send",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({message})});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||"Support send failed");input.value="";document.getElementById("supportStatus").textContent=supportText("sent");await loadSupportMessages(false)}catch(error){document.getElementById("supportStatus").textContent=supportText("failed")}finally{supportSending=false;button.disabled=false}}
 function startSupportChat(){if(supportPollingStarted)return;supportPollingStarted=true;document.getElementById("supportForm").addEventListener("submit",sendSupportMessage);loadUserId().finally(()=>loadSupportMessages(true));setInterval(()=>{if(!document.hidden)loadSupportMessages(false)},4000)}
