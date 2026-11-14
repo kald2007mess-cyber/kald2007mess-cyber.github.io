@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OXIDE HUB | ADMIN</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080d18;color:#fff;font-family:Arial,sans-serif;padding:20px}
+.container{max-width:650px;margin:auto}
+header{text-align:center;padding:25px 10px}
+h1{color:#35d7ff;letter-spacing:2px}
+.subtitle{color:#8fa5bd}
+.card{background:#111d30;border:1px solid #233b56;border-radius:16px;padding:18px;margin:14px 0}
+button{width:100%;padding:14px;border:0;border-radius:10px;background:#087eaa;color:white;font-size:16px;font-weight:bold;margin-top:10px;cursor:pointer;transition:transform .18s,box-shadow .18s,filter .18s}
+button:active{transform:scale(.96);box-shadow:0 0 22px #35d7ff;filter:brightness(1.2)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.status{color:#35d7ff;text-align:center;white-space:pre-wrap;line-height:1.7}
+.hidden{display:none!important}
+.maintenance-state{padding:12px;border-radius:10px;text-align:center;margin:12px 0;font-weight:bold}
+.state-on{background:#492326;color:#ff9b9b;border:1px solid #a74747}
+.state-off{background:#123d30;color:#73f0b4;border:1px solid #23875e}
+.note{color:#9eb2c9;font-size:13px;line-height:1.7;text-align:center}
+.field{margin:13px 0}
+.field label{display:block;color:#9ebbd4;margin-bottom:7px;font-size:14px}
+.field input,.field textarea{width:100%;padding:13px;border-radius:9px;border:1px solid #294661;background:#091525;color:white;font-size:15px;outline:none}
+.field textarea{min-height:85px;resize:vertical}
+.field input:focus,.field textarea:focus{border-color:#35d7ff}
+.platform-status{padding:10px;text-align:center;border-radius:9px;margin:12px 0;background:#17283c;color:#35d7ff;white-space:pre-wrap;overflow-wrap:anywhere}
+.secondary{background:#344a63}
+.back{background:#344a63;margin-bottom:10px}
+.file-input{border:1px dashed #35d7ff!important;padding:18px!important}
+.menu-heading{text-align:center;color:#9ebbd4;font-size:13px;letter-spacing:2px;margin:4px 0 16px}
+.menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.menu-tile{min-height:126px;margin:0;padding:16px 9px;border-radius:17px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;border:1px solid var(--edge);background:linear-gradient(145deg,var(--bg1),var(--bg2));color:#fff;box-shadow:inset 0 1px 5px #ffffff18,0 5px 15px #0006;transition:transform .18s,box-shadow .18s,filter .18s}
+.menu-tile:active{transform:scale(.95);box-shadow:0 0 24px var(--glow),inset 0 0 12px #ffffff30;filter:brightness(1.18)}
+.menu-tile .tile-icon{width:43px;height:43px;filter:drop-shadow(0 0 8px var(--glow))}
+.menu-tile .tile-icon svg{width:100%;height:100%;fill:none;stroke:var(--light);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.menu-tile span{font-size:15px;font-weight:bold;text-align:center;line-height:1.4}
+.menu-tile small{font-size:11px;color:var(--light);font-weight:bold}
+.blue{--bg1:#183b59;--bg2:#10263d;--edge:#38bdf8;--light:#9be5ff;--glow:#38bdf8}
+.yellow{--bg1:#44371e;--bg2:#2b2417;--edge:#facc15;--light:#fff0a3;--glow:#facc15}
+.green{--bg1:#164333;--bg2:#102b25;--edge:#4ade80;--light:#a7f3c0;--glow:#4ade80}
+.purple{--bg1:#39234c;--bg2:#251a35;--edge:#c084fc;--light:#e9c9ff;--glow:#c084fc}
+.silver{--bg1:#35404c;--bg2:#202a35;--edge:#cbd5e1;--light:#f1f5f9;--glow:#cbd5e1}
+.site-on{--bg1:#164333;--bg2:#102b25;--edge:#4ade80;--light:#a7f3c0;--glow:#4ade80}
+.site-off{--bg1:#492326;--bg2:#2c171c;--edge:#ff7777;--light:#ffc1c1;--glow:#ff7777}
+.users-summary{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.users-stat{background:#10263d;border:1px solid #2876a0;border-radius:12px;padding:13px;text-align:center}
+.users-stat strong{display:block;color:#8be2ff;font-size:22px;margin-top:5px}
+.users-toolbar{display:flex;gap:8px;align-items:center}
+.users-toolbar input{flex:1;min-width:0;padding:13px;border-radius:9px;border:1px solid #294661;background:#091525;color:white;font-size:15px}
+.user-item{background:#0b192a;border:1px solid #294661;border-radius:12px;padding:13px;margin:10px 0}
+.user-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:10px}
+.user-id{color:#8be2ff;font-weight:bold;direction:ltr;text-align:left;overflow-wrap:anywhere}
+.user-details{display:grid;grid-template-columns:1fr 1fr;gap:8px;color:#b8c9da;font-size:13px;line-height:1.6}
+.user-details b{color:#fff}
+.users-pagination{display:flex;gap:9px;margin-top:12px}
+.users-pagination button{flex:1}
+.users-empty{text-align:center;color:#9eb2c9;padding:25px 8px}
+.news-preview{margin-top:10px;border:1px dashed #355675;border-radius:12px;padding:10px;text-align:center;min-height:50px;color:#9eb2c9}
+.news-preview img,.news-preview video{max-width:100%;max-height:260px;border-radius:9px;display:block;margin:8px auto}
+.news-post{background:#0b192a;border:1px solid #294661;border-radius:13px;padding:14px;margin:12px 0}
+.news-post h4{margin:0 0 9px;color:#ffe58a;font-size:17px}
+.news-post p{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.7;color:#d4e0ec;margin:8px 0}
+.news-post-media{width:100%;max-height:280px;object-fit:contain;background:#050a12;border-radius:10px;margin:8px 0}
+.news-meta{display:flex;flex-wrap:wrap;gap:10px;color:#9eb2c9;font-size:12px;line-height:1.7;margin:9px 0}
+.news-actions{display:flex;gap:8px}
+.news-actions button{flex:1;margin-top:8px}
+.danger{background:#87363e}
+.news-empty{text-align:center;color:#9eb2c9;padding:25px 8px}
+.news-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}
+.news-stat{background:#14263b;border:1px solid #294661;border-radius:9px;padding:9px;text-align:center;color:#b9cadb;font-size:12px}
+.news-stat b{display:block;color:#fff;font-size:17px;margin-top:4px}
+.tasks-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.task-stat{background:#10263d;border:1px solid #2876a0;border-radius:11px;padding:11px 5px;text-align:center;color:#b8c9da;font-size:12px}
+.task-stat strong{display:block;color:#8be2ff;font-size:21px;margin-top:5px}
+.task-item{background:#0b192a;border:1px solid #31506d;border-radius:13px;padding:14px;margin:12px 0}
+.task-item h4{margin:0 0 8px;color:#a7f3c0;font-size:17px}
+.task-meta{display:flex;flex-wrap:wrap;gap:8px;color:#b8c9da;font-size:12px;margin:9px 0;line-height:1.6}
+.task-count{background:#123d30;color:#a7f3c0;border:1px solid #23875e;border-radius:9px;padding:10px;text-align:center;font-weight:bold;margin:10px 0;cursor:pointer}
+.task-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.task-actions button{margin-top:7px;padding:11px;font-size:14px}
+.task-form{border:1px solid #31506d;border-radius:12px;padding:13px;margin:12px 0;background:#0c1928}
+.task-empty{text-align:center;color:#9eb2c9;padding:22px 8px}
+.task-user{background:#0b192a;border:1px solid #294661;border-radius:10px;padding:12px;margin:8px 0;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.task-user b{color:#8be2ff;direction:ltr}
+@media(max-width:360px){body{padding:12px}.menu-grid{gap:9px}.menu-tile{min-height:116px}.menu-tile span{font-size:13px}.news-actions{flex-direction:column}}
+/* OXIDE HUB site background and glass-rain layer — copied from the supplied website. */
+body{min-height:100vh;background:linear-gradient(rgba(3,8,22,.68),rgba(3,8,22,.88)),url("background.png") center/cover fixed;background-size:auto,105% 105%;animation:oxideAdminBackgroundDrift 35s ease-in-out infinite alternate;isolation:isolate}
+@keyframes oxideAdminBackgroundDrift{from{background-position:center,48% 48%}to{background-position:center,52% 52%}}
+.oxide-admin-stars{position:fixed;inset:-100px;z-index:-1;pointer-events:none;opacity:.25;background-image:radial-gradient(2px 2px at 30px 40px,#fff,transparent),radial-gradient(1px 1px at 100px 130px,#fff,transparent),radial-gradient(2px 2px at 190px 80px,#54caff,transparent),radial-gradient(1px 1px at 250px 190px,#fff,transparent),radial-gradient(2px 2px at 320px 40px,#fff,transparent);background-size:350px 250px;animation:oxideAdminStarMove 65s linear infinite}
+@keyframes oxideAdminStarMove{from{transform:translate(0,0)}to{transform:translate(-100px,80px)}}
+.oxide-admin-rain-glass{position:fixed;inset:0;z-index:2;pointer-events:none;overflow:hidden;opacity:1;background:linear-gradient(115deg,rgba(120,190,255,.025),transparent 38%,rgba(125,195,255,.035) 72%,transparent)}
+#oxideRainCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+.container{position:relative;z-index:1}
+@media(prefers-reduced-motion:reduce){body,.oxide-admin-stars{animation:none}}
+/* OXIDE HUB - Glass Effect */
+.admin-card,.stat-card,.panel,.section,.card,.table-container,.modal-content{background:rgba(7,15,35,.58)!important;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(120,190,255,.18)}
+button,input,select,textarea{backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+</style>
+</head>
+<body>
+<div class="oxide-admin-stars" aria-hidden="true"></div>
+<div class="oxide-admin-rain-glass" aria-hidden="true"><canvas id="oxideRainCanvas"></canvas></div>
+<div class="container">
+<header><h1>OXIDE HUB</h1><div class="subtitle">ADMIN CONTROL CENTER</div></header>
+<div class="card" id="loading"><div class="status" id="status">جارٍ التحقق من صلاحية المدير...</div></div>
+<div id="panel" class="hidden">
+<div id="mainMenu">
+<p class="menu-heading">CONTROL CENTER</p>
+<div class="menu-grid">
+<button class="menu-tile blue" data-admin-permission="users" onclick="action('users')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><span>معلومات المستخدمين</span></button>
+<button class="menu-tile yellow" data-admin-permission="news" onclick="action('news')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><span>إدارة الأخبار</span></button>
+<button class="menu-tile green" data-admin-permission="tasks" onclick="action('tasks')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="m9 11 3 3L22 4"/><path d="M20 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11"/></svg></div><span>إدارة المهمات</span></button>
+<button class="menu-tile blue" data-admin-permission="android" onclick="openPlatform('android')"><div class="tile-icon"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 18h6"/></svg></div><span>ANDROID</span></button>
+<button class="menu-tile purple" data-admin-permission="beta" onclick="openPlatform('beta')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M8 15h8"/></svg></div><span>BETA</span></button>
+<button class="menu-tile silver" data-admin-permission="ios" onclick="openPlatform('ios')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M12 7c-2-3-6-2-7 1-2 5 3 12 5 12 1 0 1-1 2-1s1 1 2 1c2 0 7-7 5-12-1-3-5-4-7-1Z"/><path d="M12 7c0-3 2-5 5-5"/></svg></div><span>iOS</span></button>
+<button id="siteTile" data-admin-permission="maintenance" class="menu-tile site-off" onclick="toggleMaintenance()"><div class="tile-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg></div><span>إدارة الموقع</span><small id="siteTileStatus">جارٍ التحميل...</small></button>
+<button class="menu-tile yellow" data-owner-only="true" onclick="action('security')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg></div><span>الأمان والصلاحيات</span></button>
+</div>
+<div class="card" id="maintenanceCard" data-admin-permission="maintenance" style="margin-top:18px"><h3>🛠️ إدارة صيانة الموقع</h3><div id="maintenanceState" class="maintenance-state">جارٍ تحميل حالة الصيانة...</div><button id="maintenanceButton" onclick="toggleMaintenance()" disabled>حالة الصيانة</button><button id="messageButton" onclick="editMaintenanceMessage()" disabled>رسالة الصيانة</button><p class="note" id="maintenanceInfo">يتم حفظ إعدادات الصيانة لجميع زوار الموقع.</p></div>
+</div>
+<div id="usersPage" class="hidden"><div class="card"><button class="back" onclick="closeUsers()">⬅ العودة إلى لوحة الإدارة</button><h3>👥 معلومات المستخدمين</h3><div class="users-summary"><div class="users-stat">إجمالي المستخدمين<strong id="usersTotal">—</strong></div><div class="users-stat">الصفحة الحالية<strong id="usersPageNumber">1</strong></div></div><div class="users-toolbar"><input id="usersSearch" type="search" placeholder="بحث بواسطة User ID" maxlength="80"><button style="width:auto;min-width:76px;margin:0" onclick="searchUsers()">بحث</button></div><div class="platform-status" id="usersStatus">جارٍ تحميل المستخدمين...</div><div id="usersList"></div><div class="users-pagination"><button class="secondary" id="usersPrev" onclick="changeUsersPage(-1)" disabled>السابق</button><button class="secondary" id="usersNext" onclick="changeUsersPage(1)" disabled>التالي</button></div><p class="note">تعرض هذه الصفحة بيانات المستخدمين المسجلة في قاعدة بيانات الموقع.</p></div></div>
+<div id="newsPage" class="hidden"><div class="card"><button class="back" onclick="closeNews()">⬅ العودة إلى لوحة الإدارة</button><h3>📰 إدارة الأخبار</h3><div class="platform-status" id="newsStatus">جارٍ تحميل المنشورات...</div><h3 id="newsFormHeading">إضافة منشور جديد</h3><div class="field"><label>عنوان المنشور</label><input id="newsTitle" maxlength="180" placeholder="اكتب عنوان المنشور"></div><div class="field"><label>نص المنشور</label><textarea id="newsContent" maxlength="5000" placeholder="اكتب تفاصيل المنشور"></textarea></div><div class="field"><label>إضافة صورة أو فيديو</label><input class="file-input" id="newsMedia" type="file" accept="image/jpeg,image/png,image/webp,video/mp4"></div><p class="note">الصيغ المقبولة: JPG / PNG / WEBP / MP4. عند تعديل منشور يمكنك ترك الملف فارغًا للاحتفاظ بالوسائط الحالية.</p><div id="newsPreview" class="news-preview">معاينة الوسائط المختارة ستظهر هنا.</div><button id="publishNewsButton" onclick="saveNews()">📢 نشر المنشور</button><button id="cancelNewsEditButton" class="secondary hidden" onclick="resetNewsForm()">إلغاء التعديل</button><hr style="border:0;border-top:1px solid #294661;margin:22px 0"><h3>المنشورات القديمة</h3><div id="newsPosts"><div class="news-empty">جارٍ تحميل المنشورات...</div></div></div></div>
+<div id="tasksPage" class="hidden"><div class="card"><button class="back" onclick="closeTasks()">⬅ العودة إلى لوحة الإدارة</button><h3>🎯 إدارة المهمات</h3><div class="platform-status" id="tasksStatus">جارٍ تحميل المهمات...</div><div class="tasks-summary"><div class="task-stat">إجمالي المهمات<strong id="tasksTotal">—</strong></div><div class="task-stat">المهمات المفعّلة<strong id="tasksEnabled">—</strong></div><div class="task-stat">إجمالي الإكمالات<strong id="tasksCompleted">—</strong></div></div><div class="task-form"><h3 id="taskFormHeading">إضافة مهمة</h3><div class="field"><label>اسم المهمة</label><input id="taskTitle" maxlength="120" placeholder="مثال: متابعة حساب TikTok"></div><div class="field"><label>المنصة</label><select id="taskPlatform" style="width:100%;padding:13px;border-radius:9px;background:#091525;color:white;border:1px solid #294661"><option value="tiktok">TikTok</option><option value="telegram">Telegram</option></select></div><div class="field"><label>وصف المهمة</label><textarea id="taskDescription" maxlength="1000" placeholder="اشرح المطلوب من المستخدم"></textarea></div><div class="field"><label>رابط المهمة (HTTPS)</label><input id="taskUrl" type="url" placeholder="https://..."></div><div class="field"><label>النقاط عند القبول</label><input id="taskReward" type="number" min="0" max="100000" value="50"></div><div class="field"><label>ترتيب المهمة</label><input id="taskOrder" type="number" min="0" value="1"></div><div class="field"><label>الحالة</label><select id="taskEnabled" style="width:100%;padding:13px;border-radius:9px;background:#091525;color:white;border:1px solid #294661"><option value="1">مفعّلة</option><option value="0">متوقفة</option></select></div><button id="taskSaveButton" onclick="saveTask()">💾 حفظ المهمة</button><button id="taskCancelButton" class="secondary hidden" onclick="resetTaskForm()">إلغاء التعديل</button></div><h3>المهمات الحالية</h3><div id="tasksList"><div class="task-empty">جارٍ التحميل...</div></div><div id="taskCompletedPanel" class="hidden"><hr style="border:0;border-top:1px solid #294661;margin:20px 0"><h3 id="taskCompletedHeading">المستخدمون الذين أكملوا المهمة</h3><div class="platform-status" id="taskCompletedStatus"></div><div id="taskCompletedUsers"></div><button class="secondary" onclick="closeCompletedUsers()">إغلاق قائمة المستخدمين</button></div><p class="note">عدد الإكمالات يعرض الطلبات التي تمت الموافقة عليها فقط. لا يمكن حذف مهمة لها طلبات محفوظة؛ أوقفها بدلًا من ذلك للحفاظ على السجل.</p></div></div>
+<div id="securityPage" class="hidden"><div class="card"><button class="back" onclick="closeSecurity()">⬅ العودة إلى لوحة الإدارة</button><h3>🛡️ الأمان والصلاحيات</h3><p class="note">هذا القسم خاص بالمالك فقط. يمكنك إضافة نائب ومنحه صلاحيات محددة أو سحبها في أي وقت.</p><div class="platform-status" id="securityStatus">جارٍ تحميل النواب...</div><div class="task-form"><h3>إضافة نائب جديد</h3><div class="field"><label>Telegram ID للنائب</label><input id="deputyTelegramId" inputmode="numeric" maxlength="20" placeholder="مثال: 123456789"></div><button id="addDeputyButton" onclick="addDeputy()">➕ إضافة النائب</button></div><h3>النواب الحاليون</h3><div id="deputiesList"><div class="task-empty">جارٍ التحميل...</div></div><p class="note">لا يمكن للنائب دخول قسم الأمان والصلاحيات. المالك وحده يستطيع إدارة النواب. صلاحيات الأقسام ستُفرض من الخادم عند ربط حماية كل قسم.</p></div></div>
+<div id="platformPage" class="hidden"><div class="card">
+<button class="back" onclick="backToMenu()">⬅ العودة إلى لوحة الإدارة</button>
+<h3 id="platformHeading">إدارة المنصة</h3>
+<div class="platform-status" id="platformStatus">جارٍ تحميل البيانات...</div>
+<div class="users-summary">
+<div class="users-stat">عدد الملفات<strong id="platformFilesCount">0</strong></div>
+<div class="users-stat">إجمالي التنزيلات<strong id="platformDownloadsCount">0</strong></div>
+</div>
+<h3>📦 الملفات الحالية</h3>
+<div id="platformFilesList"><div class="users-empty">جارٍ تحميل الملفات...</div></div>
+<hr style="border:0;border-top:1px solid #294661;margin:22px 0">
+<h3 id="platformFormHeading">➕ إضافة ملف جديد</h3>
+<div class="field"><label>اسم التطبيق / الملف</label><input id="appTitle" maxlength="150" placeholder="اسم التطبيق"></div>
+<div class="field"><label>رقم الإصدار</label><input id="appVersion" maxlength="50" placeholder="مثال: 2.1.2"></div>
+<div class="field"><label>الوصف</label><textarea id="appDescription" maxlength="1000" placeholder="وصف الإصدار"></textarea></div>
+<div class="field"><label>رابط تنزيل خارجي (اختياري)</label><input id="platformUrl" type="url" placeholder="https://..."></div>
+<div class="field"><label id="platformFileLabel">اختر ملف APK من هاتفك</label><input class="file-input" id="platformFile" type="file" accept=".apk,application/vnd.android.package-archive"><p class="note" id="platformFileHint">يمكنك رفع ملف من الهاتف حتى 2.5 غيغابايت، أو استخدام رابط خارجي.</p></div>
+<div class="platform-status" id="currentFile">لا توجد بيانات ملف محدد.</div>
+<div class="field"><label>حالة التنزيل</label><select id="enabled" style="width:100%;padding:13px;border-radius:9px;background:#091525;color:white;border:1px solid #294661"><option value="1">مفعّل</option><option value="0">متوقف</option></select></div>
+<button id="saveButton" onclick="savePlatform()">💾 إضافة بيانات الملف</button>
+<button id="uploadButton" onclick="uploadPlatform()">📤 رفع الملف</button>
+<button id="cancelPlatformEdit" class="secondary hidden" onclick="resetPlatformForm()">إلغاء التعديل</button>
+<p class="note" id="platformInfo">رفع ملف جديد ينشئ بطاقة تنزيل مستقلة. تعديل البيانات لا يحذف الملفات الموجودة.</p>
+<hr style="border:0;border-top:1px solid #294661;margin:22px 0">
+<h3>🎥 فيديو شرح المنصة</h3>
+<div class="field"><label>رابط فيديو الشرح (HTTPS)</label><input id="tutorialUrl" type="url" placeholder="https://..."></div>
+<button id="saveTutorialButton" onclick="savePlatformTutorial()">💾 حفظ رابط الشرح</button>
+</div></div>
+</div>
+</div>
+<script>
+const tg=window.Telegram?.WebApp;
+const statusBox=document.getElementById("status");
+let maintenanceEnabled=false,maintenanceMessage="",maintenanceReady=false,maintenanceBusy=false;
+let downloads=[],platformTutorials={android:"",ios:"",beta:""},currentPlatform="",platformBusy=false,editingPlatformFileId=null;
+let adminOwner=false,adminPermissions=[];
+function hasAdminPermission(permission){return adminOwner||adminPermissions.includes(permission);}
+function applyAdminPermissions(){
+ document.querySelectorAll("[data-admin-permission]").forEach(element=>element.classList.toggle("hidden",!hasAdminPermission(element.dataset.adminPermission)));
+ document.querySelectorAll("[data-owner-only]").forEach(element=>element.classList.toggle("hidden",!adminOwner));
+}
+async function apiMaintenance(data){
+ const response=await fetch("/api/admin/maintenance",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({...data,initData:tg.initData})});
+ const result=await response.json();if(!response.ok||!result.success)throw new Error(result.error||"MAINTENANCE_ERROR");return result;
+}
+function renderMaintenance(){
+ const state=document.getElementById("maintenanceState"),button=document.getElementById("maintenanceButton"),siteTile=document.getElementById("siteTile");
+ if(maintenanceEnabled){state.textContent="🔴 الصيانة مفعّلة";state.className="maintenance-state state-on";button.textContent="إيقاف الصيانة";siteTile.classList.remove("site-on");siteTile.classList.add("site-off");document.getElementById("siteTileStatus").textContent="تحت الصيانة";}
+ else{state.textContent="🟢 الموقع يعمل بشكل طبيعي";state.className="maintenance-state state-off";button.textContent="تشغيل الصيانة";siteTile.classList.remove("site-off");siteTile.classList.add("site-on");document.getElementById("siteTileStatus").textContent="الموقع يعمل";}
+ document.getElementById("messageButton").disabled=false;button.disabled=false;maintenanceReady=true;
+}
+async function loadMaintenance(){
+ try{const result=await apiMaintenance({action:"get"});maintenanceEnabled=result.maintenance===true;maintenanceMessage=String(result.message||"");renderMaintenance();}
+ catch(error){document.getElementById("maintenanceState").textContent="تعذر تحميل إعدادات الصيانة. أعد تحميل اللوحة.";document.getElementById("maintenanceState").className="maintenance-state state-on";document.getElementById("maintenanceInfo").textContent="خطأ: "+error.message;document.getElementById("siteTileStatus").textContent="تعذر معرفة الحالة";}
+}
+async function toggleMaintenance(){
+ if(!hasAdminPermission("maintenance")){alert("ليس لديك صلاحية إدارة الموقع.");return;}
+ if(!maintenanceReady||maintenanceBusy)return;const nextState=!maintenanceEnabled;
+ if(!confirm(nextState?"هل تريد تشغيل الصيانة؟ سيتم تفعيل وضع الصيانة.":"هل تريد إيقاف الصيانة وإعادة الموقع للعمل؟"))return;
+ maintenanceBusy=true;document.getElementById("maintenanceButton").disabled=true;document.getElementById("messageButton").disabled=true;document.getElementById("siteTile").disabled=true;
+ try{const result=await apiMaintenance({action:"save",maintenance:nextState,message:maintenanceMessage});maintenanceEnabled=result.maintenance;maintenanceMessage=result.message;renderMaintenance();alert(maintenanceEnabled?"تم تشغيل الصيانة وحفظ الإعدادات.":"تم إيقاف الصيانة وإعادة الحالة إلى العمل.");}
+ catch(error){alert("تعذر حفظ حالة الصيانة: "+error.message);}
+ finally{maintenanceBusy=false;document.getElementById("maintenanceButton").disabled=false;document.getElementById("messageButton").disabled=false;document.getElementById("siteTile").disabled=false;}
+}
+async function editMaintenanceMessage(){
+ if(!hasAdminPermission("maintenance")){alert("ليس لديك صلاحية إدارة الموقع.");return;}
+ if(!maintenanceReady||maintenanceBusy)return;const entered=prompt("اكتب رسالة الصيانة الجديدة:",maintenanceMessage);if(entered===null)return;
+ const newMessage=entered.trim();if(!newMessage){alert("الرسالة لا يمكن أن تكون فارغة.");return;}if(newMessage.length>1000){alert("الحد الأقصى للرسالة هو 1000 حرف.");return;}
+ maintenanceBusy=true;document.getElementById("maintenanceButton").disabled=true;document.getElementById("messageButton").disabled=true;
+ try{const result=await apiMaintenance({action:"save",maintenance:maintenanceEnabled,message:newMessage});maintenanceEnabled=result.maintenance;maintenanceMessage=result.message;renderMaintenance();alert("تم حفظ رسالة الصيانة بنجاح.");}
+ catch(error){alert("تعذر حفظ الرسالة: "+error.message);}
+ finally{maintenanceBusy=false;document.getElementById("maintenanceButton").disabled=false;document.getElementById("messageButton").disabled=false;}
+}
+async function apiDownloads(data){
+ const response=await fetch("/api/admin/downloads",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({...data,initData:tg.initData})});
+ const result=await response.json();if(!response.ok||!result.success)throw new Error(result.error||"DOWNLOADS_ERROR");return result;
+}
+async function loadDownloads(){
+ const result=await apiDownloads({action:"get"});
+ downloads=Array.isArray(result.downloads)?result.downloads:[];
+ platformTutorials=result.tutorials||{android:"",ios:"",beta:""};
+}
+function platformName(platform){return platform==="ios"?"iOS":platform==="beta"?"BETA":"Android";}
+function platformExtension(){return currentPlatform==="ios"?".ipa":".apk";}
+function platformFiles(){return downloads.filter(item=>item.platform===currentPlatform);}
+function openPlatform(platform){
+ if(!hasAdminPermission(platform)){alert("ليس لديك صلاحية إدارة هذه المنصة.");return;}
+ currentPlatform=platform;editingPlatformFileId=null;
+ document.getElementById("mainMenu").classList.add("hidden");
+ document.getElementById("platformPage").classList.remove("hidden");
+ document.getElementById("platformHeading").textContent="إدارة "+platformName(platform);
+ const ios=platform==="ios";
+ document.getElementById("platformFileLabel").textContent=ios?"اختر ملف IPA من هاتفك":"اختر ملف APK من هاتفك";
+ document.getElementById("platformFile").accept=ios?".ipa,application/octet-stream":".apk,application/vnd.android.package-archive";
+ document.getElementById("platformFileHint").textContent="الحد الأقصى 2.5 غيغابايت. يمكنك أيضًا إضافة رابط تنزيل خارجي.";
+ document.getElementById("tutorialUrl").value=platformTutorials[platform]||"";
+ resetPlatformForm();
+ document.getElementById("platformStatus").textContent="جارٍ تحميل ملفات "+platformName(platform)+"...";
+ loadDownloads().then(()=>{
+  document.getElementById("tutorialUrl").value=platformTutorials[platform]||"";
+  renderPlatformFiles();
+  document.getElementById("platformStatus").textContent="تم تحميل بيانات "+platformName(platform)+".";
+ }).catch(error=>{
+  document.getElementById("platformStatus").textContent="تعذر تحميل الملفات: "+error.message;
+ });
+}
+function renderPlatformFiles(){
+ const items=platformFiles(),list=document.getElementById("platformFilesList");
+ document.getElementById("platformFilesCount").textContent=items.length;
+ document.getElementById("platformDownloadsCount").textContent=items.reduce((n,item)=>n+Number(item.downloads_count||0),0).toLocaleString("en-US");
+ if(!items.length){list.innerHTML='<div class="users-empty">لا توجد ملفات لهذه المنصة. أضف أول ملف من النموذج.</div>';return;}
+ list.innerHTML=items.map(item=>{
+  const id=String(item.id||"");
+  const enabled=Number(item.enabled)===1;
+  const fileLabel=item.file_name|| (item.download_url?"رابط خارجي":"لا يوجد ملف مرفق");
+  const link=item.download_url?'<a href="'+escapeHtml(item.download_url)+'" target="_blank" rel="noopener" style="color:#8be2ff;direction:ltr;display:block;overflow-wrap:anywhere">فتح رابط التنزيل ↗</a>':"";
+  return '<article class="task-item"><h4>'+escapeHtml(item.title||"ملف بلا اسم")+' · '+escapeHtml(item.version||"بدون إصدار")+'</h4><div class="task-meta"><span>'+escapeHtml(fileLabel)+'</span><span>الحجم: '+formatSize(item.file_size)+'</span><span>التنزيلات: '+Number(item.downloads_count||0)+'</span><span>'+(enabled?"🟢 مفعّل":"🔴 متوقف")+'</span></div><p style="color:#c7d5e3;line-height:1.6;white-space:pre-wrap">'+escapeHtml(item.description||"")+'</p>'+link+'<div class="task-actions"><button class="secondary" onclick="editPlatformFile(\''+encodeURIComponent(id)+'\')">✏️ تعديل</button><button onclick="togglePlatformFile(\''+encodeURIComponent(id)+'\','+(enabled?0:1)+')">'+(enabled?"⏸ إيقاف":"▶️ تفعيل")+'</button><button class="danger" style="grid-column:1/-1" onclick="deletePlatformFile(\''+encodeURIComponent(id)+'\')">🗑️ حذف الملف</button></div></article>';
+ }).join("");
+}
+function resetPlatformForm(){
+ editingPlatformFileId=null;
+ ["appTitle","appVersion","appDescription","platformUrl"].forEach(id=>document.getElementById(id).value="");
+ document.getElementById("enabled").value="1";
+ document.getElementById("platformFile").value="";
+ document.getElementById("platformFormHeading").textContent="➕ إضافة ملف جديد";
+ document.getElementById("currentFile").textContent="لا توجد بيانات ملف محدد.";
+ document.getElementById("saveButton").textContent="💾 إضافة بيانات الملف";
+ document.getElementById("cancelPlatformEdit").classList.add("hidden");
+}
+function editPlatformFile(encodedId){
+ const id=decodeURIComponent(encodedId);
+ const item=platformFiles().find(x=>String(x.id)===id);if(!item)return;
+ editingPlatformFileId=id;
+ document.getElementById("appTitle").value=item.title||"";
+ document.getElementById("appVersion").value=item.version||"";
+ document.getElementById("appDescription").value=item.description||"";
+ document.getElementById("platformUrl").value=item.download_url||"";
+ document.getElementById("enabled").value=String(Number(item.enabled)===1?1:0);
+ document.getElementById("platformFile").value="";
+ document.getElementById("platformFormHeading").textContent="✏️ تعديل الملف: "+(item.title||item.file_name||"");
+ document.getElementById("currentFile").textContent=(item.file_name?"📦 الملف: "+item.file_name+"\n":"")+(item.download_url?"🔗 "+item.download_url+"\n":"")+"الحجم: "+formatSize(item.file_size)+"\nالتنزيلات: "+Number(item.downloads_count||0);
+ document.getElementById("saveButton").textContent="💾 حفظ التعديلات";
+ document.getElementById("cancelPlatformEdit").classList.remove("hidden");
+ document.getElementById("platformFormHeading").scrollIntoView({behavior:"smooth",block:"center"});
+}
+function formatSize(bytes){const size=Number(bytes||0);if(size<1024)return size+" B";if(size<1048576)return(size/1024).toFixed(1)+" KB";if(size<1073741824)return(size/1048576).toFixed(2)+" MB";return(size/1073741824).toFixed(2)+" GB";}
+function platformData(){
+ const current=platformFiles().find(x=>String(x.id)===String(editingPlatformFileId));
+ return {platform:currentPlatform,id:editingPlatformFileId||undefined,title:document.getElementById("appTitle").value.trim(),version:document.getElementById("appVersion").value.trim(),description:document.getElementById("appDescription").value.trim(),download_url:document.getElementById("platformUrl").value.trim()||(current?.download_url||""),enabled:document.getElementById("enabled").value==="1"};
+}
+async function savePlatform(){
+ if(platformBusy)return;
+ const data=platformData();
+ if(!data.title){alert("اكتب اسم التطبيق أو الملف.");return;}
+ if(data.download_url&&!/^https:\/\//i.test(data.download_url)){alert("رابط التنزيل يجب أن يبدأ بـ https://");return;}
+ if(currentPlatform==="ios"&&data.enabled&&!data.download_url){alert("في iOS يجب رفع ملف IPA أو إضافة رابط تنزيل قبل تفعيل الملف.");return;}
+ platformBusy=true;const button=document.getElementById("saveButton");button.disabled=true;button.textContent="جارٍ الحفظ...";
+ try{
+  await apiDownloads({action:"save",...data});
+  await loadDownloads();renderPlatformFiles();resetPlatformForm();
+  document.getElementById("platformStatus").textContent="✅ تم حفظ بيانات الملف بنجاح.";
+ }catch(error){document.getElementById("platformStatus").textContent="تعذر الحفظ: "+error.message;alert("خطأ: "+error.message);}
+ finally{platformBusy=false;button.disabled=false;button.textContent=editingPlatformFileId?"💾 حفظ التعديلات":"💾 إضافة بيانات الملف";}
+}
+async function togglePlatformFile(encodedId,enabled){
+ if(platformBusy)return;
+ const id=decodeURIComponent(encodedId),item=platformFiles().find(x=>String(x.id)===id);if(!item)return;
+ if(currentPlatform==="ios"&&enabled===1&&!item.download_url){alert("لا يمكن تفعيل ملف iOS دون ملف IPA أو رابط تنزيل.");return;}
+ if(!confirm(enabled?"تفعيل هذا الملف؟":"إيقاف هذا الملف؟"))return;
+ platformBusy=true;
+ try{
+  await apiDownloads({action:"save",platform:currentPlatform,id:item.id,title:item.title||"ملف",version:item.version||"",description:item.description||"",download_url:item.download_url||"",enabled:enabled===1});
+  await loadDownloads();renderPlatformFiles();document.getElementById("platformStatus").textContent="تم تحديث حالة الملف.";
+ }catch(error){alert("تعذر تغيير الحالة: "+error.message);}
+ finally{platformBusy=false;}
+}
+async function deletePlatformFile(encodedId){
+ if(platformBusy)return;
+ const id=decodeURIComponent(encodedId),item=platformFiles().find(x=>String(x.id)===id);if(!item)return;
+ if(!confirm("حذف هذا الملف نهائيًا من القائمة والتخزين؟"))return;
+ platformBusy=true;
+ try{
+  await apiDownloads({action:"delete",platform:currentPlatform,id});
+  await loadDownloads();renderPlatformFiles();document.getElementById("platformStatus").textContent="تم حذف الملف.";
+ }catch(error){alert("تعذر حذف الملف: "+error.message);}
+ finally{platformBusy=false;}
+}
+async function savePlatformTutorial(){
+ if(platformBusy)return;
+ const url=document.getElementById("tutorialUrl").value.trim();
+ if(url&&!/^https:\/\//i.test(url)){alert("رابط الفيديو يجب أن يبدأ بـ https://");return;}
+ platformBusy=true;const button=document.getElementById("saveTutorialButton");button.disabled=true;button.textContent="جارٍ الحفظ...";
+ try{
+  const result=await apiDownloads({action:"tutorial_save",platform:currentPlatform,video_url:url});
+  platformTutorials[currentPlatform]=result.video_url||url;
+  document.getElementById("platformStatus").textContent="تم حفظ رابط فيديو الشرح.";
+ }catch(error){alert("تعذر حفظ رابط الشرح: "+error.message);}
+ finally{platformBusy=false;button.disabled=false;button.textContent="💾 حفظ رابط الشرح";}
+}
+
+/* رفع APK أو IPA حتى 2.5GB عبر R2 Multipart Upload */
+async function uploadPlatform(){
+ if(platformBusy)return;
+ const file=document.getElementById("platformFile").files[0];
+ if(!file){alert("اختر ملف "+platformExtension()+" أولاً.");return;}
+ if(!file.name.toLowerCase().endsWith(platformExtension())){alert("الرجاء اختيار ملف "+platformExtension()+" فقط.");return;}
+ const MAX_SIZE=2.5*1024*1024*1024,DEFAULT_PART_SIZE=10*1024*1024;
+ if(file.size>MAX_SIZE){alert("الحد الأقصى لحجم الملف هو 2.5GB.");return;}
+ const metadata={title:document.getElementById("appTitle").value.trim(),version:document.getElementById("appVersion").value.trim(),description:document.getElementById("appDescription").value.trim()};
+ if(!metadata.title){alert("اكتب اسم التطبيق أو الملف أولاً.");return;}
+ if(!confirm("رفع ملف "+platformExtension()+" جديد إلى "+platformName(currentPlatform)+"؟\n"+file.name+"\n"+formatSize(file.size)))return;
+ platformBusy=true;
+ const button=document.getElementById("uploadButton"),saveButton=document.getElementById("saveButton"),status=document.getElementById("platformStatus");
+ button.disabled=true;saveButton.disabled=true;
+ let uploadId=null,uploadKey=null,uploadCreated=false;
+ let progress=document.getElementById("uploadProgress");
+ if(!progress){
+  progress=document.createElement("div");progress.id="uploadProgress";
+  progress.style.cssText="background:#091525;border:1px solid #294661;border-radius:12px;padding:14px;margin:12px 0;text-align:center;color:#35d7ff;";
+  const label=document.createElement("div");label.id="uploadProgressText";label.textContent="0%";
+  const bar=document.createElement("div");bar.style.cssText="height:12px;background:#26394d;border-radius:20px;overflow:hidden;margin-top:12px;";
+  const fill=document.createElement("div");fill.id="uploadProgressFill";fill.style.cssText="height:100%;width:0%;background:linear-gradient(90deg,#087eaa,#35d7ff);transition:width .2s;";
+  bar.appendChild(fill);progress.appendChild(label);progress.appendChild(bar);button.parentNode.insertBefore(progress,button);
+ }
+ progress.classList.remove("hidden");progress.style.display="block";
+ const progressText=document.getElementById("uploadProgressText"),progressFill=document.getElementById("uploadProgressFill");
+ progressFill.style.width="0%";progressText.textContent="0%";
+ async function sendForm(form){
+  const response=await fetch("/api/admin/downloads",{method:"POST",credentials:"same-origin",cache:"no-store",body:form});
+  let result;try{result=await response.json();}catch{throw new Error("استجابة الخادم غير صالحة.");}
+  if(!response.ok||!result.success)throw new Error(result.error||"UPLOAD_FAILED");
+  return result;
+ }
+ try{
+  const createForm=new FormData();
+  createForm.append("action","create");createForm.append("platform",currentPlatform);createForm.append("initData",tg.initData);
+  createForm.append("fileName",file.name);createForm.append("fileSize",String(file.size));
+  createForm.append("title",metadata.title);createForm.append("version",metadata.version);createForm.append("description",metadata.description);
+  button.textContent="جارٍ تجهيز الرفع...";const created=await sendForm(createForm);
+  uploadId=created.uploadId;uploadKey=created.key;uploadCreated=true;
+  if(!uploadId||!uploadKey)throw new Error("لم يستلم الموقع بيانات بدء الرفع.");
+  const partSize=Number(created.partSize)||DEFAULT_PART_SIZE;
+  if(!Number.isSafeInteger(partSize)||partSize<=0)throw new Error("حجم أجزاء الرفع غير صالح.");
+  const totalParts=Math.ceil(file.size/partSize),parts=[];
+  for(let partNumber=1;partNumber<=totalParts;partNumber++){
+   const start=(partNumber-1)*partSize,end=Math.min(start+partSize,file.size),chunk=file.slice(start,end),form=new FormData();
+   form.append("action","part");form.append("platform",currentPlatform);form.append("initData",tg.initData);
+   form.append("key",uploadKey);form.append("uploadId",uploadId);form.append("partNumber",String(partNumber));form.append("chunk",chunk,file.name+".part"+partNumber);
+   button.textContent="رفع الجزء "+partNumber+"/"+totalParts;
+   const result=await sendForm(form);if(!result.etag)throw new Error("لم يستلم النظام تأكيد الجزء رقم "+partNumber);
+   parts.push({partNumber,etag:result.etag});
+   const percent=Math.round(end/file.size*100);progressFill.style.width=percent+"%";
+   progressText.textContent=percent+"% — "+formatSize(end)+" / "+formatSize(file.size);
+   status.textContent="جارٍ رفع "+platformExtension()+"...\nالجزء "+partNumber+" من "+totalParts+"\nتم رفع "+percent+"%";
+  }
+  button.textContent="جارٍ إكمال الرفع...";
+  const completeForm=new FormData();
+  completeForm.append("action","complete");completeForm.append("platform",currentPlatform);completeForm.append("initData",tg.initData);
+  completeForm.append("key",uploadKey);completeForm.append("uploadId",uploadId);completeForm.append("fileName",file.name);
+  completeForm.append("fileSize",String(file.size));completeForm.append("title",metadata.title);
+  completeForm.append("version",metadata.version);completeForm.append("description",metadata.description);
+  completeForm.append("parts",JSON.stringify(parts));
+  await sendForm(completeForm);uploadCreated=false;
+  progressFill.style.width="100%";progressText.textContent="100% — اكتمل الرفع";
+  document.getElementById("platformFile").value="";
+  await loadDownloads();renderPlatformFiles();resetPlatformForm();
+  status.textContent="✅ اكتمل رفع الملف بنجاح.";alert("تم رفع الملف وإضافته إلى قائمة الملفات.");
+ }catch(error){
+  if(uploadCreated&&uploadId&&uploadKey){
+   try{const abortForm=new FormData();abortForm.append("action","abort");abortForm.append("platform",currentPlatform);abortForm.append("initData",tg.initData);abortForm.append("key",uploadKey);abortForm.append("uploadId",uploadId);await fetch("/api/admin/downloads",{method:"POST",credentials:"same-origin",cache:"no-store",body:abortForm});}
+   catch(abortError){console.error("Abort upload error:",abortError);}
+  }
+  status.textContent="❌ فشل الرفع: "+error.message;alert("تعذر رفع الملف: "+error.message);
+ }finally{
+  platformBusy=false;button.disabled=false;saveButton.disabled=false;button.textContent="📤 رفع الملف";
+ }
+}
+function backToMenu(){document.getElementById("platformPage").classList.add("hidden");document.getElementById("mainMenu").classList.remove("hidden");}
+
+/* المستخدمون */
+let usersPage=1,usersTotalPages=1,usersQuery="",usersBusy=false;
+async function loadUsers(){
+ if(usersBusy)return;usersBusy=true;const status=document.getElementById("usersStatus"),list=document.getElementById("usersList");status.textContent="جارٍ تحميل بيانات المستخدمين...";list.innerHTML="";document.getElementById("usersPrev").disabled=true;document.getElementById("usersNext").disabled=true;
+ try{const response=await fetch("/api/admin/users",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({initData:tg.initData,page:usersPage,limit:20,query:usersQuery})});const result=await response.json();if(!response.ok||!result.success)throw new Error(result.error||"USERS_LOAD_FAILED");
+ usersTotalPages=Number(result.totalPages||1);document.getElementById("usersTotal").textContent=Number(result.total||0).toLocaleString("en-US");document.getElementById("usersPageNumber").textContent=usersPage+" / "+usersTotalPages;
+ if(!result.users||result.users.length===0)list.innerHTML='<div class="users-empty">لا يوجد مستخدمون مطابقون للبحث.</div>';
+ else list.innerHTML=result.users.map(user=>{const date=user.createdAt?new Date(Number(user.createdAt)*1000).toLocaleString("ar-DZ"):"غير متوفر";return`<div class="user-item"><div class="user-top"><span>المستخدم</span><span class="user-id">${escapeHtml(user.id||"—")}</span></div><div class="user-details"><div>النقاط: <b>${Number(user.points||0).toLocaleString("en-US")}</b></div><div>الإعلانات: <b>${Number(user.progress||0)} / 3</b></div><div style="grid-column:1/-1">تاريخ التسجيل: <b>${escapeHtml(date)}</b></div></div></div>`;}).join("");
+ status.textContent="تم تحميل البيانات بنجاح.";document.getElementById("usersPrev").disabled=usersPage<=1;document.getElementById("usersNext").disabled=usersPage>=usersTotalPages;
+ }catch(error){status.textContent="تعذر تحميل المستخدمين: "+error.message;list.innerHTML='<div class="users-empty">تحقق من نشر ملف users.js ثم أعد المحاولة.</div>';}
+ finally{usersBusy=false;}
+}
+function escapeHtml(value){return String(value).replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));}
+function openUsers(){usersPage=1;usersQuery="";document.getElementById("usersSearch").value="";document.getElementById("mainMenu").classList.add("hidden");document.getElementById("usersPage").classList.remove("hidden");loadUsers();}
+function closeUsers(){document.getElementById("usersPage").classList.add("hidden");document.getElementById("mainMenu").classList.remove("hidden");}
+function searchUsers(){usersQuery=document.getElementById("usersSearch").value.trim();usersPage=1;loadUsers();}
+function changeUsersPage(direction){const next=usersPage+direction;if(next<1||next>usersTotalPages)return;usersPage=next;loadUsers();}
+
+/* إدارة الأخبار */
+let newsPosts=[],newsBusy=false,editingNewsId=null,newsPreviewUrl="";
+function openNews(){document.getElementById("mainMenu").classList.add("hidden");document.getElementById("newsPage").classList.remove("hidden");resetNewsForm();loadNews();}
+function closeNews(){document.getElementById("newsPage").classList.add("hidden");document.getElementById("mainMenu").classList.remove("hidden");}
+function clearNewsPreview(){if(newsPreviewUrl){URL.revokeObjectURL(newsPreviewUrl);newsPreviewUrl="";}document.getElementById("newsPreview").innerHTML="معاينة الوسائط المختارة ستظهر هنا.";}
+document.getElementById("newsMedia").addEventListener("change",function(){
+ clearNewsPreview();const file=this.files&&this.files[0];if(!file)return;
+ const isVideo=file.type==="video/mp4"||file.name.toLowerCase().endsWith(".mp4"),isImage=["image/jpeg","image/png","image/webp"].includes(file.type)||/\.(jpg|jpeg|png|webp)$/i.test(file.name);
+ if(!isVideo&&!isImage){this.value="";alert("اختر صورة JPG أو PNG أو WEBP أو فيديو MP4 فقط.");return;}
+ if(isVideo&&file.size>50*1024*1024){this.value="";alert("الحد الأقصى للفيديو 50 ميغابايت.");return;}
+ if(isImage&&file.size>10*1024*1024){this.value="";alert("الحد الأقصى للصورة 10 ميغابايت.");return;}
+ newsPreviewUrl=URL.createObjectURL(file);document.getElementById("newsPreview").innerHTML=isVideo?'<video controls class="news-post-media"></video>':'<img class="news-post-media" alt="معاينة الصورة">';
+ const media=document.querySelector("#newsPreview video, #newsPreview img");media.src=newsPreviewUrl;
+});
+function resetNewsForm(){editingNewsId=null;document.getElementById("newsTitle").value="";document.getElementById("newsContent").value="";document.getElementById("newsMedia").value="";document.getElementById("newsFormHeading").textContent="إضافة منشور جديد";document.getElementById("publishNewsButton").textContent="📢 نشر المنشور";document.getElementById("cancelNewsEditButton").classList.add("hidden");clearNewsPreview();}
+async function adminNewsRequest(data){const response=await fetch("/api/admin/news",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({...data,initData:tg.initData})});const result=await response.json();if(!response.ok||!result.success)throw new Error(result.error||"NEWS_REQUEST_FAILED");return result;}
+async function loadNews(){
+ if(newsBusy)return;newsBusy=true;document.getElementById("newsStatus").textContent="جارٍ تحميل المنشورات...";document.getElementById("newsPosts").innerHTML='<div class="news-empty">جارٍ التحميل...</div>';
+ try{const result=await adminNewsRequest({action:"list"});newsPosts=Array.isArray(result.posts)?result.posts:[];renderNewsPosts();document.getElementById("newsStatus").textContent="تم تحميل "+newsPosts.length+" منشور.";}
+ catch(error){document.getElementById("newsStatus").textContent="تعذر تحميل الأخبار: "+error.message;document.getElementById("newsPosts").innerHTML='<div class="news-empty">تأكد من إنشاء ونشر API إدارة الأخبار في functions/api/admin/news.js.</div>';}
+ finally{newsBusy=false;}
+}
+function renderNewsPosts(){
+ const box=document.getElementById("newsPosts");if(!newsPosts.length){box.innerHTML='<div class="news-empty">لا توجد منشورات حتى الآن.</div>';return;}
+ box.innerHTML=newsPosts.map(post=>{
+  const id=Number(post.id),date=post.created_at?new Date(Number(post.created_at)*1000).toLocaleString("ar-DZ"):"غير متوفر";
+  const media=post.media_type?`<${post.media_type==="video"?"video":"img"} class="news-post-media" ${post.media_type==="video"?"controls":""} src="/api/news/media?id=${id}" ${post.media_type==="photo"?'alt="صورة المنشور"':""}></${post.media_type==="video"?"video":"img"}>`:"";
+  const reactions=Number(post.heart_count||0)+Number(post.angry_count||0)+Number(post.sad_count||0)+Number(post.like_count||0)+Number(post.dislike_count||0);
+  return `<article class="news-post"><h4>${escapeHtml(post.title||"منشور بلا عنوان")}</h4><p>${escapeHtml(post.content||"")}</p>${media}<div class="news-meta"><span>📅 ${escapeHtml(date)}</span><span>🟢 منشور</span><span>🆔 #${id}</span></div><div class="news-stats"><div class="news-stat">👁️ المشاهدات<b>${Number(post.views||0).toLocaleString("en-US")}</b></div><div class="news-stat">💬 التعليقات<b>${Number(post.comments_count||0).toLocaleString("en-US")}</b></div><div class="news-stat">❤️ التفاعلات<b>${reactions.toLocaleString("en-US")}</b></div></div><div class="news-actions"><button class="secondary" onclick="editNews(${id})">✏️ تعديل</button><button class="danger" onclick="deleteNews(${id})">🗑️ حذف</button></div></article>`;
+ }).join("");
+}
+function editNews(id){const post=newsPosts.find(item=>Number(item.id)===Number(id));if(!post)return;editingNewsId=Number(id);document.getElementById("newsTitle").value=post.title||"";document.getElementById("newsContent").value=post.content||"";document.getElementById("newsMedia").value="";document.getElementById("newsFormHeading").textContent="تعديل المنشور #"+id;document.getElementById("publishNewsButton").textContent="💾 حفظ التعديلات";document.getElementById("cancelNewsEditButton").classList.remove("hidden");clearNewsPreview();document.getElementById("newsPreview").textContent="الوسائط الحالية محفوظة. اختر ملفًا جديدًا فقط إذا أردت استبدالها.";window.scrollTo({top:0,behavior:"smooth"});}
+async function saveNews(){
+ if(newsBusy)return;const title=document.getElementById("newsTitle").value.trim(),content=document.getElementById("newsContent").value.trim(),file=document.getElementById("newsMedia").files[0];
+ if(!title){alert("اكتب عنوان المنشور.");return;}if(!content){alert("اكتب نص المنشور.");return;}if(!editingNewsId&&!file){alert("اختر صورة أو فيديو للمنشور.");return;}
+ if(file){const video=file.type==="video/mp4"||file.name.toLowerCase().endsWith(".mp4");if(video&&file.size>50*1024*1024){alert("الحد الأقصى للفيديو 50 ميغابايت.");return;}if(!video&&file.size>10*1024*1024){alert("الحد الأقصى للصورة 10 ميغابايت.");return;}}
+ if(!confirm(editingNewsId?"هل تريد حفظ تعديلات هذا المنشور؟":"هل تريد نشر هذا المنشور الآن؟"))return;
+ newsBusy=true;const button=document.getElementById("publishNewsButton");button.disabled=true;button.textContent="جارٍ الحفظ والرفع...";document.getElementById("newsStatus").textContent="يتم حفظ المنشور والوسائط. لا تغلق الصفحة.";
+ try{const form=new FormData();form.append("action",editingNewsId?"update":"create");form.append("initData",tg.initData);form.append("title",title);form.append("content",content);if(editingNewsId)form.append("postId",String(editingNewsId));if(file)form.append("media",file);const response=await fetch("/api/admin/news",{method:"POST",credentials:"same-origin",cache:"no-store",body:form});const result=await response.json();if(!response.ok||!result.success)throw new Error(result.error||"NEWS_SAVE_FAILED");document.getElementById("newsStatus").textContent=editingNewsId?"تم تحديث المنشور.":"تم نشر المنشور.";resetNewsForm();await loadNews();alert(editingNewsId?"تم تحديث المنشور بنجاح.":"تم نشر المنشور بنجاح.");}
+ catch(error){document.getElementById("newsStatus").textContent="تعذر حفظ المنشور: "+error.message;alert("تعذر حفظ المنشور: "+error.message);}
+ finally{newsBusy=false;button.disabled=false;button.textContent=editingNewsId?"💾 حفظ التعديلات":"📢 نشر المنشور";}
+}
+async function deleteNews(id){if(newsBusy)return;if(!confirm("هل أنت متأكد من حذف المنشور رقم "+id+"؟\nسيتم حذف المنشور وتعليقاته وتفاعلاته المرتبطة به."))return;newsBusy=true;document.getElementById("newsStatus").textContent="جارٍ حذف المنشور...";try{await adminNewsRequest({action:"delete",postId:id});newsPosts=newsPosts.filter(post=>Number(post.id)!==Number(id));renderNewsPosts();document.getElementById("newsStatus").textContent="تم حذف المنشور.";if(editingNewsId===Number(id))resetNewsForm();alert("تم حذف المنشور.");}catch(error){document.getElementById("newsStatus").textContent="تعذر حذف المنشور: "+error.message;alert("تعذر حذف المنشور: "+error.message);}finally{newsBusy=false;}}
+
+/* إدارة المهمات */
+let adminTasks=[],editingTaskId=null,tasksBusy=false,completedPage=1;
+async function tasksRequest(data){const response=await fetch("/api/admin/tasks",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({...data,initData:tg.initData})});const result=await response.json();if(!response.ok||!result.success)throw new Error(result.error||"TASKS_API_ERROR");return result;}
+function openTasks(){document.getElementById("mainMenu").classList.add("hidden");document.getElementById("tasksPage").classList.remove("hidden");document.getElementById("taskCompletedPanel").classList.add("hidden");resetTaskForm();loadTasks();}
+function closeTasks(){document.getElementById("tasksPage").classList.add("hidden");document.getElementById("mainMenu").classList.remove("hidden");}
+function resetTaskForm(){editingTaskId=null;document.getElementById("taskTitle").value="";document.getElementById("taskPlatform").value="tiktok";document.getElementById("taskDescription").value="";document.getElementById("taskUrl").value="";document.getElementById("taskReward").value="50";document.getElementById("taskOrder").value=String(adminTasks.length+1);document.getElementById("taskEnabled").value="1";document.getElementById("taskFormHeading").textContent="إضافة مهمة";document.getElementById("taskSaveButton").textContent="💾 حفظ المهمة";document.getElementById("taskCancelButton").classList.add("hidden");}
+async function loadTasks(){if(tasksBusy)return;tasksBusy=true;const status=document.getElementById("tasksStatus"),list=document.getElementById("tasksList");status.textContent="جارٍ تحميل المهمات...";list.innerHTML='<div class="task-empty">جارٍ التحميل...</div>';try{const result=await tasksRequest({action:"list"});adminTasks=Array.isArray(result.tasks)?result.tasks:[];renderTasks();status.textContent="تم تحميل "+adminTasks.length+" مهمة.";}catch(error){status.textContent="تعذر تحميل المهمات: "+error.message;list.innerHTML='<div class="task-empty">تحقق من نشر functions/api/admin/tasks.js وأن جدول المهمات موجود.</div>';}finally{tasksBusy=false;}}
+function renderTasks(){const list=document.getElementById("tasksList");let enabled=0,completed=0;adminTasks.forEach(t=>{if(Number(t.enabled)===1)enabled++;completed+=Number(t.completed_count||0);});document.getElementById("tasksTotal").textContent=adminTasks.length;document.getElementById("tasksEnabled").textContent=enabled;document.getElementById("tasksCompleted").textContent=completed;if(!adminTasks.length){list.innerHTML='<div class="task-empty">لا توجد مهمات مسجلة.</div>';return;}list.innerHTML=adminTasks.map(task=>{const id=Number(task.id),isOn=Number(task.enabled)===1;return `<article class="task-item"><h4>${escapeHtml(task.title||"مهمة بلا اسم")} · #${id}</h4><div class="task-meta"><span>المنصة: ${task.platform==="telegram"?"Telegram":"TikTok"}</span><span>المكافأة: ${Number(task.reward_points||0)} نقطة</span><span>الترتيب: ${Number(task.sort_order||0)}</span><span>${isOn?"🟢 مفعّلة":"🔴 متوقفة"}</span></div><p style="color:#c7d5e3;line-height:1.6">${escapeHtml(task.description||"")}</p>${task.target_url?`<p style="direction:ltr;text-align:left;overflow-wrap:anywhere"><a href="${escapeHtml(task.target_url)}" target="_blank" rel="noopener" style="color:#8be2ff">${escapeHtml(task.target_url)}</a></p>`:""}<div class="task-count" onclick="showCompletedUsers(${id})">✅ المكتملون: ${Number(task.completed_count||0)} · بانتظار المراجعة: ${Number(task.pending_count||0)} · مرفوض: ${Number(task.rejected_count||0)}<br><small>اضغط لعرض المستخدمين الذين تمت الموافقة عليهم</small></div><div class="task-actions"><button class="secondary" onclick="editTask(${id})">✏️ تعديل</button><button onclick="toggleTask(${id},${isOn?0:1})">${isOn?"⏸ إيقاف":"▶️ تفعيل"}</button><button class="danger" onclick="deleteTask(${id})">🗑️ حذف</button><button class="secondary" onclick="showCompletedUsers(${id})">👥 المكتملون</button></div></article>`;}).join("");}
+function editTask(id){const t=adminTasks.find(x=>Number(x.id)===Number(id));if(!t)return;editingTaskId=Number(id);document.getElementById("taskTitle").value=t.title||"";document.getElementById("taskPlatform").value=t.platform||"tiktok";document.getElementById("taskDescription").value=t.description||"";document.getElementById("taskUrl").value=t.target_url||"";document.getElementById("taskReward").value=Number(t.reward_points||0);document.getElementById("taskOrder").value=Number(t.sort_order||0);document.getElementById("taskEnabled").value=String(Number(t.enabled)||0);document.getElementById("taskFormHeading").textContent="تعديل المهمة #"+id;document.getElementById("taskSaveButton").textContent="💾 حفظ التعديلات";document.getElementById("taskCancelButton").classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"});}
+async function saveTask(){if(tasksBusy)return;const title=document.getElementById("taskTitle").value.trim(),url=document.getElementById("taskUrl").value.trim(),reward=Number(document.getElementById("taskReward").value),order=Number(document.getElementById("taskOrder").value);if(!title){alert("اكتب اسم المهمة.");return;}if(url&&!/^https:\/\//i.test(url)){alert("رابط المهمة يجب أن يبدأ بـ https://");return;}if(!Number.isInteger(reward)||reward<0||reward>100000){alert("قيمة النقاط غير صحيحة.");return;}if(!Number.isInteger(order)||order<0){alert("ترتيب المهمة غير صحيح.");return;}tasksBusy=true;const button=document.getElementById("taskSaveButton");button.disabled=true;button.textContent="جارٍ الحفظ...";try{await tasksRequest({action:"save",id:editingTaskId||0,title,platform:document.getElementById("taskPlatform").value,description:document.getElementById("taskDescription").value.trim(),target_url:url,reward_points:reward,sort_order:order,enabled:Number(document.getElementById("taskEnabled").value)});document.getElementById("tasksStatus").textContent=editingTaskId?"تم تحديث المهمة.":"تمت إضافة المهمة.";resetTaskForm();tasksBusy=false;await loadTasks();}catch(error){alert("تعذر حفظ المهمة: "+error.message);document.getElementById("tasksStatus").textContent="خطأ: "+error.message;}finally{tasksBusy=false;button.disabled=false;button.textContent=editingTaskId?"💾 حفظ التعديلات":"💾 حفظ المهمة";}}
+async function toggleTask(id,enabled){if(tasksBusy)return;if(!confirm(enabled?"هل تريد تفعيل هذه المهمة؟":"هل تريد إيقاف هذه المهمة؟"))return;tasksBusy=true;try{await tasksRequest({action:"toggle",id,enabled});tasksBusy=false;await loadTasks();}catch(error){alert("تعذر تغيير حالة المهمة: "+error.message);}finally{tasksBusy=false;}}
+async function deleteTask(id){if(tasksBusy)return;if(!confirm("هل تريد حذف المهمة رقم "+id+"؟ إذا كانت لها طلبات محفوظة فلن يسمح النظام بحذفها، ويمكن إيقافها بدلًا من ذلك."))return;tasksBusy=true;try{await tasksRequest({action:"delete",id});tasksBusy=false;await loadTasks();alert("تم حذف المهمة.");}catch(error){alert("تعذر حذف المهمة: "+error.message);}finally{tasksBusy=false;}}
+async function showCompletedUsers(missionId){const panel=document.getElementById("taskCompletedPanel");panel.classList.remove("hidden");document.getElementById("taskCompletedHeading").textContent="المستخدمون الذين أكملوا المهمة #"+missionId;document.getElementById("taskCompletedStatus").textContent="جارٍ تحميل القائمة...";document.getElementById("taskCompletedUsers").innerHTML="";try{const result=await tasksRequest({action:"completed",missionId,page:1});document.getElementById("taskCompletedStatus").textContent="عدد المستخدمين المقبولين: "+Number(result.total||0);const users=result.users||[];document.getElementById("taskCompletedUsers").innerHTML=users.length?users.map(u=>`<div class="task-user"><span>معرف المستخدم: <b>${escapeHtml(u.user_id||"—")}</b></span><span>النقاط الحالية: <b>${Number(u.points||0)}</b></span></div>`).join(""):'<div class="task-empty">لا يوجد مستخدمون أكملوا هذه المهمة بعد.</div>';}catch(error){document.getElementById("taskCompletedStatus").textContent="تعذر تحميل المستخدمين: "+error.message;}panel.scrollIntoView({behavior:"smooth",block:"start"});}
+function closeCompletedUsers(){document.getElementById("taskCompletedPanel").classList.add("hidden");}
+
+/* إدارة الأمان والصلاحيات - المالك فقط */
+const permissionLabels={users:"معلومات المستخدمين",news:"إدارة الأخبار",tasks:"إدارة المهمات",android:"Android",beta:"BETA",ios:"iOS",maintenance:"إدارة الموقع",stats:"الإحصائيات"};
+let deputies=[],securityBusy=false;
+async function securityRequest(data){const response=await fetch("/api/admin/security",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({...data,initData:tg.initData})});const result=await response.json();if(!response.ok||!result.success)throw new Error(result.error||"SECURITY_API_ERROR");return result;}
+function openSecurity(){document.getElementById("mainMenu").classList.add("hidden");document.getElementById("securityPage").classList.remove("hidden");loadDeputies();}
+function closeSecurity(){document.getElementById("securityPage").classList.add("hidden");document.getElementById("mainMenu").classList.remove("hidden");}
+async function loadDeputies(force=false){if(securityBusy&&!force)return;const wasBusy=securityBusy;securityBusy=true;const status=document.getElementById("securityStatus"),list=document.getElementById("deputiesList");status.textContent="جارٍ تحميل النواب...";list.innerHTML='<div class="task-empty">جارٍ التحميل...</div>';try{const result=await securityRequest({action:"list"});deputies=Array.isArray(result.deputies)?result.deputies:[];renderDeputies();status.textContent="عدد النواب: "+deputies.length;}catch(error){status.textContent="تعذر تحميل النواب: "+error.message;list.innerHTML='<div class="task-empty">تحقق من نشر ملف functions/api/admin/security.js.</div>';}finally{securityBusy=wasBusy;}}
+function renderDeputies(){const list=document.getElementById("deputiesList");if(!deputies.length){list.innerHTML='<div class="task-empty">لا يوجد نواب حتى الآن.</div>';return;}list.innerHTML=deputies.map(d=>{const id=String(d.telegram_id||"");const checks=Object.entries(permissionLabels).map(([key,label])=>`<label style="display:flex;align-items:center;gap:8px;background:#102238;border:1px solid #294661;border-radius:8px;padding:9px;color:#d9e7f5"><input type="checkbox" data-permission="${key}" ${Array.isArray(d.permissions)&&d.permissions.includes(key)?"checked":""} style="width:18px;height:18px;accent-color:#35d7ff">${label}</label>`).join("");return `<article class="task-item"><h4>النائب · <span style="direction:ltr;display:inline-block">${id}</span></h4><div class="task-meta"><span>${Number(d.active)===1?"🟢 نشط":"🔴 موقوف"}</span><span>تاريخ الإضافة: ${d.created_at?new Date(Number(d.created_at)*1000).toLocaleDateString("ar-DZ"):"—"}</span></div><h4 style="font-size:14px;color:#8be2ff">الصلاحيات الممنوحة</h4><div class="deputy-permissions" style="display:grid;grid-template-columns:1fr 1fr;gap:8px" data-deputy="${id}">${checks}</div><div class="task-actions"><button onclick="saveDeputyPermissions('${id}')">💾 حفظ الصلاحيات</button><button class="secondary" onclick="toggleDeputy('${id}',${Number(d.active)===1?0:1})">${Number(d.active)===1?"⏸ إيقاف النائب":"▶️ تفعيل النائب"}</button><button class="danger" style="grid-column:1/-1" onclick="deleteDeputy('${id}')">🗑️ حذف النائب</button></div></article>`;}).join("");}
+async function addDeputy(){if(securityBusy)return;const input=document.getElementById("deputyTelegramId"),telegram_id=input.value.trim();if(!/^\d{5,20}$/.test(telegram_id)){alert("أدخل Telegram ID صحيحًا مكوّنًا من أرقام.");return;}securityBusy=true;const button=document.getElementById("addDeputyButton");button.disabled=true;button.textContent="جارٍ الإضافة...";try{await securityRequest({action:"add",telegram_id});input.value="";document.getElementById("securityStatus").textContent="تمت إضافة النائب. اختر صلاحياته ثم احفظها.";await loadDeputies(true);}catch(error){alert("تعذرت إضافة النائب: "+error.message);}finally{securityBusy=false;button.disabled=false;button.textContent="➕ إضافة النائب";}}
+async function saveDeputyPermissions(telegramId){if(securityBusy)return;const box=document.querySelector(`.deputy-permissions[data-deputy="${telegramId}"]`);if(!box)return;const permissions=[...box.querySelectorAll("input[data-permission]:checked")].map(x=>x.dataset.permission);if(!confirm("حفظ الصلاحيات المحددة لهذا النائب؟"))return;securityBusy=true;try{await securityRequest({action:"permissions",telegram_id:telegramId,permissions});document.getElementById("securityStatus").textContent="تم حفظ صلاحيات النائب.";await loadDeputies(true);}catch(error){alert("تعذر حفظ الصلاحيات: "+error.message);}finally{securityBusy=false;}}
+async function toggleDeputy(telegramId,active){if(securityBusy)return;if(!confirm(active?"هل تريد إعادة تفعيل هذا النائب؟":"هل تريد إيقاف هذا النائب ومنعه من استخدام صلاحياته؟"))return;securityBusy=true;try{await securityRequest({action:"toggle",telegram_id:telegramId,active});await loadDeputies(true);}catch(error){alert("تعذر تغيير حالة النائب: "+error.message);}finally{securityBusy=false;}}
+async function deleteDeputy(telegramId){if(securityBusy)return;if(!confirm("حذف هذا النائب نهائيًا مع جميع صلاحياته؟"))return;securityBusy=true;try{await securityRequest({action:"delete",telegram_id:telegramId});await loadDeputies(true);}catch(error){alert("تعذر حذف النائب: "+error.message);}finally{securityBusy=false;}}
+
+/* بقية أقسام الإدارة */
+function action(name){if(name==="security"){if(!adminOwner){alert("قسم الأمان والصلاحيات خاص بالمالك.");return;}openSecurity();return;}if(["users","news","tasks"].includes(name)&&!hasAdminPermission(name)){alert("ليس لديك صلاحية لهذا القسم.");return;}if(name==="users"){openUsers();return;}if(name==="news"){openNews();return;}if(name==="tasks"){openTasks();return;}const messages={stats:"إحصائيات الموقع"};alert((messages[name]||"هذا القسم")+"\\nهذه الوظيفة لم يتم ربطها بعد.");}
+
+/* التحقق من المدير */
+async function start(){
+ if(!tg||!tg.initData){statusBox.textContent="افتح لوحة الإدارة من رابط Mini App داخل Telegram.";return;}
+ tg.ready();tg.expand();
+ try{const response=await fetch("/api/admin/auth",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({initData:tg.initData})});const result=await response.json();if(!response.ok||!result.success||!result.admin){statusBox.textContent="غير مصرح لك بالدخول.";return;}adminOwner=Boolean(result.owner);adminPermissions=Array.isArray(result.permissions)?result.permissions.filter(x=>typeof x==="string"):[];applyAdminPermissions();document.getElementById("loading").classList.add("hidden");document.getElementById("panel").classList.remove("hidden");if(hasAdminPermission("maintenance"))await loadMaintenance();if(["android","beta","ios"].some(hasAdminPermission)){try{await loadDownloads();}catch(error){console.error("Downloads loading error:",error);}}}
+ catch{statusBox.textContent="تعذر الاتصال بالخادم. حاول مجدداً.";}
+}
+start();
+
+// OXIDE HUB realistic falling rain + water droplets sliding over glass.
+(function initOxideRealRain(){
+ const canvas=document.getElementById('oxideRainCanvas');if(!canvas||!canvas.getContext)return;
+ const ctx=canvas.getContext('2d',{alpha:true});if(!ctx)return;
+ let w=0,h=0,dpr=1,raf=0,last=0,raindrops=[],glassDrops=[];
+ const rand=(a,b)=>a+Math.random()*(b-a);
+ function resize(){const rect=canvas.getBoundingClientRect();w=Math.max(1,rect.width);h=Math.max(1,rect.height);dpr=Math.min(window.devicePixelRatio||1,2.5);canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);const count=Math.max(100,Math.min(440,Math.round(w*h/3000)));raindrops=Array.from({length:count},()=>({x:rand(-20,w+20),y:rand(-h,h),len:rand(9,25),speed:rand(420,850),width:rand(.55,1.35),alpha:rand(.16,.48),drift:rand(-28,18)}));glassDrops=Array.from({length:Math.max(24,Math.min(85,Math.round(w/7)))},()=>makeGlassDrop(true));}
+ function makeGlassDrop(initial=false){const r=rand(1.1,4.4);return{x:rand(0,w),y:initial?rand(0,h):rand(-35,-5),r,vy:rand(7,25),vx:rand(-2,2),trail:rand(12,48),alpha:rand(.18,.48),wobble:rand(0,Math.PI*2)};}
+ function drawRain(dt){for(const d of raindrops){d.y+=d.speed*dt;d.x+=d.drift*dt;if(d.y>h+35){d.y=rand(-90,-10);d.x=rand(-10,w+10);}if(d.x>w+25)d.x=-20;if(d.x< -25)d.x=w+20;const g=ctx.createLinearGradient(d.x,d.y-d.len,d.x+d.drift*.035,d.y);g.addColorStop(0,'rgba(204,235,255,0)');g.addColorStop(.35,`rgba(202,231,255,${d.alpha*.48})`);g.addColorStop(1,`rgba(235,248,255,${d.alpha})`);ctx.beginPath();ctx.strokeStyle=g;ctx.lineWidth=d.width;ctx.lineCap='round';ctx.moveTo(d.x,d.y-d.len);ctx.lineTo(d.x+d.drift*.035,d.y);ctx.stroke();}}
+ function drawGlassDrops(dt,time){for(let i=0;i<glassDrops.length;i++){const d=glassDrops[i];d.y+=d.vy*dt;d.x+=Math.sin(time*.0007+d.wobble)*d.vx*dt;if(d.y>h+50){glassDrops[i]=makeGlassDrop(false);continue;}const trail=ctx.createLinearGradient(d.x,d.y-d.trail,d.x,d.y);trail.addColorStop(0,'rgba(195,229,255,0)');trail.addColorStop(1,`rgba(198,229,255,${d.alpha*.23})`);ctx.beginPath();ctx.strokeStyle=trail;ctx.lineWidth=Math.max(.7,d.r*.55);ctx.lineCap='round';ctx.moveTo(d.x,d.y-d.trail);ctx.lineTo(d.x,d.y);ctx.stroke();const rg=ctx.createRadialGradient(d.x-d.r*.36,d.y-d.r*.42,.2,d.x,d.y,d.r*1.35);rg.addColorStop(0,`rgba(255,255,255,${d.alpha*.9})`);rg.addColorStop(.28,`rgba(206,235,255,${d.alpha*.42})`);rg.addColorStop(.72,`rgba(96,164,220,${d.alpha*.19})`);rg.addColorStop(1,'rgba(225,245,255,0)');ctx.beginPath();ctx.fillStyle=rg;ctx.ellipse(d.x,d.y,d.r*.78,d.r*1.18,0,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.strokeStyle=`rgba(231,247,255,${d.alpha*.65})`;ctx.lineWidth=.65;ctx.ellipse(d.x-d.r*.12,d.y-d.r*.12,d.r*.48,d.r*.78,-.18,Math.PI*1.08,Math.PI*1.78);ctx.stroke();ctx.beginPath();ctx.fillStyle=`rgba(255,255,255,${d.alpha*.8})`;ctx.ellipse(d.x-d.r*.25,d.y-d.r*.42,Math.max(.45,d.r*.15),Math.max(.7,d.r*.25),-.3,0,Math.PI*2);ctx.fill();}}
+ function frame(now){if(document.hidden){raf=requestAnimationFrame(frame);return;}const dt=Math.min(.04,(now-last||16.7)/1000);last=now;ctx.clearRect(0,0,w,h);drawRain(dt);drawGlassDrops(dt,now);raf=requestAnimationFrame(frame);}
+ resize();if('ResizeObserver'in window){new ResizeObserver(resize).observe(canvas);}else window.addEventListener('resize',resize,{passive:true});document.addEventListener('visibilitychange',()=>{last=performance.now();});raf=requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
