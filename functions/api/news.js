@@ -50,6 +50,7 @@ export async function onRequestGet({ request, env }) {
       SELECT
         p.id,
         p.title,
+        p.content,
         p.media_type,
         p.views,
         p.created_at,
