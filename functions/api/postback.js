@@ -196,17 +196,20 @@ async function handleIslandPostback({
     const existing = await env.DB.prepare(`
       SELECT status, credited_points, cycle_started_at
       FROM reward_ad_events
-      WHERE trans_id = ?
-    `).bind(transId).first();
+      WHERE trans_id = ? AND user_id = ?
+    `).bind(transId, userId).first();
 
     if (existing && Number(existing.status) === 1) {
-      await env.DB.prepare(`
+      const reversed = await env.DB.prepare(`
         UPDATE reward_ad_events
         SET status = 2
-        WHERE trans_id = ? AND status = 1
-      `).bind(transId).run();
+        WHERE trans_id = ? AND user_id = ? AND status = 1
+      `).bind(transId, userId).run();
 
-      const points = Number(existing.credited_points || 0);
+      // Only the request that changes status 1 -> 2 may reverse the credit.
+      const points = reversed.meta?.changes === 1
+        ? Number(existing.credited_points || 0)
+        : 0;
 
       if (points > 0) {
         await env.DB.prepare(`
@@ -378,7 +381,7 @@ export async function onRequestPost({ request, env }) {
       `).bind(transId, subId).first();
 
       if (existing && Number(existing.status) === 1) {
-        await env.DB.prepare(`
+        const reversed = await env.DB.prepare(`
           UPDATE offerwall_events
           SET status = 2
           WHERE trans_id = ?
@@ -386,7 +389,8 @@ export async function onRequestPost({ request, env }) {
             AND status = 1
         `).bind(transId, subId).run();
 
-        if (existing.offer_type === "ptc") {
+        // Prevent duplicate reversal callbacks from decrementing progress twice.
+        if (reversed.meta?.changes === 1 && existing.offer_type === "ptc") {
           await env.DB.prepare(`
             UPDATE visitors
             SET progress = MAX(0, progress - 1)
