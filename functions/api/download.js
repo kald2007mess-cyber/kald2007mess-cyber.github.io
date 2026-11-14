@@ -201,8 +201,8 @@ export async function onRequestGet({ request, env }) {
       }, 404);
     }
 
-    /* iOS */
-    if (platform === "ios") {
+    /* iOS external links redirect; uploaded IPA files are served through R2. */
+    if (platform === "ios" && !item.file_key) {
       if (!item.download_url) {
         return json({
           success: false,
@@ -246,7 +246,9 @@ export async function onRequestGet({ request, env }) {
 
     headers.set(
       "Content-Type",
-      "application/vnd.android.package-archive"
+      platform === "ios"
+        ? "application/octet-stream"
+        : "application/vnd.android.package-archive"
     );
 
     headers.set(
