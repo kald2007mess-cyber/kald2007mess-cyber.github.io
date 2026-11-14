@@ -189,8 +189,8 @@ export async function onRequestPost({ request, env }) {
 
       triggerCreditsPoints = (triggers.results || []).some(row => {
         const sql = String(row.sql || "");
-        return /UPDATE\\s+(?:main\\.)?["'`]?visitors["'`]?/i.test(sql) &&
-          /\\bpoints\\b/i.test(sql) &&
+        return /UPDATE\s+(?:main\.)?["'`]?visitors["'`]?/i.test(sql) &&
+          /\bpoints\b/i.test(sql) &&
           /referrer_id/i.test(sql);
       });
     } catch (error) {
