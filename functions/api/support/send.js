@@ -67,6 +67,21 @@ export async function onRequestPost({ request, env }) {
       return json({ error: "Conversation creation failed" }, 500);
     }
 
+    const recentMessages = await env.DB.prepare(`
+      SELECT COUNT(*) AS total
+      FROM support_messages
+      WHERE conversation_id = ?
+        AND sender = 'user'
+        AND created_at >= ?
+    `).bind(conversation.id, now - 60).first();
+
+    if (Number(recentMessages?.total || 0) >= 5) {
+      return json({
+        error: "RATE_LIMITED",
+        retryAfter: 60
+      }, 429);
+    }
+
     const saved = await env.DB.prepare(`
       INSERT INTO support_messages
       (conversation_id, sender, message_type, message_text, created_at)
