@@ -93,7 +93,7 @@ async function loadPage(){
   files=Array.isArray(pd.platforms?.ios)?pd.platforms.ios.filter(f=>f&&(f.enabled===true||Number(f.enabled)===1)).sort((a,b)=>Number(a.slot||1)-Number(b.slot||1)):[];
   allowed=Number(rd.progress||0)>=REQUIRED;renderFiles();
   const tutorial=String(pd.tutorials?.ios||"").trim();
-  if(/^https:\/\//i.test(tutorial)){
+  if(tutorial.startsWith("/api/tutorial?")||/^https:\/\//i.test(tutorial)){
    $("tutorialVideo").src=tutorial;$("videoSection").hidden=false;$("tutorialVideo").load();
   }else $("videoSection").hidden=true;
  }catch(error){files=[];allowed=false;renderFiles();$("videoSection").hidden=true;console.error("iOS page load failed",error);}
