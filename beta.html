@@ -66,6 +66,7 @@ const translations={
   downloading:'جارٍ تحميل الملف...',
   done:'اكتمل التنزيل 100% — جارٍ حفظ الملف',
   failed:'تعذر التنزيل. حاول مرة أخرى.',
+  largeDownload:'الملف كبير؛ سيُدار التنزيل عبر مدير تنزيلات الهاتف.',
   videoError:'تعذر تشغيل فيديو الشرح.'
  },
  en:{
@@ -82,6 +83,7 @@ const translations={
   downloading:'Downloading file...',
   done:'Download complete 100% — saving file',
   failed:'Download failed. Please try again.',
+  largeDownload:'Large file; your browser download manager will handle it.',
   videoError:'Unable to play the tutorial video.'
  },
  ru:{
@@ -98,6 +100,7 @@ const translations={
   downloading:'Загрузка файла...',
   done:'Загрузка завершена на 100% — сохранение файла',
   failed:'Не удалось загрузить файл. Попробуйте снова.',
+  largeDownload:'Большой файл; загрузкой будет управлять менеджер загрузок.',
   videoError:'Не удалось воспроизвести видео.'
  }
 };
@@ -244,6 +247,12 @@ async function downloadFile(file,button,box,fill,label){
 
  try{
   const url='/api/download?id='+encodeURIComponent(file.id)+'&platform='+encodeURIComponent(PLATFORM);
+  if(Number(file.file_size||0)>100*1024*1024){
+   button.style.display='none';
+   label.textContent=t.largeDownload;
+   window.location.assign(url);
+   return;
+  }
   const response=await fetch(url,{cache:'no-store',credentials:'same-origin'});
 
   if(!response.ok){
