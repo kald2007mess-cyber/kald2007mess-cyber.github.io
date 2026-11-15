@@ -472,7 +472,7 @@ async function ensureNewsAdminSessions(DB) {
 async function showNewsMenu(env, chatId, messageId = null) {
   const data = {
     chat_id: chatId,
-    text: "📰 إدارة المنشورات\\n\\nاختر العملية التي تريد تنفيذها:",
+    text: "📰 إدارة المنشورات\n\nاختر العملية التي تريد تنفيذها:",
     reply_markup: {
       inline_keyboard: [
         [{ text: "➕ إضافة منشور", callback_data: "oxide_news:add" }],
@@ -518,7 +518,7 @@ async function sendNewsPostList(env, chatId, messageId, mode) {
   await telegram(env, "editMessageText", {
     chat_id: chatId,
     message_id: messageId,
-    text: "📋 أحدث المنشورات (آخر 10):\\nاختر منشورًا من القائمة:",
+    text: "📋 أحدث المنشورات (آخر 10):\nاختر منشورًا من القائمة:",
     reply_markup: { inline_keyboard: keyboard }
   });
 }
@@ -542,7 +542,7 @@ async function handleNewsCallback(callback, env) {
     ).bind(chatId, Math.floor(Date.now() / 1000)).run();
     await telegram(env, "editMessageText", {
       chat_id: chatId, message_id: messageId,
-      text: "➕ إضافة منشور جديد\\n\\nأرسل عنوان المنشور الآن.\\nللإلغاء أرسل /cancel.",
+      text: "➕ إضافة منشور جديد\n\nأرسل عنوان المنشور الآن.\nللإلغاء أرسل /cancel.",
       reply_markup: { inline_keyboard: [[{ text: "⬅️ رجوع", callback_data: "oxide_news:menu" }]] }
     });
   } else if (data === "oxide_news:list_edit") {
@@ -552,9 +552,9 @@ async function handleNewsCallback(callback, env) {
   } else if (data === "oxide_news:list") {
     await sendNewsPostList(env, chatId, messageId, "view");
   } else {
-    const editMatch = data.match(/^oxide_news:edit:(\\d+)$/);
-    const deleteMatch = data.match(/^oxide_news:delete:(\\d+)$/);
-    const detailsMatch = data.match(/^oxide_news:details:(\\d+)$/);
+    const editMatch = data.match(/^oxide_news:edit:(\d+)$/);
+    const deleteMatch = data.match(/^oxide_news:delete:(\d+)$/);
+    const detailsMatch = data.match(/^oxide_news:details:(\d+)$/);
     if (editMatch) {
       const postId = Number(editMatch[1]);
       const post = await env.DB.prepare("SELECT id,title FROM news_posts WHERE id=?").bind(postId).first();
@@ -567,7 +567,7 @@ async function handleNewsCallback(callback, env) {
       ).bind(chatId, postId, post.title, Math.floor(Date.now() / 1000)).run();
       await telegram(env, "editMessageText", {
         chat_id: chatId, message_id: messageId,
-        text: "✏️ تعديل المنشور #" + postId + "\\nالعنوان الحالي: " + post.title + "\\n\\nأرسل العنوان الجديد، أو /skip للإبقاء عليه. بعد ذلك يمكنك تغيير الصورة/الفيديو أو تخطيها.",
+        text: "✏️ تعديل المنشور #" + postId + "\nالعنوان الحالي: " + post.title + "\n\nأرسل العنوان الجديد، أو /skip للإبقاء عليه. بعد ذلك يمكنك تغيير الصورة/الفيديو أو تخطيها.",
         reply_markup: { inline_keyboard: [[{ text: "⬅️ رجوع", callback_data: "oxide_news:list_edit" }]] }
       });
     } else if (deleteMatch) {
@@ -579,14 +579,14 @@ async function handleNewsCallback(callback, env) {
       }
       await telegram(env, "editMessageText", {
         chat_id: chatId, message_id: messageId,
-        text: "⚠️ هل تريد حذف هذا المنشور نهائيًا؟\\n\\n#" + post.id + " — " + post.title + "\\nسيتم حذف التعليقات والتفاعلات المرتبطة به أيضًا.",
+        text: "⚠️ هل تريد حذف هذا المنشور نهائيًا؟\n\n#" + post.id + " — " + post.title + "\nسيتم حذف التعليقات والتفاعلات المرتبطة به أيضًا.",
         reply_markup: { inline_keyboard: [
           [{ text: "نعم، احذف المنشور", callback_data: "oxide_news:confirm_delete:" + postId }],
           [{ text: "إلغاء", callback_data: "oxide_news:list_delete" }]
         ]}
       });
-    } else if (data.match(/^oxide_news:confirm_delete:(\\d+)$/)) {
-      const postId = Number(data.match(/^oxide_news:confirm_delete:(\\d+)$/)[1]);
+    } else if (data.match(/^oxide_news:confirm_delete:(\d+)$/)) {
+      const postId = Number(data.match(/^oxide_news:confirm_delete:(\d+)$/)[1]);
       const post = await env.DB.prepare("SELECT id FROM news_posts WHERE id=?").bind(postId).first();
       if (!post) {
         await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id, text: "المنشور محذوف أو غير موجود" });
@@ -613,7 +613,7 @@ async function handleNewsCallback(callback, env) {
       }
       await telegram(env, "editMessageText", {
         chat_id: chatId, message_id: messageId,
-        text: "📰 المنشور #" + post.id + "\\nالعنوان: " + post.title + "\\nالوسائط: " + post.media_type + "\\nالمشاهدات: " + Number(post.views || 0) + "\\nالتاريخ: " + new Date(Number(post.created_at) * 1000).toLocaleString("ar"),
+        text: "📰 المنشور #" + post.id + "\nالعنوان: " + post.title + "\nالوسائط: " + post.media_type + "\nالمشاهدات: " + Number(post.views || 0) + "\nالتاريخ: " + new Date(Number(post.created_at) * 1000).toLocaleString("ar"),
         reply_markup: { inline_keyboard: [[{ text: "⬅️ رجوع", callback_data: "oxide_news:menu" }]] }
       });
     }
@@ -627,11 +627,11 @@ async function handleNewsMessage(message, env) {
   const chatId = String(message.chat.id);
   const text = String(message.text || "").trim();
 
-  if (/^\\/(?:news|posts)(?:@\\w+)?$/i.test(text)) {
+  if (/^\/(?:news|posts)(?:@\w+)?$/i.test(text)) {
     await showNewsMenu(env, chatId);
     return true;
   }
-  if (/^\\/cancel(?:@\\w+)?$/i.test(text)) {
+  if (/^\/cancel(?:@\w+)?$/i.test(text)) {
     await env.DB.prepare("DELETE FROM telegram_news_sessions WHERE admin_id=?").bind(chatId).run();
     await adminMessage(env, chatId, "تم إلغاء العملية.");
     return true;
@@ -665,7 +665,7 @@ async function handleNewsMessage(message, env) {
       "INSERT INTO news_posts(title,media_type,media_file_id,created_at) VALUES(?,?,?,?)"
     ).bind(session.title, photo ? "photo" : "video", photo || video, now).run();
     await env.DB.prepare("DELETE FROM telegram_news_sessions WHERE admin_id=?").bind(chatId).run();
-    await adminMessage(env, chatId, "🎉 تم نشر المنشور بنجاح!\\n🆔 رقم المنشور: " + Number(inserted.meta && inserted.meta.last_row_id || 0) + "\\n📰 " + session.title);
+    await adminMessage(env, chatId, "🎉 تم نشر المنشور بنجاح!\n🆔 رقم المنشور: " + Number(inserted.meta && inserted.meta.last_row_id || 0) + "\n📰 " + session.title);
     return true;
   }
 
