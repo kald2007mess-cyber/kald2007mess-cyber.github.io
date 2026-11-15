@@ -341,11 +341,11 @@ function renderFiles() {
 
     info.textContent = [title, ...details].join(" — ");
 
-    const url = String(file.download_url || "").trim();
-    if (url && /^https:\/\/[^\s]+$/i.test(url)) {
-      link.href = url;
+    const fileId = String(file.id || "").trim();
+    if (fileId) {
+      link.href = "/api/download?id=" + encodeURIComponent(fileId) + "&platform=android";
       link.hidden = false;
-      link.dataset.fileId = file.id || "";
+      link.dataset.fileId = fileId;
       link.dataset.fileName = file.file_name || title;
       button.textContent = currentText(`file${slot}Button`);
     } else {
@@ -409,11 +409,15 @@ async function startDownload(fileNumber) {
   label.textContent = "0%";
 
   try {
-    const response = await fetch(url, { method: "GET", mode: "cors" });
+    const response = await fetch(url, {
+      method: "GET",
+      cache: "no-store",
+      credentials: "same-origin"
+    });
     if (!response.ok) throw new Error("HTTP " + response.status);
 
-    const total = Number(response.headers.get("Content-Length")) || 0;
     if (!response.body) throw new Error("Streaming not supported");
+    const total = Number(response.headers.get("Content-Length")) || 0;
 
     const reader = response.body.getReader();
     const chunks = [];
@@ -434,8 +438,9 @@ async function startDownload(fileNumber) {
       }
     }
 
-    fill.style.width = "100%";
-    label.textContent = currentText("completed");
+    if (total > 0 && received !== total) {
+      throw new Error("The file transfer was incomplete. Please retry.");
+    }
 
     const blob = new Blob(chunks, {
       type: response.headers.get("Content-Type") || "application/octet-stream"
@@ -448,11 +453,15 @@ async function startDownload(fileNumber) {
     saveLink.click();
     saveLink.remove();
     setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+    fill.style.width = "100%";
+    label.textContent = currentText("completed");
     link.dataset.downloading = "false";
     document.getElementById(`file${fileNumber}Redownload`).hidden = false;
   } catch (error) {
     console.error("Download error:", error);
     label.textContent = currentText("failed");
+    box.style.display = "none";
+    fill.style.width = "0%";
     link.dataset.downloading = "false";
     link.style.display = "block";
     document.getElementById(`file${fileNumber}Redownload`).hidden = true;
