@@ -21,6 +21,72 @@ async function telegram(env, method, data) {
   return await response.json();
 }
 
+
+// Forward an administrator's Telegram reply to the matching website conversation.
+async function handleSupportReply(message, env) {
+  if (
+    !message ||
+    !message.reply_to_message ||
+    String(message.chat?.id) !== String(env.TELEGRAM_ADMIN_ID)
+  ) {
+    return;
+  }
+
+  const originalMessageId = Number(message.reply_to_message.message_id);
+  if (!originalMessageId) return;
+
+  const original = await env.DB.prepare(`
+    SELECT m.conversation_id, c.user_id
+    FROM support_messages m
+    JOIN support_conversations c ON c.id = m.conversation_id
+    WHERE m.telegram_chat_id = ?
+      AND m.telegram_message_id = ?
+      AND m.sender = 'user'
+    LIMIT 1
+  `).bind(String(message.chat.id), originalMessageId).first();
+
+  if (!original) return;
+
+  const text = String(message.text || message.caption || "").trim();
+  const photo = message.photo?.length
+    ? message.photo[message.photo.length - 1].file_id
+    : null;
+  const video = message.video?.file_id || null;
+
+  let messageType = "text";
+  let mediaFileId = null;
+
+  if (photo) {
+    messageType = "photo";
+    mediaFileId = photo;
+  } else if (video) {
+    messageType = "video";
+    mediaFileId = video;
+  }
+
+  if (!text && !mediaFileId) return;
+
+  const now = Math.floor(Date.now() / 1000);
+
+  await env.DB.prepare(`
+    INSERT INTO support_messages
+      (conversation_id, sender, message_type, message_text, media_file_id, created_at)
+    VALUES (?, 'admin', ?, ?, ?, ?)
+  `).bind(
+    original.conversation_id,
+    messageType,
+    text || null,
+    mediaFileId,
+    now
+  ).run();
+
+  await env.DB.prepare(`
+    UPDATE support_conversations
+    SET updated_at = ?, status = 'open'
+    WHERE id = ?
+  `).bind(now, original.conversation_id).run();
+}
+
 export async function onRequestPost({ request, env }) {
   try {
     if (
@@ -41,8 +107,14 @@ export async function onRequestPost({ request, env }) {
     }
 
     const update = await request.json();
-    const callback = update.callback_query;
 
+    // Support replies are normal Telegram messages, not callback queries.
+    if (update.message) {
+      await handleSupportReply(update.message, env);
+      return json({ success: true });
+    }
+
+    const callback = update.callback_query;
     if (!callback) {
       return json({ success: true });
     }
