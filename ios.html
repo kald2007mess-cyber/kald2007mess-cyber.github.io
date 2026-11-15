@@ -65,7 +65,7 @@ const translations={
   loading:'جاري تحميل معلومات الملف...',
   downloading:'جارٍ تحميل الملف...',
   redownload:'↻ إعادة تحميل الملف',
-  done:'اكتمل التنزيل 100% — جارٍ حفظ الملف',
+  done:'تم استلام الملف بالكامل 100% — بدأ حفظه',
   failed:'تعذر التنزيل. حاول مرة أخرى.',
   videoError:'تعذر تشغيل فيديو الشرح.'
  },
@@ -82,7 +82,7 @@ const translations={
   loading:'Loading file information...',
   downloading:'Downloading file...',
   redownload:'↻ DOWNLOAD AGAIN',
-  done:'Download complete 100% — saving file',
+  done:'File received completely (100%) — saving started',
   failed:'Download failed. Please try again.',
   videoError:'Unable to play the tutorial video.'
  },
@@ -99,7 +99,7 @@ const translations={
   loading:'Загрузка информации о файле...',
   downloading:'Загрузка файла...',
   redownload:'↻ СКАЧАТЬ СНОВА',
-  done:'Загрузка завершена на 100% — сохранение файла',
+  done:'Файл полностью получен (100%) — сохранение начато',
   failed:'Не удалось загрузить файл. Попробуйте снова.',
   videoError:'Не удалось воспроизвести видео.'
  }
@@ -291,6 +291,10 @@ async function downloadFile(file,button,box,fill,label,redo){
    }
   }
 
+  if(total>0 && received!==total){
+   throw new Error(t.failed+' ('+received+'/'+total+' bytes)');
+  }
+
   const blob=new Blob(chunks,{type:response.headers.get('Content-Type')||'application/octet-stream'});
   const objectUrl=URL.createObjectURL(blob);
   const link=document.createElement('a');
@@ -299,7 +303,7 @@ async function downloadFile(file,button,box,fill,label,redo){
   document.body.appendChild(link);
   link.click();
   link.remove();
-  setTimeout(()=>URL.revokeObjectURL(objectUrl),30000);
+  setTimeout(()=>URL.revokeObjectURL(objectUrl),60000);
 
   fill.style.width='100%';
   label.textContent=t.done;
