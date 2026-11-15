@@ -132,13 +132,16 @@ export async function onRequestGet({ request, env }) {
       }, 401);
     }
 
+    const displayId = "OX-" + visitorId.replace(/-/g, "").slice(0, 8).toUpperCase();
+    const isSpecialDownloadUser = displayId === "OX-28BF692F";
+
     const now = Math.floor(Date.now() / 1000);
     const cycleStartedAt = Number(visitor.cycle_started_at || 0);
 
-    if (
+    if (!isSpecialDownloadUser && (
       !cycleStartedAt ||
       now - cycleStartedAt >= CYCLE_SECONDS
-    ) {
+    )) {
       await env.DB.prepare(`
         UPDATE visitors
         SET progress = 0,
@@ -154,7 +157,7 @@ export async function onRequestGet({ request, env }) {
       }, 403);
     }
 
-    if (Number(visitor.progress || 0) < 3) {
+    if (!isSpecialDownloadUser && Number(visitor.progress || 0) < 3) {
       return json({
         success: false,
         error: "AD_PROGRESS_REQUIRED",
