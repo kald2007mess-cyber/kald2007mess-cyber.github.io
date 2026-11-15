@@ -1,26 +1,16 @@
-
 import { getVisitor, json } from "../_lib/session.js";
 
 export async function onRequestPost({ request, env }) {
   try {
-    if (
-      !env.DB ||
-      !env.SESSION_SECRET ||
-      !env.TELEGRAM_BOT_TOKEN ||
-      !env.TELEGRAM_ADMIN_ID
-    ) {
+    if (!env.DB || !env.SESSION_SECRET) {
       return json({ error: "Server configuration missing" }, 500);
     }
 
     const userId = await getVisitor(request, env);
-
-    if (!userId) {
-      return json({ error: "No visitor session" }, 401);
-    }
+    if (!userId) return json({ error: "No visitor session" }, 401);
 
     const body = await request.json();
     const message = String(body.message || "").trim();
-
     if (!message || message.length > 2000) {
       return json({ error: "Invalid message" }, 400);
     }
@@ -40,14 +30,11 @@ export async function onRequestPost({ request, env }) {
             AND e.offer_type = 'ptc'
         ) AS ptc_ads
       FROM visitors v
-      LEFT JOIN reward_ad_cycles r
-        ON r.user_id = v.user_id
+      LEFT JOIN reward_ad_cycles r ON r.user_id = v.user_id
       WHERE v.user_id = ?
     `).bind(userId).first();
 
-    if (!user) {
-      return json({ error: "User not found" }, 404);
-    }
+    if (!user) return json({ error: "User not found" }, 404);
 
     const now = Math.floor(Date.now() / 1000);
 
@@ -58,71 +45,20 @@ export async function onRequestPost({ request, env }) {
     `).bind(userId, now, now).run();
 
     const conversation = await env.DB.prepare(`
-      SELECT id
-      FROM support_conversations
-      WHERE user_id = ?
+      SELECT id FROM support_conversations WHERE user_id = ?
     `).bind(userId).first();
 
     if (!conversation) {
       return json({ error: "Conversation creation failed" }, 500);
     }
 
+    // Save the user's message first. Telegram must never control whether
+    // the message is stored or shown in the website conversation.
     const saved = await env.DB.prepare(`
       INSERT INTO support_messages
       (conversation_id, sender, message_type, message_text, created_at)
       VALUES (?, 'user', 'text', ?, ?)
     `).bind(conversation.id, message, now).run();
-
-    const displayId =
-      "OX-" + userId.replace(/-/g, "").slice(0, 8).toUpperCase();
-
-    const telegramText =
-      "📩 OXIDE HUB SUPPORT\n\n" +
-      "👤 User: " + displayId + "\n" +
-      "🆔 ID: " + userId + "\n\n" +
-      "💬 Message:\n" + message + "\n\n" +
-      "📊 ACCOUNT INFORMATION\n" +
-      "⭐ Points: " + Number(user.points || 0) + "\n" +
-      "🎬 OXIDE HUB PTC completed: " + Number(user.ptc_ads || 0) + "\n" +
-      "🏝️ OXIDE ISLAND completed: " + Number(user.island_ads || 0) + "\n" +
-      "📈 Current progress: " + Number(user.progress || 0) + "/3\n" +
-      "📅 Registration: " +
-      (user.created_at
-        ? new Date(Number(user.created_at) * 1000).toISOString()
-        : "Unknown") +
-      "\n\n↩️ Reply to this message to answer the user.";
-
-    const telegramResponse = await fetch(
-      `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_id: env.TELEGRAM_ADMIN_ID,
-          text: telegramText
-        })
-      }
-    );
-
-    const telegramResult = await telegramResponse.json();
-
-    if (!telegramResponse.ok || !telegramResult.ok) {
-      return json({
-        error: "Telegram delivery failed",
-        saved: true
-      }, 502);
-    }
-
-    await env.DB.prepare(`
-      UPDATE support_messages
-      SET telegram_chat_id = ?,
-          telegram_message_id = ?
-      WHERE id = ?
-    `).bind(
-      String(telegramResult.result.chat.id),
-      telegramResult.result.message_id,
-      saved.meta.last_row_id
-    ).run();
 
     await env.DB.prepare(`
       UPDATE support_conversations
@@ -130,12 +66,75 @@ export async function onRequestPost({ request, env }) {
       WHERE id = ?
     `).bind(now, conversation.id).run();
 
+    let notificationSent = false;
+    let telegramMessageId = null;
+    let telegramChatId = null;
+
+    if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_ADMIN_ID) {
+      const displayId =
+        "OX-" + userId.replace(/-/g, "").slice(0, 8).toUpperCase();
+
+      const telegramText =
+        "📩 OXIDE HUB SUPPORT\\n\\n" +
+        "👤 User: " + displayId + "\\n" +
+        "🆔 ID: " + userId + "\\n\\n" +
+        "💬 Message:\\n" + message + "\\n\\n" +
+        "📊 ACCOUNT INFORMATION\\n" +
+        "⭐ Points: " + Number(user.points || 0) + "\\n" +
+        "🎬 OXIDE HUB PTC completed: " + Number(user.ptc_ads || 0) + "\\n" +
+        "🏝️ OXIDE ISLAND completed: " + Number(user.island_ads || 0) + "\\n" +
+        "📈 Current progress: " + Number(user.progress || 0) + "/3\\n" +
+        "📅 Registration: " +
+        (user.created_at
+          ? new Date(Number(user.created_at) * 1000).toISOString()
+          : "Unknown") +
+        "\\n\\n↩️ Reply to this message to answer the user.";
+
+      try {
+        const telegramResponse = await fetch(
+          `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              chat_id: env.TELEGRAM_ADMIN_ID,
+              text: telegramText
+            })
+          }
+        );
+
+        const telegramResult = await telegramResponse.json();
+        if (telegramResponse.ok && telegramResult.ok) {
+          notificationSent = true;
+          telegramMessageId = telegramResult.result.message_id;
+          telegramChatId = String(telegramResult.result.chat.id);
+        }
+      } catch {
+        // The message is already safely stored in D1.
+      }
+    }
+
+    if (notificationSent && saved.meta?.last_row_id) {
+      await env.DB.prepare(`
+        UPDATE support_messages
+        SET telegram_chat_id = ?, telegram_message_id = ?
+        WHERE id = ?
+      `).bind(
+        telegramChatId,
+        telegramMessageId,
+        saved.meta.last_row_id
+      ).run();
+    }
+
     return json({
       success: true,
-      message: "Message sent"
+      saved: true,
+      notificationSent,
+      message: "Message saved"
     });
-
   } catch (error) {
-    return json({ error: "Could not send support message" }, 500);
+    return json({
+      error: "Could not save support message"
+    }, 500);
   }
 }
