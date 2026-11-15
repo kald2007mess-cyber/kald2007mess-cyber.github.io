@@ -269,7 +269,7 @@ async function handleGiftMessage(message, env) {
 
 
 async function showReviewMenu(env, chatId, messageId = null) {
-  const data = { chat_id: chatId, text: "📋 مراجعة الطلبات\\n\\nاختر نوع الطلب الذي تريد مراجعته:",
+  const data = { chat_id: chatId, text: "📋 مراجعة الطلبات\n\nاختر نوع الطلب الذي تريد مراجعته:",
     reply_markup: { inline_keyboard: [
       [{ text: "📝 طلبات المهمات (الدليل)", callback_data: "oxide_review:missions" }],
       [{ text: "💎 طلبات استبدال النقاط (العروض)", callback_data: "oxide_review:redemptions" }]
@@ -305,18 +305,18 @@ async function handleReviewCallback(callback, env) {
       reply_markup:{inline_keyboard:[[ {text:"⬅️ رجوع",callback_data:"oxide_review:menu"} ]] }});
     for (const row of rows) {
       const uid=String(row.user_id||""), display="OX-"+uid.replace(/-/g,"").slice(0,8).toUpperCase();
-      const caption="📝 طلب مهمة #"+row.id+"\\n🎯 المهمة: "+String(row.mission_title||"غير معروف")+
-        "\\n🆔 المستخدم: "+display+"\\n🔐 UUID: "+uid+
-        "\\n⭐ الرصيد: "+Number(row.points||0).toLocaleString()+" نقطة"+
-        "\\n🎁 المكافأة: "+Number(row.reward_points||0).toLocaleString()+" نقطة"+
-        "\\n📅 تاريخ الطلب: "+new Date(Number(row.created_at||0)*1000).toLocaleString("ar");
+      const caption="📝 طلب مهمة #"+row.id+"\n🎯 المهمة: "+String(row.mission_title||"غير معروف")+
+        "\n🆔 المستخدم: "+display+"\n🔐 UUID: "+uid+
+        "\n⭐ الرصيد: "+Number(row.points||0).toLocaleString()+" نقطة"+
+        "\n🎁 المكافأة: "+Number(row.reward_points||0).toLocaleString()+" نقطة"+
+        "\n📅 تاريخ الطلب: "+new Date(Number(row.created_at||0)*1000).toLocaleString("ar");
       const keyboard={inline_keyboard:[[
         {text:"موافقة ✅",callback_data:"oxide_mission:approve:"+row.id},
         {text:"رفض ❌",callback_data:"oxide_mission:reject:"+row.id}
       ]]};
       if(row.proof_file_id && row.proof_file_id!=="uploading")
         await telegram(env,"sendPhoto",{chat_id:chatId,photo:row.proof_file_id,caption,reply_markup:keyboard});
-      else await telegram(env,"sendMessage",{chat_id:chatId,text:caption+"\\n⚠️ ملف الدليل غير متوفر.",reply_markup:keyboard});
+      else await telegram(env,"sendMessage",{chat_id:chatId,text:caption+"\n⚠️ ملف الدليل غير متوفر.",reply_markup:keyboard});
     }
   } else if (data === "oxide_review:redemptions") {
     const result=await env.DB.prepare(`
@@ -330,12 +330,12 @@ async function handleReviewCallback(callback, env) {
       reply_markup:{inline_keyboard:[[ {text:"⬅️ رجوع",callback_data:"oxide_review:menu"} ]] }});
     for(const row of rows){
       const uid=String(row.user_id||"");
-      const details="💎 طلب استبدال #"+row.id+"\\n👤 المستخدم: "+String(row.display_id||("OX-"+uid.replace(/-/g,"").slice(0,8).toUpperCase()))+
-        "\\n🔐 UUID: "+uid+"\\n🎮 العرض: "+String(row.offer_name||"غير معروف")+
-        "\\n💰 النقاط المطلوبة: "+Number(row.points_cost||0).toLocaleString()+
-        "\\n⭐ الرصيد الحالي: "+Number(row.points||0).toLocaleString()+
-        "\\n🪪 UUID المدخل: "+String(row.user_uuid_input||"غير متوفر")+
-        "\\n📅 تاريخ الطلب: "+new Date(Number(row.created_at||0)*1000).toLocaleString("ar");
+      const details="💎 طلب استبدال #"+row.id+"\n👤 المستخدم: "+String(row.display_id||("OX-"+uid.replace(/-/g,"").slice(0,8).toUpperCase()))+
+        "\n🔐 UUID: "+uid+"\n🎮 العرض: "+String(row.offer_name||"غير معروف")+
+        "\n💰 النقاط المطلوبة: "+Number(row.points_cost||0).toLocaleString()+
+        "\n⭐ الرصيد الحالي: "+Number(row.points||0).toLocaleString()+
+        "\n🪪 UUID المدخل: "+String(row.user_uuid_input||"غير متوفر")+
+        "\n📅 تاريخ الطلب: "+new Date(Number(row.created_at||0)*1000).toLocaleString("ar");
       await telegram(env,"sendMessage",{chat_id:chatId,text:details,reply_markup:{inline_keyboard:[[
         {text:"موافقة ✅",callback_data:"oxide_redeem:approve:"+row.id},
         {text:"رفض ❌",callback_data:"oxide_redeem:reject:"+row.id}
