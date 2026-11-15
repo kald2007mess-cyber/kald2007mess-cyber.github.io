@@ -44,9 +44,6 @@ export async function onRequestPost({ request, env }) {
     if (!userId) return json({ success:false, error:"NO_VISITOR_SESSION" },401);
     await ensureTable(env.DB);
     const body = await request.json();
-    const id = Number(body.id);
-    if (!Number.isSafeInteger(id) || id < 1) return json({ success:false, error:"INVALID_NOTIFICATION" },400);
-
     if (body.action === "read_all") {
       await env.DB.prepare(`
         UPDATE oxide_notifications SET read_at = COALESCE(read_at, ?)
@@ -54,6 +51,8 @@ export async function onRequestPost({ request, env }) {
       `).bind(Math.floor(Date.now()/1000), userId).run();
       return json({ success:true });
     }
+    const id = Number(body.id);
+    if (!Number.isSafeInteger(id) || id < 1) return json({ success:false, error:"INVALID_NOTIFICATION" },400);
     if (body.action === "read") {
       await env.DB.prepare(`
         UPDATE oxide_notifications SET read_at = COALESCE(read_at, ?)
