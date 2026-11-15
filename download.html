@@ -175,6 +175,7 @@ footer { margin-top: 30px; color: #879bb2; font-size: 12px; }
       <div class="progress-track"><div class="progress-fill" id="file1ProgressFill"></div></div>
       <span class="progress-label" id="file1ProgressLabel">0%</span>
     </div>
+    <button class="download-btn" id="file1Redownload" type="button" hidden>↻ إعادة تحميل الملف الأول</button>
   </section>
 
   <section class="section" id="file2Section">
@@ -187,6 +188,7 @@ footer { margin-top: 30px; color: #879bb2; font-size: 12px; }
       <div class="progress-track"><div class="progress-fill" id="file2ProgressFill"></div></div>
       <span class="progress-label" id="file2ProgressLabel">0%</span>
     </div>
+    <button class="download-btn" id="file2Redownload" type="button" hidden>↻ إعادة تحميل الملف الثاني</button>
   </section>
 
   <section class="section" id="videoSection" hidden>
@@ -212,6 +214,8 @@ const translations = {
     file1Button: "تحميل الملف الأول",
     file2Title: "📦 الملف الثاني",
     file2Button: "تحميل الملف الثاني",
+    redownload1: "↻ إعادة تحميل الملف الأول",
+    redownload2: "↻ إعادة تحميل الملف الثاني",
     loading: "جارٍ تحميل بيانات الملف...",
     unavailable: "لا يوجد ملف متاح حاليًا.",
     downloading: "جارٍ تحميل الملف...",
@@ -229,6 +233,8 @@ const translations = {
     file1Button: "DOWNLOAD FILE 1",
     file2Title: "📦 FILE 2",
     file2Button: "DOWNLOAD FILE 2",
+    redownload1: "↻ DOWNLOAD FILE 1 AGAIN",
+    redownload2: "↻ DOWNLOAD FILE 2 AGAIN",
     loading: "Loading file information...",
     unavailable: "No file is currently available.",
     downloading: "Downloading file...",
@@ -246,6 +252,8 @@ const translations = {
     file1Button: "СКАЧАТЬ ФАЙЛ 1",
     file2Title: "📦 ФАЙЛ 2",
     file2Button: "СКАЧАТЬ ФАЙЛ 2",
+    redownload1: "↻ СКАЧАТЬ ФАЙЛ 1 СНОВА",
+    redownload2: "↻ СКАЧАТЬ ФАЙЛ 2 СНОВА",
     loading: "Загрузка информации о файле...",
     unavailable: "Файл сейчас недоступен.",
     downloading: "Загрузка файла...",
@@ -314,6 +322,9 @@ function renderFiles() {
     const info = document.getElementById(`file${slot}Info`);
     const link = document.getElementById(`file${slot}Download`);
     const button = document.getElementById(`file${slot}Button`);
+    const redo = document.getElementById(`file${slot}Redownload`);
+    redo.textContent = currentText(`redownload${slot}`);
+    redo.hidden = true;
 
     if (!file) {
       info.textContent = currentText("unavailable");
@@ -437,11 +448,14 @@ async function startDownload(fileNumber) {
     saveLink.click();
     saveLink.remove();
     setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+    link.dataset.downloading = "false";
+    document.getElementById(`file${fileNumber}Redownload`).hidden = false;
   } catch (error) {
     console.error("Download error:", error);
     label.textContent = currentText("failed");
     link.dataset.downloading = "false";
     link.style.display = "block";
+    document.getElementById(`file${fileNumber}Redownload`).hidden = true;
   }
 }
 
@@ -453,6 +467,8 @@ document.getElementById("file2Download").addEventListener("click", event => {
   event.preventDefault();
   startDownload(2);
 });
+document.getElementById("file1Redownload").addEventListener("click", () => startDownload(1));
+document.getElementById("file2Redownload").addEventListener("click", () => startDownload(2));
 
 changeLanguage("ar");
 loadPlatformData();
