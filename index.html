@@ -357,6 +357,66 @@ body{padding:18px 10px}
 .platform-grid .platform-svg{width:32px;height:32px}
 .platform-grid .platform-svg.android-svg{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:1.8}
 @media(max-width:360px){.platform-grid{gap:5px}.platform-grid .platform-button{min-height:94px;padding:11px 3px;font-size:10px}.platform-grid .platform-svg{width:29px;height:29px}}
+
+/* Compact mission center refresh: visual-only sizing and restrained offer buttons. */
+.mission-center{padding:11px;border-radius:15px;box-shadow:0 5px 16px rgba(0,0,0,.16)}
+.mission-header{margin-bottom:10px;gap:6px}
+.mission-brand{gap:8px}
+.mission-brand-icon{width:35px;height:35px;border-radius:10px;font-size:18px;box-shadow:none}
+.mission-brand-name{font-size:15px}
+.mission-brand-sub{font-size:8px;letter-spacing:1px}
+.mission-live{padding:4px 7px;font-size:8px}
+.mission-language{padding:6px 7px;font-size:9px;max-width:100px}
+.mission-progress-card{padding:9px;margin-bottom:9px}
+.mission-progress-top{font-size:10px}
+.mission-progress-number{font-size:17px}
+.mission-progress-track{height:6px;margin:7px 0 5px}
+.mission-progress-fill{box-shadow:none}
+.mission-progress-foot{font-size:8px}
+.mission-summary{gap:7px;margin-bottom:12px}
+.mission-summary-item{gap:4px;padding:8px 9px;border-radius:9px;font-size:8px}
+.mission-summary-value{font-size:18px}
+.mission-group-title{font-size:11px;margin:12px 1px 7px}
+.mission-list{gap:7px}
+.mission-item{padding:10px;border-radius:11px;box-shadow:none}
+.mission-item-main{gap:7px}
+.mission-item-heading{gap:8px}
+.mission-item-icon{width:37px;height:37px;border-radius:10px;box-shadow:none}
+.mission-platform-svg{width:23px;height:23px}
+.mission-item-title{font-size:11px;line-height:1.4}
+.mission-item-meta{font-size:8px;margin-top:3px}
+.mission-status-pill{padding:4px 6px;font-size:8px}
+.mission-description{font-size:10px;line-height:1.6;margin:8px 0}
+.mission-reward-row{margin:8px 0;padding:7px 8px;border-radius:8px;font-size:9px}
+.mission-reward{font-size:12px;text-shadow:none}
+.mission-link-button{margin-top:6px;padding:9px;font-size:10px;box-shadow:none}
+.mission-proof-box{margin-top:9px;padding:9px;border-radius:9px}
+.mission-file-label{font-size:10px;margin-bottom:7px}
+.mission-file-input{min-height:37px;padding:6px;font-size:10px}
+.mission-file-input::file-selector-button{padding:6px 8px}
+.mission-upload-hint{font-size:8px}
+.mission-preview{margin-top:8px;padding:7px}
+.mission-preview-image{max-height:180px}
+.mission-submit-button{min-height:37px;margin-top:8px;padding:8px;font-size:10px;box-shadow:none}
+.mission-message{font-size:9px;margin-top:7px}
+.mission-offers-section{margin-top:13px;padding:10px 9px;border-radius:11px}
+.mission-offers-title{display:flex;align-items:center;gap:7px;margin:0 0 9px;font-size:14px;color:#dce8f7}
+.mission-offers-heading-icon{width:18px;height:18px;fill:none;stroke:#9fb4d0;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.mission-offers-grid{gap:7px}
+.mission-offer-card{padding:6px;border-radius:9px}
+.mission-offer-art{height:48px;gap:3px;border:0;background:transparent}
+.mission-offer-svg{width:23px;height:23px;fill:none;stroke:#aebfd5;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.mission-offer-soon{font-size:8px;letter-spacing:.8px;color:#9eafc4}
+.mission-offer-button{margin-top:4px;padding:7px 5px;border-color:#3c4d63;border-radius:6px;background:#25354b;color:#bdc9d8;font-size:9px;box-shadow:none}
+.mission-offer-button:disabled{opacity:1;cursor:not-allowed}
+@media(max-width:360px){
+  .mission-center{padding:9px}
+  .mission-brand-name{font-size:14px}
+  .mission-summary-item{padding:7px}
+  .mission-language{max-width:88px}
+  .mission-offer-card{padding:5px}
+}
+
 </style>
 </head>
 <body>
@@ -445,22 +505,22 @@ body{padding:18px 10px}
     </div>
   </div>
   <section class="mission-offers-section" aria-label="عروض">
-    <h3 class="mission-offers-title">🎮 عروض</h3>
+    <h3 class="mission-offers-title"><svg class="mission-offers-heading-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12a4 4 0 0 1 3.8 5l-1.2 4a2.5 2.5 0 0 1-4.2 1l-2.2-2H9.8l-2.2 2a2.5 2.5 0 0 1-4.2-1l-1.2-4A4 4 0 0 1 6 8Z"/><path d="M7 11v4M5 13h4M16.5 11.5h.01M19 14h.01"/></svg><span>عروض</span></h3>
     <div class="mission-offers-grid">
       <article class="mission-offer-card">
-        <div class="mission-offer-art"><span class="mission-offer-icon">🎮</span><span class="mission-offer-soon">SOON 🔒</span></div>
+        <div class="mission-offer-art"><svg class="mission-offer-svg" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 8h18a5 5 0 0 1 4.7 6.5l-1.8 6a3 3 0 0 1-5 1.2L19 18h-6l-3.9 3.7a3 3 0 0 1-5-1.2l-1.8-6A5 5 0 0 1 7 8Z"/><path d="M10 11v7M6.5 14.5h7M21 12h.1M25 16h.1"/></svg><span class="mission-offer-soon">SOON</span></div>
         <button class="mission-offer-button" type="button" disabled>SOON</button>
       </article>
       <article class="mission-offer-card">
-        <div class="mission-offer-art"><span class="mission-offer-icon">🚀</span><span class="mission-offer-soon">SOON 🔒</span></div>
+        <div class="mission-offer-art"><svg class="mission-offer-svg" viewBox="0 0 32 32" aria-hidden="true"><path d="M18 3c5 3 8 8 8 14l-8 8c-6 0-11-3-14-8 4-8 8-12 14-14Z"/><path d="m10 22-5 5M8 16l-5 1 4-7M17 24l-1 5 7-4"/><circle cx="19" cy="12" r="3"/></svg><span class="mission-offer-soon">SOON</span></div>
         <button class="mission-offer-button" type="button" disabled>SOON</button>
       </article>
       <article class="mission-offer-card">
-        <div class="mission-offer-art"><span class="mission-offer-icon">🏎️</span><span class="mission-offer-soon">SOON 🔒</span></div>
+        <div class="mission-offer-art"><svg class="mission-offer-svg" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 20l2-8 5-4h10l5 4 2 8H4Z"/><path d="M8 20v3M24 20v3M9 12l2-4M23 12l-2-4"/><circle cx="10" cy="20" r="2.5"/><circle cx="22" cy="20" r="2.5"/></svg><span class="mission-offer-soon">SOON</span></div>
         <button class="mission-offer-button" type="button" disabled>SOON</button>
       </article>
       <article class="mission-offer-card">
-        <div class="mission-offer-art"><span class="mission-offer-icon">🧩</span><span class="mission-offer-soon">SOON 🔒</span></div>
+        <div class="mission-offer-art"><svg class="mission-offer-svg" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 5h9v9H5zM18 5h9v9h-9zM5 18h9v9H5zM18 18h9v9h-9z"/><path d="M9.5 9.5h.01M22.5 9.5h.01M9.5 22.5h.01M22.5 22.5h.01"/></svg><span class="mission-offer-soon">SOON</span></div>
         <button class="mission-offer-button" type="button" disabled>SOON</button>
       </article>
     </div>
