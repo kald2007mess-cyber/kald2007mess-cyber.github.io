@@ -156,6 +156,7 @@ button,input,select,textarea{backdrop-filter:blur(8px);-webkit-backdrop-filter:b
 <button class="menu-tile purple" data-admin-permission="beta" onclick="openPlatform('beta')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/><path d="M8 15h8"/></svg></div><span>BETA</span></button>
 <button class="menu-tile silver" data-admin-permission="ios" onclick="openPlatform('ios')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M12 7c-2-3-6-2-7 1-2 5 3 12 5 12 1 0 1-1 2-1s1 1 2 1c2 0 7-7 5-12-1-3-5-4-7-1Z"/><path d="M12 7c0-3 2-5 5-5"/></svg></div><span>iOS</span></button>
 <button id="siteTile" data-admin-permission="maintenance" class="menu-tile site-off" onclick="toggleMaintenance()"><div class="tile-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg></div><span>إدارة الموقع</span><small id="siteTileStatus">جارٍ التحميل...</small></button>
+<button class="menu-tile green" data-owner-only="true" onclick="action('rewards')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 7v14M12 7H7.5a2.5 2.5 0 1 1 2.5-2.5C10 6 12 7 12 7ZM12 7h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z"/></svg></div><span>إرسال المكافآت</span><small>إشعارات المستخدمين</small></button>
 <button class="menu-tile yellow" data-owner-only="true" onclick="action('security')"><div class="tile-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m9 12 2 2 4-4"/></svg></div><span>الأمان والصلاحيات</span></button>
 </div>
 <div class="card" id="maintenanceCard" data-admin-permission="maintenance" style="margin-top:18px"><h3>🛠️ إدارة صيانة الموقع</h3><div id="maintenanceState" class="maintenance-state">جارٍ تحميل حالة الصيانة...</div><button id="maintenanceButton" onclick="toggleMaintenance()" disabled>حالة الصيانة</button><button id="messageButton" onclick="editMaintenanceMessage()" disabled>رسالة الصيانة</button><p class="note" id="maintenanceInfo">يتم حفظ إعدادات الصيانة لجميع زوار الموقع.</p></div>
@@ -203,6 +204,8 @@ button,input,select,textarea{backdrop-filter:blur(8px);-webkit-backdrop-filter:b
 </div></div>
 </div>
 </div>
+
+<div id="rewardsAdminPage" class="hidden"><div class="card"><button class="back" onclick="closeAdminRewards()">⬅ العودة إلى لوحة الإدارة</button><h3>🎁 إرسال مكافأة</h3><p class="note">أرسل إشعار مكافأة إلى مستخدم محدد أو جميع المستخدمين. لا تُضاف النقاط إلا بعد ضغط المستخدم على «استلم المكافأة».</p><div class="field"><label>المستلم</label><select id="rewardTarget" style="width:100%;padding:13px;border-radius:9px;background:#091525;color:white;border:1px solid #294661"><option value="all">جميع المستخدمين</option><option value="user">مستخدم محدد</option></select></div><div class="field" id="rewardUserField" style="display:none"><label>رقم المستخدم (مثال: OX-1234ABCD)</label><input id="rewardUserId" maxlength="11" placeholder="OX-XXXXXXXX"></div><div class="field"><label>عدد النقاط</label><input id="rewardPoints" type="number" min="1" max="1000000" value="50"></div><div class="field"><label>عنوان الإشعار</label><input id="rewardTitle" maxlength="120" value="🎁 مكافأة جديدة"></div><div class="field"><label>رسالة للمستخدم</label><textarea id="rewardMessage" maxlength="500">لديك مكافأة جديدة جاهزة للاستلام.</textarea></div><button id="sendRewardButton" onclick="sendAdminReward()">📢 إرسال المكافأة</button><div class="platform-status" id="rewardSendStatus">المكافأة ستُضاف بعد استلام المستخدم لها.</div></div></div>
 <script>
 const tg=window.Telegram?.WebApp;
 const statusBox=document.getElementById("status");
@@ -632,8 +635,31 @@ async function saveDeputyPermissions(telegramId){if(securityBusy)return;const bo
 async function toggleDeputy(telegramId,active){if(securityBusy)return;if(!confirm(active?"هل تريد إعادة تفعيل هذا النائب؟":"هل تريد إيقاف هذا النائب ومنعه من استخدام صلاحياته؟"))return;securityBusy=true;try{await securityRequest({action:"toggle",telegram_id:telegramId,active});await loadDeputies(true);}catch(error){alert("تعذر تغيير حالة النائب: "+error.message);}finally{securityBusy=false;}}
 async function deleteDeputy(telegramId){if(securityBusy)return;if(!confirm("حذف هذا النائب نهائيًا مع جميع صلاحياته؟"))return;securityBusy=true;try{await securityRequest({action:"delete",telegram_id:telegramId});await loadDeputies(true);}catch(error){alert("تعذر حذف النائب: "+error.message);}finally{securityBusy=false;}}
 
+
+/* إرسال المكافآت للمستخدمين */
+document.getElementById("rewardTarget")?.addEventListener("change",function(){document.getElementById("rewardUserField").style.display=this.value==="user"?"block":"none";});
+function openAdminRewards(){if(!adminOwner){alert("إرسال المكافآت متاح للمالك فقط.");return;}document.getElementById("mainMenu").classList.add("hidden");document.getElementById("rewardsAdminPage").classList.remove("hidden");document.getElementById("rewardSendStatus").textContent="المكافأة ستُضاف بعد استلام المستخدم لها.";}
+function closeAdminRewards(){document.getElementById("rewardsAdminPage").classList.add("hidden");document.getElementById("mainMenu").classList.remove("hidden");}
+async function sendAdminReward(){
+ if(!adminOwner)return;
+ const button=document.getElementById("sendRewardButton"),status=document.getElementById("rewardSendStatus");
+ const targetMode=document.getElementById("rewardTarget").value;
+ const target=targetMode==="all"?"all":document.getElementById("rewardUserId").value.trim();
+ const points=Number(document.getElementById("rewardPoints").value);
+ if(targetMode==="user"&&!/^OX-[A-F0-9]{8}$/i.test(target)){alert("أدخل رقم مستخدم صحيحًا مثل OX-1234ABCD.");return;}
+ if(!Number.isInteger(points)||points<1||points>1000000){alert("أدخل عدد نقاط من 1 إلى 1,000,000.");return;}
+ if(!confirm(targetMode==="all"?"إرسال هذه المكافأة إلى جميع المستخدمين؟":"إرسال هذه المكافأة إلى المستخدم المحدد؟"))return;
+ button.disabled=true;status.textContent="جارٍ إرسال إشعارات المكافأة...";
+ try{
+  const response=await fetch("/api/admin/rewards",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({initData:tg.initData,target,points,title:document.getElementById("rewardTitle").value,message:document.getElementById("rewardMessage").value})});
+  const result=await response.json();if(!response.ok||!result.success)throw new Error(result.error||"REWARD_SEND_FAILED");
+  status.textContent="تم إرسال المكافأة بنجاح إلى "+Number(result.sent||0)+" مستخدم.";alert(status.textContent);
+ }catch(error){status.textContent="تعذر إرسال المكافأة: "+error.message;alert(status.textContent);}
+ finally{button.disabled=false;}
+}
+
 /* بقية أقسام الإدارة */
-function action(name){if(name==="security"){if(!adminOwner){alert("قسم الأمان والصلاحيات خاص بالمالك.");return;}openSecurity();return;}if(["users","news","tasks"].includes(name)&&!hasAdminPermission(name)){alert("ليس لديك صلاحية لهذا القسم.");return;}if(name==="users"){openUsers();return;}if(name==="news"){openNews();return;}if(name==="tasks"){openTasks();return;}const messages={stats:"إحصائيات الموقع"};alert((messages[name]||"هذا القسم")+"\\nهذه الوظيفة لم يتم ربطها بعد.");}
+function action(name){if(name==="rewards"){openAdminRewards();return;}if(name==="security"){if(!adminOwner){alert("قسم الأمان والصلاحيات خاص بالمالك.");return;}openSecurity();return;}if(["users","news","tasks"].includes(name)&&!hasAdminPermission(name)){alert("ليس لديك صلاحية لهذا القسم.");return;}if(name==="users"){openUsers();return;}if(name==="news"){openNews();return;}if(name==="tasks"){openTasks();return;}const messages={stats:"إحصائيات الموقع"};alert((messages[name]||"هذا القسم")+"\\nهذه الوظيفة لم يتم ربطها بعد.");}
 
 /* التحقق من المدير */
 async function start(){
