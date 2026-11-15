@@ -75,20 +75,20 @@ export async function onRequestPost({ request, env }) {
         "OX-" + userId.replace(/-/g, "").slice(0, 8).toUpperCase();
 
       const telegramText =
-        "📩 OXIDE HUB SUPPORT\\n\\n" +
-        "👤 User: " + displayId + "\\n" +
-        "🆔 ID: " + userId + "\\n\\n" +
-        "💬 Message:\\n" + message + "\\n\\n" +
-        "📊 ACCOUNT INFORMATION\\n" +
-        "⭐ Points: " + Number(user.points || 0) + "\\n" +
-        "🎬 OXIDE HUB PTC completed: " + Number(user.ptc_ads || 0) + "\\n" +
-        "🏝️ OXIDE ISLAND completed: " + Number(user.island_ads || 0) + "\\n" +
-        "📈 Current progress: " + Number(user.progress || 0) + "/3\\n" +
+        "📩 OXIDE HUB SUPPORT\n\n" +
+        "👤 User: " + displayId + "\n" +
+        "🆔 ID: " + userId + "\n\n" +
+        "💬 Message:\n" + message + "\n\n" +
+        "📊 ACCOUNT INFORMATION\n" +
+        "⭐ Points: " + Number(user.points || 0) + "\n" +
+        "🎬 OXIDE HUB PTC completed: " + Number(user.ptc_ads || 0) + "\n" +
+        "🏝️ OXIDE ISLAND completed: " + Number(user.island_ads || 0) + "\n" +
+        "📈 Current progress: " + Number(user.progress || 0) + "/3\n" +
         "📅 Registration: " +
         (user.created_at
           ? new Date(Number(user.created_at) * 1000).toISOString()
           : "Unknown") +
-        "\\n\\n↩️ Reply to this message to answer the user.";
+        "\n\n↩️ Reply to this message to answer the user.";
 
       try {
         const telegramResponse = await fetch(
