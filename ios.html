@@ -222,7 +222,7 @@ async function loadPage(){
   if(!platformData.success)throw new Error('platforms');
 
   iosFiles=getPlatformFiles(platformData);
-  allowed=Number(progressData.progress||0)>=REQUIRED;
+  allowed=specialUserGlow || Number(progressData.progress||0)>=REQUIRED;
 
   renderFiles();
 
