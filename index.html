@@ -417,6 +417,22 @@ body{padding:18px 10px}
   .mission-offer-card{padding:5px}
 }
 
+
+/* OXIDE HUB notifications */
+.messages-top-button{position:relative}
+.notification-count{position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:20px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center;border:1px solid #071426}
+.notifications-panel{margin:12px 0 18px;padding:14px;border:1px solid rgba(105,190,255,.24);border-radius:16px;background:rgba(7,18,37,.88);backdrop-filter:blur(14px);box-shadow:0 10px 28px #0005}
+.notifications-panel[hidden]{display:none!important}
+.notifications-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;color:#e9f6ff;font-weight:800}
+.notification-item{padding:12px;margin:8px 0;border:1px solid rgba(125,180,220,.17);border-radius:12px;background:rgba(24,43,67,.68);color:#e7f1fc}
+.notification-item.unread{border-color:rgba(56,189,248,.5)}
+.notification-title{font-weight:800;margin-bottom:5px}
+.notification-body{font-size:13px;color:#b8c9dc;line-height:1.6;white-space:pre-wrap}
+.notification-meta{font-size:10px;color:#819bb5;margin-top:7px}
+.notification-claim{margin-top:10px;width:100%;padding:10px;border:1px solid #2da879;border-radius:9px;background:linear-gradient(135deg,#176d50,#124b3d);color:#eafff5;font-weight:800}
+.notification-claim:disabled{opacity:.65}
+.notification-empty{padding:18px;text-align:center;color:#91a8c1;font-size:13px}
+
 </style>
 </head>
 <body>
@@ -424,9 +440,13 @@ body{padding:18px 10px}
 <div class="rain-glass" aria-hidden="true"><canvas id="oxideRainCanvas"></canvas></div>
 <main class="container">
 <div class="top-bar">
-  <div class="top-actions"><div class="language-box"><select id="language" onchange="changeLanguage(this.value)"><option value="ar">🇩🇿 العربية</option><option value="en">🇬🇧 English</option><option value="ru">🇷🇺 Русский</option><option value="es">🇪🇸 Español</option><option value="tr">🇹🇷 Türkçe</option><option value="id">🇮🇩 Bahasa Indonesia</option></select></div><button class="messages-top-button" id="messagesTopButton" type="button" aria-label="Notifications" title="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg></button><button class="support-top-button" id="supportTopButton" type="button" onclick="showPage('support')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-2a8 8 0 0 1 16 0v2"></path><rect x="3" y="12" width="4" height="7" rx="2"></rect><rect x="17" y="12" width="4" height="7" rx="2"></rect><path d="M19 19a3 3 0 0 1-3 2h-2"></path></svg><span id="supportTopButtonText">الدعم الفني</span></button></div>
+  <div class="top-actions"><div class="language-box"><select id="language" onchange="changeLanguage(this.value)"><option value="ar">🇩🇿 العربية</option><option value="en">🇬🇧 English</option><option value="ru">🇷🇺 Русский</option><option value="es">🇪🇸 Español</option><option value="tr">🇹🇷 Türkçe</option><option value="id">🇮🇩 Bahasa Indonesia</option></select></div><button class="messages-top-button" id="messagesTopButton" type="button" aria-label="Notifications" title="Notifications" onclick="toggleNotifications()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg><span class="notification-count" id="notificationCount">0</span></button><button class="support-top-button" id="supportTopButton" type="button" onclick="showPage('support')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-2a8 8 0 0 1 16 0v2"></path><rect x="3" y="12" width="4" height="7" rx="2"></rect><rect x="17" y="12" width="4" height="7" rx="2"></rect><path d="M19 19a3 3 0 0 1-3 2h-2"></path></svg><span id="supportTopButtonText">الدعم الفني</span></button></div>
   <div class="user-id-card"><div class="user-id-label" id="userIdLabel">رقم المستخدم الخاص بك</div><div class="user-id-row"><span class="user-id-value" id="userIdValue">Loading...</span><button class="copy-id-button" id="copyIdButton" type="button" onclick="copyUserId()"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg><span id="copyIdButtonText">نسخ</span></button></div></div>
 </div>
+<section id="notificationsPanel" class="notifications-panel" hidden aria-live="polite">
+ <div class="notifications-heading"><span>🔔 مركز الإشعارات</span><button type="button" class="secondary" onclick="closeNotifications()" style="padding:6px 10px">إغلاق</button></div>
+ <div id="notificationsList"><div class="notification-empty">جارٍ تحميل الإشعارات...</div></div>
+</section>
 <div class="brand-block"><div class="logo">OXIDE HUB</div><div class="subtitle">SURVIVE • EXPLORE • DOMINATE</div></div>
 <section class="maintenance-panel" id="maintenancePanel" role="status" aria-live="polite">
   <div class="maintenance-icon">🛠️</div>
@@ -585,6 +605,58 @@ function createStages(){stages.innerHTML="";for(let i=1;i<=REQUIRED;i++){const i
 function changeLanguage(language,save=true){if(!translations[language])return;currentLanguage=language;localStorage.setItem("oxide_language",language);if(save)saveLanguagePreference(language);document.documentElement.lang=language;document.documentElement.dir=language==="ar"?"rtl":"ltr";document.getElementById("progressLabel").textContent=t("progress");document.getElementById("androidText").textContent=t("android");document.getElementById("iphoneText").textContent=t("iphone");document.getElementById("betaText").textContent=t("beta");document.getElementById("navHome").textContent=t("home");document.getElementById("navRewards").textContent=t("rewards");document.getElementById("navReferral").textContent=t("referral");document.getElementById("navNews").textContent=t("news");["soon2","iphoneSoon","betaSoon"].forEach(id=>document.getElementById(id).textContent=t("soon"));document.getElementById("balanceLabel").textContent=t("balance");document.getElementById("pendingNote").textContent=t("pendingNote");document.getElementById("rewardsHeading").textContent="🎁 "+t("rewards");document.getElementById("islandAdsLabel").textContent=t("islandAds");document.getElementById("islandTasksLabel").textContent=t("islandTasks");document.getElementById("islandRewardText").textContent=t("islandReward");document.getElementById("islandWatchButton").textContent=t("islandWatch");document.getElementById("userIdLabel").textContent=t("userId");document.getElementById("copyIdButtonText").textContent=t("copyId");document.getElementById("supportTopButtonText").textContent=t("support");document.getElementById("supportBackButton").textContent=t("back");document.getElementById("newsHeading").textContent="📰 "+t("newsTitle");document.getElementById("supportTitle").textContent=supportText("title");document.getElementById("supportDescription").textContent=supportText("description");document.getElementById("supportInput").placeholder=supportText("placeholder");document.getElementById("supportSend").textContent=supportText("send");document.getElementById("supportMediaNote").textContent=supportText("mediaNote");document.getElementById("referralHeading").textContent="👥 "+t("referral");document.getElementById("referralInviteTitle").textContent=t("referralTitle");document.getElementById("referralDescription").textContent=t("referralDesc");document.getElementById("referralCountLabel").textContent=t("referrals");document.getElementById("referralEarnedLabel").textContent=t("earned");document.getElementById("copyReferralButton").textContent=t("copy");document.getElementById("shareReferralButton").textContent=t("share");document.getElementById("pointsRankingTitle").textContent=t("pointsRank");document.getElementById("referralRankingTitle").textContent=t("refRank");renderGuide();createStages();renderRewards();updateIslandDisplay();renderSupportLanguage();changeMissionLanguage(language);renderNewsLanguage();if(progress>=REQUIRED)statusBox.textContent=t("complete");if(referralLoaded)loadReferral()}
 async function loadUserId(){if(userIdLoaded)return;try{const response=await fetch("/api/me",{method:"GET",cache:"no-store",credentials:"same-origin"});const data=await response.json();if(!response.ok||!data.success||!data.displayId)throw new Error("User ID loading failed");userDisplayId=data.displayId;userIdLoaded=true;document.getElementById("userIdValue").textContent=userDisplayId}catch(error){document.getElementById("userIdValue").textContent="Unavailable"}}
 async function copyUserId(){if(!userDisplayId)await loadUserId();if(!userDisplayId)return;try{await navigator.clipboard.writeText(userDisplayId);const label=document.getElementById("copyIdButtonText");if(label){label.textContent=currentLanguage==="ar"?"تم النسخ":"Copied";setTimeout(()=>{label.textContent=t("copyId")},1800)}}catch(error){document.getElementById("userIdValue").textContent=userDisplayId}}
+
+/* OXIDE HUB notification center */
+let oxideNotifications=[],notificationsOpen=false,notificationsBusy=false;
+async function loadNotifications(openPanel=false){
+ if(notificationsBusy)return;notificationsBusy=true;
+ const list=document.getElementById("notificationsList");
+ try{
+  const response=await fetch("/api/notifications",{method:"GET",cache:"no-store",credentials:"same-origin"});
+  const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||"NOTIFICATIONS_FAILED");
+  oxideNotifications=Array.isArray(data.notifications)?data.notifications:[];
+  const unread=oxideNotifications.filter(n=>!n.read_at).length;
+  const badge=document.getElementById("notificationCount");
+  if(badge){badge.textContent=unread>99?"99+":String(unread);badge.style.display=unread?"flex":"none"}
+  if(!list)return;
+  if(!oxideNotifications.length){list.innerHTML='<div class="notification-empty">لا توجد إشعارات حتى الآن.</div>';return}
+  list.replaceChildren();
+  oxideNotifications.forEach(n=>{
+   const card=document.createElement("article");card.className="notification-item"+(!n.read_at?" unread":"");
+   const title=document.createElement("div");title.className="notification-title";title.textContent=String(n.title||"إشعار");
+   const body=document.createElement("div");body.className="notification-body";body.textContent=String(n.body||"");
+   const meta=document.createElement("div");meta.className="notification-meta";meta.textContent=new Date(Number(n.created_at||0)*1000).toLocaleString();
+   card.append(title,body,meta);
+   if(n.type==="reward"&&Number(n.reward_points)>0){
+    const button=document.createElement("button");button.className="notification-claim";
+    button.textContent=n.claimed_at?"تم الاستلام ✓":"🎁 استلم "+Number(n.reward_points).toLocaleString()+" نقطة";
+    button.disabled=Boolean(n.claimed_at);if(!n.claimed_at)button.addEventListener("click",()=>claimNotification(Number(n.id),button));
+    card.appendChild(button);
+   }
+   list.appendChild(card);
+  });
+  if(openPanel)document.getElementById("notificationsPanel").hidden=false;
+ }catch(error){if(list)list.innerHTML='<div class="notification-empty">تعذر تحميل الإشعارات. حاول مجددًا.</div>'}
+ finally{notificationsBusy=false}
+}
+async function toggleNotifications(){
+ const panel=document.getElementById("notificationsPanel");if(!panel)return;
+ if(!panel.hidden){panel.hidden=true;notificationsOpen=false;return}
+ notificationsOpen=true;panel.hidden=false;await loadNotifications(true);
+}
+function closeNotifications(){const panel=document.getElementById("notificationsPanel");if(panel)panel.hidden=true;notificationsOpen=false}
+async function claimNotification(id,button){
+ if(button.disabled)return;button.disabled=true;button.textContent="جارٍ استلام المكافأة...";
+ try{
+  const response=await fetch("/api/notifications",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({action:"claim",id})});
+  const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||"CLAIM_FAILED");
+  button.textContent="تم الاستلام ✓";
+  const balance=document.getElementById("missionsBalance");if(balance&&Number.isFinite(Number(data.balance)))balance.textContent=Number(data.balance).toLocaleString();
+  await loadNotifications(true);
+  alert("🎉 تمت إضافة "+Number(data.pointsAwarded||0)+" نقطة إلى رصيدك!");
+ }catch(error){button.disabled=false;button.textContent="حاول الاستلام مجددًا";alert(error.message==="ALREADY_CLAIMED_OR_NOT_FOUND"?"تم استلام هذه المكافأة مسبقًا أو لم تعد متاحة.":"تعذر استلام المكافأة. حاول مجددًا.");}
+}
+
 function showPage(page){
  const support=page==="support";
  const news=page==="news";
@@ -1254,7 +1326,7 @@ async function initializeOxideHub(){
  }catch(error){console.warn("Maintenance status could not be loaded; continuing with normal site startup.",error)}
  await boot();
 }
-async function boot(){/* Register referral before any other endpoint can create a visitor. */await registerReferralFromLink();getActiveSession();createStages();await refreshProgress();await loadSavedLanguage();if(sessionStorage.getItem("oxide_referral_notice")==="1"){document.getElementById("referralStatus").textContent=t("refRegistered");sessionStorage.removeItem("oxide_referral_notice")}loadRewards();loadIsland();loadMissionStatus();startSupportChat();setInterval(refreshProgress,5000);window.addEventListener("focus",()=>{refreshProgress();refreshIslandAfterReturn();loadSupportMessages(false)});document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshProgress();refreshIslandAfterReturn();loadSupportMessages(false)}});window.addEventListener("pageshow",()=>{getActiveSession();refreshProgress();refreshIslandAfterReturn();loadSupportMessages(false)})}
+async function boot(){/* Register referral before any other endpoint can create a visitor. */await registerReferralFromLink();getActiveSession();createStages();await refreshProgress();await loadSavedLanguage();if(sessionStorage.getItem("oxide_referral_notice")==="1"){document.getElementById("referralStatus").textContent=t("refRegistered");sessionStorage.removeItem("oxide_referral_notice")}loadRewards();loadIsland();loadMissionStatus();loadNotifications(false);startSupportChat();setInterval(refreshProgress,5000);window.addEventListener("focus",()=>{refreshProgress();refreshIslandAfterReturn();loadSupportMessages(false);loadNotifications(false)});document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshProgress();refreshIslandAfterReturn();loadSupportMessages(false)}});window.addEventListener("pageshow",()=>{getActiveSession();refreshProgress();refreshIslandAfterReturn();loadSupportMessages(false)})}
 initializeOxideHub();
 
 // OXIDE HUB: unlock all three platform buttons after the third confirmed ad.
