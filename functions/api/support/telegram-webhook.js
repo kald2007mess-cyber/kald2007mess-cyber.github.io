@@ -1,6 +1,13 @@
 
 import { json } from "../_lib/session.js";
 
+
+async function createMissionNotification(env,userId,type,title,body,points=0){
+ await env.DB.prepare(`CREATE TABLE IF NOT EXISTS oxide_notifications (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id TEXT NOT NULL,type TEXT NOT NULL,title TEXT NOT NULL,body TEXT NOT NULL DEFAULT '',reward_points INTEGER NOT NULL DEFAULT 0,created_at INTEGER NOT NULL,read_at INTEGER,claimed_at INTEGER,claim_token TEXT)`).run();
+ await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_oxide_notifications_user ON oxide_notifications(user_id, created_at DESC)`).run();
+ await env.DB.prepare(`INSERT INTO oxide_notifications(user_id,type,title,body,reward_points,created_at) VALUES(?,?,?,?,?,?)`).bind(userId,type,title,body,points,Math.floor(Date.now()/1000)).run();
+}
+
 async function telegram(env, method, data) {
   const response = await fetch(
     `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`,
@@ -101,6 +108,7 @@ async function handleMissionCallback(callback, env) {
       return;
     }
 
+    try{await createMissionNotification(env,submission.user_id,"mission_approved","✅ تمت الموافقة على مهمتك","تم قبول المهمة وإضافة 50 نقطة إلى رصيدك.");}catch(error){console.error("Mission notification failed",error);}
     resultText = "✅ تمت الموافقة وإضافة 50 نقطة للمستخدم.";
   } else {
     const rejected = await env.DB.prepare(`
@@ -117,6 +125,7 @@ async function handleMissionCallback(callback, env) {
       return;
     }
 
+    try{await createMissionNotification(env,submission.user_id,"mission_rejected","❌ تم رفض إثبات المهمة","لم يتم قبول إثبات المهمة. راجع المطلوب وأرسل إثباتًا صحيحًا جديدًا.");}catch(error){console.error("Mission notification failed",error);}
     resultText = "❌ تم رفض المهمة. يمكن للمستخدم المحاولة مجدداً.";
   }
 
