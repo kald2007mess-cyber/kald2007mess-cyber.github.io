@@ -1,11 +1,24 @@
-
 import { getVisitor, json } from "./_lib/session.js";
 
+function logPTC(event, details = {}) {
+  // Never log visitor IDs, IP addresses, ad URLs, or API credentials.
+  console.log(JSON.stringify({
+    service: "ptc",
+    event,
+    timestamp: new Date().toISOString(),
+    ...details
+  }));
+}
+
 export async function onRequestGet({ request, env }) {
+  const startedAt = Date.now();
+  let country = "";
+
   try {
     const userId = await getVisitor(request, env);
 
     if (!userId) {
+      logPTC("no_session", { durationMs: Date.now() - startedAt });
       return json({ error: "No visitor session" }, 401);
     }
 
@@ -14,15 +27,20 @@ export async function onRequestGet({ request, env }) {
       !env.OFFERWALL_PUBLIC_KEY ||
       !env.OFFERWALL_SECRET
     ) {
+      logPTC("configuration_missing", { durationMs: Date.now() - startedAt });
       return json({ error: "Missing server configuration" }, 500);
     }
 
     const ip = request.headers.get("CF-Connecting-IP");
-    const country = (
+    country = (
       request.headers.get("CF-IPCountry") || ""
     ).toUpperCase();
 
     if (!ip || !/^[A-Z]{2}$/.test(country)) {
+      logPTC("location_unavailable", {
+        country: /^[A-Z]{2}$/.test(country) ? country : "unknown",
+        durationMs: Date.now() - startedAt
+      });
       return json({ error: "User location unavailable" }, 400);
     }
 
@@ -70,13 +88,29 @@ export async function onRequestGet({ request, env }) {
     }).toString();
 
     const response = await fetch(apiUrl.toString());
-    const result = await response.json();
 
-    if (!response.ok || result.status !== 200) {
+    if (!response.ok) {
+      logPTC("provider_http_error", {
+        country,
+        providerStatus: response.status,
+        durationMs: Date.now() - startedAt
+      });
       return json({ error: "PTC API request failed" }, 502);
     }
 
-    const ads = (Array.isArray(result.data) ? result.data : [])
+    const result = await response.json();
+
+    if (result.status !== 200) {
+      logPTC("provider_rejected_request", {
+        country,
+        providerStatus: Number(result.status) || "unknown",
+        durationMs: Date.now() - startedAt
+      });
+      return json({ error: "PTC API request failed" }, 502);
+    }
+
+    const rawAds = Array.isArray(result.data) ? result.data : [];
+    const ads = rawAds
       .filter(ad =>
         [0, 1].includes(Number(ad.type)) &&
         Number.isFinite(Number(ad.duration)) &&
@@ -92,6 +126,13 @@ export async function onRequestGet({ request, env }) {
         url: ad.url
       }));
 
+    logPTC(ads.length > 0 ? "ads_available" : "no_ads_available", {
+      country,
+      rawCount: rawAds.length,
+      validCount: ads.length,
+      durationMs: Date.now() - startedAt
+    });
+
     return json({
       success: true,
       count: ads.length,
@@ -99,6 +140,11 @@ export async function onRequestGet({ request, env }) {
     });
 
   } catch (error) {
+    logPTC("internal_error", {
+      country: /^[A-Z]{2}$/.test(country) ? country : "unknown",
+      errorType: error?.name || "Error",
+      durationMs: Date.now() - startedAt
+    });
     return json({ error: "PTC service error" }, 500);
   }
 }
