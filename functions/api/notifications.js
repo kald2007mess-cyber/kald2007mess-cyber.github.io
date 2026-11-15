@@ -47,6 +47,13 @@ export async function onRequestPost({ request, env }) {
     const id = Number(body.id);
     if (!Number.isSafeInteger(id) || id < 1) return json({ success:false, error:"INVALID_NOTIFICATION" },400);
 
+    if (body.action === "read_all") {
+      await env.DB.prepare(`
+        UPDATE oxide_notifications SET read_at = COALESCE(read_at, ?)
+        WHERE user_id = ? AND read_at IS NULL
+      `).bind(Math.floor(Date.now()/1000), userId).run();
+      return json({ success:true });
+    }
     if (body.action === "read") {
       await env.DB.prepare(`
         UPDATE oxide_notifications SET read_at = COALESCE(read_at, ?)
