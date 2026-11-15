@@ -29,6 +29,27 @@ async function adminMessage(env, chatId, text) {
 }
 
 
+async function ensureNotificationsTable(DB) {
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS oxide_notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL DEFAULT '',
+      reward_points INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL,
+      read_at INTEGER,
+      claimed_at INTEGER,
+      claim_token TEXT
+    )
+  `).run();
+  await DB.prepare(`
+    CREATE INDEX IF NOT EXISTS idx_oxide_notifications_user
+    ON oxide_notifications(user_id, created_at DESC)
+  `).run();
+}
+
 async function ensureGiftSessions(DB) {
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS telegram_gift_sessions (
@@ -49,6 +70,7 @@ async function handleGiftMessage(message, env) {
   ) return false;
 
   await ensureGiftSessions(env.DB);
+  await ensureNotificationsTable(env.DB);
   const chatId = String(message.chat.id);
   const text = String(message.text || "").trim();
 
@@ -66,7 +88,7 @@ async function handleGiftMessage(message, env) {
     `).bind(chatId, now, now).run();
 
     await adminMessage(env, message.chat.id,
-      "🎁 إرسال هدية نقاط\n\nأرسل الآن معرف المستخدم (UUID أو OX-XXXXXXXX).\nلإلغاء العملية أرسل /cancel.");
+      "🎁 إدارة نقاط المستخدم\n\nأرسل الآن معرف المستخدم (UUID أو OX-XXXXXXXX).\nبعدها أرسل عدد النقاط: رقم موجب للإضافة، أو رقم سالب للخصم مثل -1000.\nلإلغاء العملية أرسل /cancel.");
     return true;
   }
 
@@ -140,55 +162,105 @@ async function handleGiftMessage(message, env) {
       "🆔 المعرف: " + displayId + "\n" +
       "⭐ الرصيد الحالي: " + Number(user.points || 0).toLocaleString() + " نقطة\n" +
       "📅 التسجيل: " + (user.created_at ? new Date(Number(user.created_at) * 1000).toISOString() : "غير معروف") +
-      "\n\nأرسل الآن عدد النقاط التي تريد إرسالها (من 1 إلى 1,000,000).");
+      "\n\nأرسل الآن مقدار التعديل: رقم موجب للإضافة أو رقم سالب للخصم، مثل 1000 أو -1000. الحد الأقصى 1,000,000 نقطة.\nلإلغاء العملية أرسل /cancel.");
     return true;
   }
 
   if (session.stage === "points") {
-    if (!/^\d+$/.test(text)) {
-      await adminMessage(env, message.chat.id, "⚠️ أرسل عدد النقاط كرقم صحيح فقط.");
-      return true;
-    }
-
-    const points = Number(text);
-    if (!Number.isSafeInteger(points) || points < 1 || points > 1000000) {
+    if (!/^-?\d+$/.test(text) || text === "-0") {
       await adminMessage(env, message.chat.id,
-        "⚠️ العدد يجب أن يكون بين 1 و 1,000,000 نقطة.");
+        "⚠️ أرسل عددًا صحيحًا فقط. مثال للإضافة: 1000، وللخصم: -1000.");
       return true;
     }
 
+    const amount = Number(text);
+    if (!Number.isSafeInteger(amount) || amount === 0 || Math.abs(amount) > 1000000) {
+      await adminMessage(env, message.chat.id,
+        "⚠️ يجب أن يكون العدد بين -1,000,000 و1,000,000، ولا يمكن أن يكون صفرًا.");
+      return true;
+    }
+
+    const targetUserId = session.target_user_id;
     const now = Math.floor(Date.now() / 1000);
-    const title = "🎁 هدية نقاط من إدارة OXIDE HUB";
-    const body = "أهدتك إدارة OXIDE HUB " + points.toLocaleString() +
-      " نقطة. اضغط زر استلام لإضافتها إلى رصيدك.";
+    const displayId = "OX-" + targetUserId.replace(/-/g, "").slice(0, 8).toUpperCase();
 
-    // إدراج الهدية وحذف جلسة الإدارة ضمن batch واحدة لمنع تكرارها عند إعادة webhook.
-    const results = await env.DB.batch([
-      env.DB.prepare(`
-        INSERT INTO oxide_notifications
-          (user_id, type, title, body, reward_points, created_at)
-        SELECT target_user_id, 'reward', ?, ?, ?, ?
-        FROM telegram_gift_sessions
-        WHERE admin_id = ? AND stage = 'points' AND target_user_id IS NOT NULL
-      `).bind(title, body, points, now, chatId),
-      env.DB.prepare(`
-        DELETE FROM telegram_gift_sessions
-        WHERE admin_id = ? AND stage = 'points' AND target_user_id IS NOT NULL
-      `).bind(chatId)
-    ]);
+    if (amount > 0) {
+      const title = "🎁 هدية نقاط من إدارة OXIDE HUB";
+      const body = "أهدتك إدارة OXIDE HUB " + amount.toLocaleString() +
+        " نقطة. اضغط زر استلام لإضافتها إلى رصيدك.";
 
-    const created = Number(results[0]?.meta?.changes || 0);
-    if (created !== 1) {
+      const results = await env.DB.batch([
+        env.DB.prepare(`
+          INSERT INTO oxide_notifications
+            (user_id, type, title, body, reward_points, created_at)
+          SELECT target_user_id, 'reward', ?, ?, ?, ?
+          FROM telegram_gift_sessions
+          WHERE admin_id = ? AND stage = 'points' AND target_user_id = ?
+        `).bind(title, body, amount, now, chatId, targetUserId),
+        env.DB.prepare(`
+          DELETE FROM telegram_gift_sessions
+          WHERE admin_id = ? AND stage = 'points' AND target_user_id = ?
+        `).bind(chatId, targetUserId)
+      ]);
+
+      const created = Number(results[0]?.meta?.changes || 0);
+      if (created !== 1) {
+        await adminMessage(env, message.chat.id,
+          "⚠️ انتهت الجلسة أو لم يعد المستخدم محددًا. أرسل /gift للبدء من جديد.");
+        return true;
+      }
+
       await adminMessage(env, message.chat.id,
-        "⚠️ انتهت جلسة الهدية أو لم يعد المستخدم محددًا. أرسل /gift للبدء من جديد.");
+        "✅ تمت إضافة الهدية إلى إشعارات المستخدم.\n\n🆔 المستخدم: " +
+        displayId + "\n🎁 الهدية: +" + amount.toLocaleString() +
+        " نقطة\n\nسيستلمها المستخدم من صندوق الإشعارات.");
       return true;
     }
+
+    const deduction = Math.abs(amount);
+    const updatedUser = await env.DB.prepare(`
+      UPDATE visitors
+      SET points = points - ?
+      WHERE user_id = ? AND points >= ?
+      RETURNING points
+    `).bind(deduction, targetUserId, deduction).first();
+
+    if (!updatedUser) {
+      const current = await env.DB.prepare("SELECT points FROM visitors WHERE user_id = ?")
+        .bind(targetUserId).first();
+      await adminMessage(env, message.chat.id,
+        "❌ لا يمكن الخصم. رصيد المستخدم الحالي " +
+        Number(current?.points || 0).toLocaleString() +
+        " نقطة، وهو أقل من " + deduction.toLocaleString() + " نقطة.\nأرسل مبلغًا آخر أو /cancel.");
+      return true;
+    }
+
+    try {
+      await createMissionNotification(
+        env,
+        targetUserId,
+        "points_adjustment",
+        "➖ تم خصم نقاط من رصيدك",
+        "قامت إدارة OXIDE HUB بخصم " + deduction.toLocaleString() +
+          " نقطة من رصيدك. رصيدك الحالي: " +
+          Number(updatedUser.points || 0).toLocaleString() + " نقطة."
+      );
+    } catch (error) {
+      await env.DB.prepare("UPDATE visitors SET points = points + ? WHERE user_id = ?")
+        .bind(deduction, targetUserId).run();
+      throw error;
+    }
+
+    await env.DB.prepare(`
+      DELETE FROM telegram_gift_sessions
+      WHERE admin_id = ? AND stage = 'points' AND target_user_id = ?
+    `).bind(chatId, targetUserId).run();
 
     await adminMessage(env, message.chat.id,
-      "✅ تم إرسال الهدية بنجاح!\n\n🆔 المستخدم: OX-" +
-      session.target_user_id.replace(/-/g, "").slice(0, 8).toUpperCase() +
-      "\n🎁 الهدية: " + points.toLocaleString() +
-      " نقطة\n\nستظهر في صندوق إشعارات المستخدم مع زر استلام.");
+      "✅ تم خصم النقاط مباشرة وإرسال إشعار للمستخدم.\n\n🆔 المستخدم: " +
+      displayId + "\n➖ المخصوم: " + deduction.toLocaleString() +
+      " نقطة\n⭐ الرصيد المتبقي: " +
+      Number(updatedUser.points || 0).toLocaleString() + " نقطة.");
     return true;
   }
 
@@ -227,7 +299,9 @@ async function handleRedemptionCallback(callback, env) {
     }
     try {
       await createMissionNotification(env, order.user_id, "redemption_approved",
-        "✅ تمت الموافقة على طلب الاستبدال", "تم قبول طلبك: " + String(order.offer_name) + ".");
+        "✅ تمت الموافقة على طلب الاستبدال",
+        "تم قبول طلبك رقم #" + orderId + " للعرض " + String(order.offer_name) +
+        ". تم اعتماد الاستبدال من الإدارة.");
     } catch (error) { console.error("Redemption approval notification failed", error); }
     resultText = "✅ تمت الموافقة على طلب الاستبدال.";
   } else {
@@ -258,8 +332,9 @@ async function handleRedemptionCallback(callback, env) {
     try {
       await createMissionNotification(env, order.user_id, "redemption_rejected",
         "❌ تم رفض طلب الاستبدال",
-        "تم رفض طلب " + String(order.offer_name) + " وإعادة " +
-        Number(order.points_cost).toLocaleString() + " نقطة إلى رصيدك.");
+        "تم رفض طلبك رقم #" + orderId + " للعرض " + String(order.offer_name) +
+        " وإعادة " + Number(order.points_cost).toLocaleString() +
+        " نقطة إلى رصيدك.");
     } catch (error) { console.error("Redemption rejection notification failed", error); }
     resultText = "❌ تم رفض الطلب وإعادة " + Number(order.points_cost).toLocaleString() + " نقطة للمستخدم.";
   }
