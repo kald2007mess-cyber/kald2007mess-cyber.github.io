@@ -307,8 +307,10 @@ async function downloadFile(file,button,box,fill,label,redo){
 
   fill.style.width='100%';
   label.textContent=t.done;
+  button.hidden=true;
   if(redo)redo.hidden=false;
  }catch(error){
+  button.hidden=false;
   if(redo)redo.hidden=true;
   box.style.display='none';
   alert(error.message||t.failed);
