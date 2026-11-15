@@ -64,6 +64,7 @@ const translations={
   noFile:'لا يوجد ملف متاح حاليًا.',
   loading:'جاري تحميل معلومات الملف...',
   downloading:'جارٍ تحميل الملف...',
+  redownload:'↻ إعادة تحميل الملف',
   done:'اكتمل التنزيل 100% — جارٍ حفظ الملف',
   failed:'تعذر التنزيل. حاول مرة أخرى.',
   videoError:'تعذر تشغيل فيديو الشرح.'
@@ -80,6 +81,7 @@ const translations={
   noFile:'No file is currently available.',
   loading:'Loading file information...',
   downloading:'Downloading file...',
+  redownload:'↻ DOWNLOAD AGAIN',
   done:'Download complete 100% — saving file',
   failed:'Download failed. Please try again.',
   videoError:'Unable to play the tutorial video.'
@@ -96,6 +98,7 @@ const translations={
   noFile:'Файл сейчас недоступен.',
   loading:'Загрузка информации о файле...',
   downloading:'Загрузка файла...',
+  redownload:'↻ СКАЧАТЬ СНОВА',
   done:'Загрузка завершена на 100% — сохранение файла',
   failed:'Не удалось загрузить файл. Попробуйте снова.',
   videoError:'Не удалось воспроизвести видео.'
@@ -150,6 +153,12 @@ function renderFiles(){
   button.type='button';
   button.textContent=slot===1?t.download1:t.download2;
 
+  const redo=document.createElement('button');
+  redo.className='download-btn';
+  redo.type='button';
+  redo.textContent=t.redownload;
+  redo.hidden=true;
+
   const progressBox=document.createElement('div');
   progressBox.className='progress-box';
   const track=document.createElement('div');
@@ -175,10 +184,15 @@ function renderFiles(){
    info.textContent=details.join(' ');
    button.disabled=!allowed;
    button.title=allowed?t.ready:t.needAds;
-   button.addEventListener('click',()=>downloadFile(file,button,progressBox,fill,label));
+   button.addEventListener('click',()=>downloadFile(file,button,progressBox,fill,label,redo));
+   redo.addEventListener('click',async()=>{
+    redo.disabled=true;
+    await downloadFile(file,button,progressBox,fill,label,redo);
+    redo.disabled=false;
+   });
   }
 
-  section.append(info,button,progressBox);
+  section.append(info,button,progressBox,redo);
   container.appendChild(section);
  }
 }
@@ -230,7 +244,7 @@ async function loadPage(){
  }
 }
 
-async function downloadFile(file,button,box,fill,label){
+async function downloadFile(file,button,box,fill,label,redo){
  const t=translations[lang];
  if(!file || !file.id || !allowed){
   alert(t.needAds);
@@ -289,7 +303,9 @@ async function downloadFile(file,button,box,fill,label){
 
   fill.style.width='100%';
   label.textContent=t.done;
+  if(redo)redo.hidden=false;
  }catch(error){
+  if(redo)redo.hidden=true;
   box.style.display='none';
   alert(error.message||t.failed);
  }finally{
