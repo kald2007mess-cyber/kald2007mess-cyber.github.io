@@ -267,6 +267,84 @@ async function handleGiftMessage(message, env) {
   return false;
 }
 
+
+async function showReviewMenu(env, chatId, messageId = null) {
+  const data = { chat_id: chatId, text: "📋 مراجعة الطلبات\\n\\nاختر نوع الطلب الذي تريد مراجعته:",
+    reply_markup: { inline_keyboard: [
+      [{ text: "📝 طلبات المهمات (الدليل)", callback_data: "oxide_review:missions" }],
+      [{ text: "💎 طلبات استبدال النقاط (العروض)", callback_data: "oxide_review:redemptions" }]
+    ] } };
+  if (messageId) { data.message_id = messageId; await telegram(env, "editMessageText", data); }
+  else await telegram(env, "sendMessage", data);
+}
+async function handleReviewMessage(message, env) {
+  if (!message || String(message.chat?.id) !== String(env.TELEGRAM_ADMIN_ID)) return false;
+  if (!/^\\/review(?:@\\w+)?$/i.test(String(message.text || "").trim())) return false;
+  await showReviewMenu(env, message.chat.id); return true;
+}
+async function handleReviewCallback(callback, env) {
+  const message = callback.message;
+  if (!message || String(message.chat?.id) !== String(env.TELEGRAM_ADMIN_ID)) {
+    await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id, text: "غير مصرح لك" }); return;
+  }
+  const data = String(callback.data || ""), chatId = message.chat.id, messageId = message.message_id;
+  if (data === "oxide_review:menu") {
+    await showReviewMenu(env, chatId, messageId);
+  } else if (data === "oxide_review:missions") {
+    const result = await env.DB.prepare(`
+      SELECT s.id,s.user_id,s.mission_id,s.proof_file_id,s.created_at,
+             m.title AS mission_title,m.reward_points,v.points
+      FROM mission_submissions s
+      JOIN oxide_admin_missions m ON m.id=s.mission_id
+      LEFT JOIN visitors v ON v.user_id=s.user_id
+      WHERE s.status='pending' ORDER BY s.created_at ASC LIMIT 10
+    `).all();
+    const rows=result.results||[];
+    await telegram(env,"editMessageText",{chat_id:chatId,message_id:messageId,
+      text: rows.length ? "📝 طلبات المهمات المعلّقة (آخر 10):" : "📝 لا توجد طلبات مهمات معلّقة حاليًا.",
+      reply_markup:{inline_keyboard:[[ {text:"⬅️ رجوع",callback_data:"oxide_review:menu"} ]] }});
+    for (const row of rows) {
+      const uid=String(row.user_id||""), display="OX-"+uid.replace(/-/g,"").slice(0,8).toUpperCase();
+      const caption="📝 طلب مهمة #"+row.id+"\\n🎯 المهمة: "+String(row.mission_title||"غير معروف")+
+        "\\n🆔 المستخدم: "+display+"\\n🔐 UUID: "+uid+
+        "\\n⭐ الرصيد: "+Number(row.points||0).toLocaleString()+" نقطة"+
+        "\\n🎁 المكافأة: "+Number(row.reward_points||0).toLocaleString()+" نقطة"+
+        "\\n📅 تاريخ الطلب: "+new Date(Number(row.created_at||0)*1000).toLocaleString("ar");
+      const keyboard={inline_keyboard:[[
+        {text:"موافقة ✅",callback_data:"oxide_mission:approve:"+row.id},
+        {text:"رفض ❌",callback_data:"oxide_mission:reject:"+row.id}
+      ]]};
+      if(row.proof_file_id && row.proof_file_id!=="uploading")
+        await telegram(env,"sendPhoto",{chat_id:chatId,photo:row.proof_file_id,caption,reply_markup:keyboard});
+      else await telegram(env,"sendMessage",{chat_id:chatId,text:caption+"\\n⚠️ ملف الدليل غير متوفر.",reply_markup:keyboard});
+    }
+  } else if (data === "oxide_review:redemptions") {
+    const result=await env.DB.prepare(`
+      SELECT o.id,o.user_id,o.display_id,o.offer_name,o.points_cost,o.user_uuid_input,o.created_at,v.points
+      FROM oxide_redemption_orders o LEFT JOIN visitors v ON v.user_id=o.user_id
+      WHERE o.status='pending' ORDER BY o.created_at ASC LIMIT 10
+    `).all();
+    const rows=result.results||[];
+    await telegram(env,"editMessageText",{chat_id:chatId,message_id:messageId,
+      text:rows.length?"💎 طلبات استبدال النقاط المعلّقة (آخر 10):":"💎 لا توجد طلبات استبدال معلّقة حاليًا.",
+      reply_markup:{inline_keyboard:[[ {text:"⬅️ رجوع",callback_data:"oxide_review:menu"} ]] }});
+    for(const row of rows){
+      const uid=String(row.user_id||"");
+      const details="💎 طلب استبدال #"+row.id+"\\n👤 المستخدم: "+String(row.display_id||("OX-"+uid.replace(/-/g,"").slice(0,8).toUpperCase()))+
+        "\\n🔐 UUID: "+uid+"\\n🎮 العرض: "+String(row.offer_name||"غير معروف")+
+        "\\n💰 النقاط المطلوبة: "+Number(row.points_cost||0).toLocaleString()+
+        "\\n⭐ الرصيد الحالي: "+Number(row.points||0).toLocaleString()+
+        "\\n🪪 UUID المدخل: "+String(row.user_uuid_input||"غير متوفر")+
+        "\\n📅 تاريخ الطلب: "+new Date(Number(row.created_at||0)*1000).toLocaleString("ar");
+      await telegram(env,"sendMessage",{chat_id:chatId,text:details,reply_markup:{inline_keyboard:[[
+        {text:"موافقة ✅",callback_data:"oxide_redeem:approve:"+row.id},
+        {text:"رفض ❌",callback_data:"oxide_redeem:reject:"+row.id}
+      ]]}});
+    }
+  }
+  await telegram(env,"answerCallbackQuery",{callback_query_id:callback.id});
+}
+
 // مراجعة طلبات استبدال النقاط من تيليغرام
 async function handleRedemptionCallback(callback, env) {
   const message = callback.message;
@@ -376,12 +454,12 @@ async function handleMissionCallback(callback, env) {
   const now = Math.floor(Date.now() / 1000);
 
   const submission = await env.DB.prepare(`
-    SELECT id, user_id, mission_id, status
-    FROM mission_submissions
-    WHERE id = ?
+    SELECT s.id, s.user_id, s.mission_id, s.status, m.reward_points
+    FROM mission_submissions s JOIN oxide_admin_missions m ON m.id=s.mission_id
+    WHERE s.id = ?
   `).bind(submissionId).first();
 
-  if (!submission || Number(submission.mission_id) !== 1) {
+  if (!submission) {
     await telegram(env, "answerCallbackQuery", {
       callback_query_id: callback.id,
       text: "الطلب غير موجود"
@@ -403,14 +481,14 @@ async function handleMissionCallback(callback, env) {
     const results = await env.DB.batch([
       env.DB.prepare(`
         UPDATE visitors
-        SET points = points + 50
+        SET points = points + ?
         WHERE user_id = ?
           AND EXISTS (
             SELECT 1
             FROM mission_submissions
             WHERE id = ? AND status = 'pending'
           )
-      `).bind(submission.user_id, submissionId),
+      `).bind(Number(submission.reward_points || 0), submission.user_id, submissionId),
 
       env.DB.prepare(`
         UPDATE mission_submissions
@@ -430,8 +508,8 @@ async function handleMissionCallback(callback, env) {
       return;
     }
 
-    try{await createMissionNotification(env,submission.user_id,"mission_approved","✅ تمت الموافقة على مهمتك","تم قبول المهمة وإضافة 50 نقطة إلى رصيدك.");}catch(error){console.error("Mission notification failed",error);}
-    resultText = "✅ تمت الموافقة وإضافة 50 نقطة للمستخدم.";
+    try{await createMissionNotification(env,submission.user_id,"mission_approved","✅ تمت الموافقة على مهمتك","تم قبول المهمة وإضافة "+Number(submission.reward_points || 0).toLocaleString()+" نقطة إلى رصيدك.");}catch(error){console.error("Mission notification failed",error);}
+    resultText = "✅ تمت الموافقة وإضافة "+Number(submission.reward_points || 0).toLocaleString()+" نقطة للمستخدم.";
   } else {
     const rejected = await env.DB.prepare(`
       UPDATE mission_submissions
@@ -708,19 +786,17 @@ export async function onRequestPost({ request, env }) {
 
     const update = await request.json();
 
-    // أزرار مراجعة طلبات الاستبدال والمهام
     if (update.callback_query) {
-      if (String(update.callback_query.data || "").startsWith("oxide_redeem:")) {
-        await handleRedemptionCallback(update.callback_query, env);
-      } else {
-        await handleMissionCallback(update.callback_query, env);
-      }
+      const callbackData = String(update.callback_query.data || "");
+      if (callbackData.startsWith("oxide_review:")) await handleReviewCallback(update.callback_query, env);
+      else if (callbackData.startsWith("oxide_redeem:")) await handleRedemptionCallback(update.callback_query, env);
+      else if (callbackData.startsWith("oxide_mission:")) await handleMissionCallback(update.callback_query, env);
       return json({ success: true });
     }
 
     if (update.message) {
-      // أمر إرسال هدايا النقاط أولاً، ثم نشر الأخبار، ثم الدعم.
-      const giftHandled = await handleGiftMessage(update.message, env);
+      const reviewHandled = await handleReviewMessage(update.message, env);
+      const giftHandled = reviewHandled ? true : await handleGiftMessage(update.message, env);
       if (!giftHandled) {
         const newsHandled = await handleNewsMessage(update.message, env);
         if (!newsHandled) {
