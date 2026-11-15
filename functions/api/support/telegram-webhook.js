@@ -29,6 +29,27 @@ async function adminMessage(env, chatId, text) {
 }
 
 
+async function ensureNotificationsTable(DB) {
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS oxide_notifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      type TEXT NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL DEFAULT '',
+      reward_points INTEGER NOT NULL DEFAULT 0,
+      created_at INTEGER NOT NULL,
+      read_at INTEGER,
+      claimed_at INTEGER,
+      claim_token TEXT
+    )
+  `).run();
+  await DB.prepare(`
+    CREATE INDEX IF NOT EXISTS idx_oxide_notifications_user
+    ON oxide_notifications(user_id, created_at DESC)
+  `).run();
+}
+
 async function ensureGiftSessions(DB) {
   await DB.prepare(`
     CREATE TABLE IF NOT EXISTS telegram_gift_sessions (
@@ -49,6 +70,7 @@ async function handleGiftMessage(message, env) {
   ) return false;
 
   await ensureGiftSessions(env.DB);
+  await ensureNotificationsTable(env.DB);
   const chatId = String(message.chat.id);
   const text = String(message.text || "").trim();
 
