@@ -202,7 +202,7 @@ async function handleRedemptionCallback(callback, env) {
     await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id, text: "غير مصرح لك بهذا الإجراء" });
     return;
   }
-  const match = String(callback.data || "").match(/^oxide_redeem:(approve|reject):(\\d+)$/);
+  const match = String(callback.data || "").match(/^oxide_redeem:(approve|reject):(\d+)$/);
   if (!match) return;
   const action = match[1];
   const orderId = Number(match[2]);
@@ -270,7 +270,7 @@ async function handleRedemptionCallback(callback, env) {
   await telegram(env, "editMessageText", {
     chat_id: message.chat.id,
     message_id: message.message_id,
-    text: (message.text || "") + "\\n\\n" + resultText,
+    text: (message.text || "") + "\n\n" + resultText,
     reply_markup: { inline_keyboard: [] }
   });
 }
