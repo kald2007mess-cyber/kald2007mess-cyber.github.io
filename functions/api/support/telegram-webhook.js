@@ -28,6 +28,173 @@ async function adminMessage(env, chatId, text) {
   });
 }
 
+
+async function ensureGiftSessions(DB) {
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS telegram_gift_sessions (
+      admin_id TEXT PRIMARY KEY,
+      stage TEXT NOT NULL,
+      target_user_id TEXT,
+      created_at INTEGER NOT NULL,
+      updated_at INTEGER NOT NULL
+    )
+  `).run();
+}
+
+// أمر /gift: اختيار المستخدم ثم عدد النقاط، دون منحها مباشرة.
+async function handleGiftMessage(message, env) {
+  if (
+    !message ||
+    String(message.chat?.id) !== String(env.TELEGRAM_ADMIN_ID)
+  ) return false;
+
+  await ensureGiftSessions(env.DB);
+  const chatId = String(message.chat.id);
+  const text = String(message.text || "").trim();
+
+  if (/^\/gift(?:@\w+)?(?:\s|$)/i.test(text)) {
+    const now = Math.floor(Date.now() / 1000);
+    await env.DB.prepare(`
+      INSERT INTO telegram_gift_sessions
+        (admin_id, stage, target_user_id, created_at, updated_at)
+      VALUES (?, 'user', NULL, ?, ?)
+      ON CONFLICT(admin_id) DO UPDATE SET
+        stage = 'user',
+        target_user_id = NULL,
+        created_at = excluded.created_at,
+        updated_at = excluded.updated_at
+    `).bind(chatId, now, now).run();
+
+    await adminMessage(env, message.chat.id,
+      "🎁 إرسال هدية نقاط\n\nأرسل الآن معرف المستخدم (UUID أو OX-XXXXXXXX).\nلإلغاء العملية أرسل /cancel.");
+    return true;
+  }
+
+  const session = await env.DB.prepare(`
+    SELECT admin_id, stage, target_user_id
+    FROM telegram_gift_sessions
+    WHERE admin_id = ?
+  `).bind(chatId).first();
+
+  if (/^\/cancel(?:@\w+)?$/i.test(text)) {
+    if (!session) return false;
+    await env.DB.prepare("DELETE FROM telegram_gift_sessions WHERE admin_id = ?")
+      .bind(chatId).run();
+    await adminMessage(env, message.chat.id, "تم إلغاء إرسال الهدية.");
+    return true;
+  }
+
+  if (!session) return false;
+  if (!text || text.startsWith("/")) return false;
+
+  if (session.stage === "user") {
+    const raw = text.trim().toUpperCase();
+    let user = null;
+
+    if (/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(raw)) {
+      user = await env.DB.prepare(`
+        SELECT user_id, points, created_at
+        FROM visitors
+        WHERE UPPER(user_id) = ?
+        LIMIT 1
+      `).bind(raw).first();
+    } else {
+      const prefix = raw.replace(/^OX-?/, "");
+      if (!/^[0-9A-F]{8}$/.test(prefix)) {
+        await adminMessage(env, message.chat.id,
+          "⚠️ المعرف غير صحيح. أرسل UUID كاملًا أو OX- متبوعًا بثمانية أحرف/أرقام.");
+        return true;
+      }
+
+      const matches = await env.DB.prepare(`
+        SELECT user_id, points, created_at
+        FROM visitors
+        WHERE UPPER(SUBSTR(REPLACE(user_id, '-', ''), 1, 8)) = ?
+        LIMIT 2
+      `).bind(prefix).all();
+
+      if ((matches.results || []).length > 1) {
+        await adminMessage(env, message.chat.id,
+          "⚠️ هذا المعرف المختصر غير فريد. أرسل UUID الكامل للمستخدم.");
+        return true;
+      }
+      user = matches.results?.[0] || null;
+    }
+
+    if (!user) {
+      await adminMessage(env, message.chat.id,
+        "❌ لم أجد هذا المستخدم. تحقق من المعرف وأرسله مجددًا.");
+      return true;
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    await env.DB.prepare(`
+      UPDATE telegram_gift_sessions
+      SET stage = 'points', target_user_id = ?, updated_at = ?
+      WHERE admin_id = ?
+    `).bind(user.user_id, now, chatId).run();
+
+    const displayId = "OX-" + user.user_id.replace(/-/g, "").slice(0, 8).toUpperCase();
+    await adminMessage(env, message.chat.id,
+      "👤 تم العثور على المستخدم\n\n" +
+      "🆔 المعرف: " + displayId + "\n" +
+      "⭐ الرصيد الحالي: " + Number(user.points || 0).toLocaleString() + " نقطة\n" +
+      "📅 التسجيل: " + (user.created_at ? new Date(Number(user.created_at) * 1000).toISOString() : "غير معروف") +
+      "\n\nأرسل الآن عدد النقاط التي تريد إرسالها (من 1 إلى 1,000,000).");
+    return true;
+  }
+
+  if (session.stage === "points") {
+    if (!/^\d+$/.test(text)) {
+      await adminMessage(env, message.chat.id, "⚠️ أرسل عدد النقاط كرقم صحيح فقط.");
+      return true;
+    }
+
+    const points = Number(text);
+    if (!Number.isSafeInteger(points) || points < 1 || points > 1000000) {
+      await adminMessage(env, message.chat.id,
+        "⚠️ العدد يجب أن يكون بين 1 و 1,000,000 نقطة.");
+      return true;
+    }
+
+    const now = Math.floor(Date.now() / 1000);
+    const title = "🎁 هدية نقاط من إدارة OXIDE HUB";
+    const body = "أهدتك إدارة OXIDE HUB " + points.toLocaleString() +
+      " نقطة. اضغط زر استلام لإضافتها إلى رصيدك.";
+
+    // إدراج الهدية وحذف جلسة الإدارة ضمن batch واحدة لمنع تكرارها عند إعادة webhook.
+    const results = await env.DB.batch([
+      env.DB.prepare(`
+        INSERT INTO oxide_notifications
+          (user_id, type, title, body, reward_points, created_at)
+        SELECT target_user_id, 'reward', ?, ?, ?, ?
+        FROM telegram_gift_sessions
+        WHERE admin_id = ? AND stage = 'points' AND target_user_id IS NOT NULL
+      `).bind(title, body, points, now, chatId),
+      env.DB.prepare(`
+        DELETE FROM telegram_gift_sessions
+        WHERE admin_id = ? AND stage = 'points' AND target_user_id IS NOT NULL
+      `).bind(chatId)
+    ]);
+
+    const created = Number(results[0]?.meta?.changes || 0);
+    if (created !== 1) {
+      await adminMessage(env, message.chat.id,
+        "⚠️ انتهت جلسة الهدية أو لم يعد المستخدم محددًا. أرسل /gift للبدء من جديد.");
+      return true;
+    }
+
+    await adminMessage(env, message.chat.id,
+      "✅ تم إرسال الهدية بنجاح!\n\n🆔 المستخدم: OX-" +
+      session.target_user_id.replace(/-/g, "").slice(0, 8).toUpperCase() +
+      "\n🎁 الهدية: " + points.toLocaleString() +
+      " نقطة\n\nستظهر في صندوق إشعارات المستخدم مع زر استلام.");
+    return true;
+  }
+
+  return false;
+}
+
 // مراجعة المهام من أزرار تيليغرام
 async function handleMissionCallback(callback, env) {
   const message = callback.message;
@@ -393,15 +560,13 @@ export async function onRequestPost({ request, env }) {
     }
 
     if (update.message) {
-      // معالجة نشر الأخبار أولاً
-      const handled = await handleNewsMessage(
-        update.message,
-        env
-      );
-
-      // إذا لم تكن رسالة نشر، نحافظ على نظام الدعم
-      if (!handled) {
-        await handleSupportReply(update.message, env);
+      // أمر إرسال هدايا النقاط أولاً، ثم نشر الأخبار، ثم الدعم.
+      const giftHandled = await handleGiftMessage(update.message, env);
+      if (!giftHandled) {
+        const newsHandled = await handleNewsMessage(update.message, env);
+        if (!newsHandled) {
+          await handleSupportReply(update.message, env);
+        }
       }
 
       return json({ success: true });
