@@ -132,10 +132,12 @@ async function reviewMission(DB, id, decision) {
       return { success: false, status: 409, error: "REQUEST_ALREADY_REVIEWED" };
     }
 
-    await notifyUser(DB, submission.user_id, "mission_approved",
-      "✅ تمت الموافقة على مهمتك",
-      "تم قبول المهمة " + String(submission.title || "") +
-      " وإضافة " + reward.toLocaleString() + " نقطة إلى رصيدك.");
+    try {
+      await notifyUser(DB, submission.user_id, "mission_approved",
+        "✅ تمت الموافقة على مهمتك",
+        "تم قبول المهمة " + String(submission.title || "") +
+        " وإضافة " + reward.toLocaleString() + " نقطة إلى رصيدك.");
+    } catch (error) { console.error("Mission approval notification failed", error); }
     return { success: true, message: "تم قبول المهمة وإضافة " + reward.toLocaleString() + " نقطة للمستخدم." };
   }
 
@@ -148,10 +150,12 @@ async function reviewMission(DB, id, decision) {
     return { success: false, status: 409, error: "REQUEST_ALREADY_REVIEWED" };
   }
 
-  await notifyUser(DB, submission.user_id, "mission_rejected",
-    "❌ تم رفض إثبات المهمة",
-    "لم يتم قبول إثبات المهمة " + String(submission.title || "") +
-    ". راجع المطلوب وأرسل إثباتًا صحيحًا جديدًا.");
+  try {
+    await notifyUser(DB, submission.user_id, "mission_rejected",
+      "❌ تم رفض إثبات المهمة",
+      "لم يتم قبول إثبات المهمة " + String(submission.title || "") +
+      ". راجع المطلوب وأرسل إثباتًا صحيحًا جديدًا.");
+  } catch (error) { console.error("Mission rejection notification failed", error); }
   return { success: true, message: "تم رفض المهمة. يمكن للمستخدم إرسال دليل جديد." };
 }
 
@@ -178,10 +182,12 @@ async function reviewRedemption(DB, id, decision) {
       return { success: false, status: 409, error: "REQUEST_ALREADY_REVIEWED" };
     }
 
-    await notifyUser(DB, order.user_id, "redemption_approved",
-      "✅ تمت الموافقة على طلب الاستبدال",
-      "تم قبول طلبك رقم #" + id + " للعرض " +
-      String(order.offer_name) + ". تم اعتماد الاستبدال من الإدارة.");
+    try {
+      await notifyUser(DB, order.user_id, "redemption_approved",
+        "✅ تمت الموافقة على طلب الاستبدال",
+        "تم قبول طلبك رقم #" + id + " للعرض " +
+        String(order.offer_name) + ". تم اعتماد الاستبدال من الإدارة.");
+    } catch (error) { console.error("Redemption approval notification failed", error); }
     return { success: true, message: "تمت الموافقة على طلب الاستبدال." };
   }
 
@@ -213,10 +219,12 @@ async function reviewRedemption(DB, id, decision) {
     return { success: false, status: 409, error: "REDEMPTION_REFUND_FAILED" };
   }
 
-  await notifyUser(DB, order.user_id, "redemption_rejected",
-    "❌ تم رفض طلب الاستبدال",
-    "تم رفض طلبك رقم #" + id + " للعرض " + String(order.offer_name) +
-    " وإعادة " + points.toLocaleString() + " نقطة إلى رصيدك.");
+  try {
+    await notifyUser(DB, order.user_id, "redemption_rejected",
+      "❌ تم رفض طلب الاستبدال",
+      "تم رفض طلبك رقم #" + id + " للعرض " + String(order.offer_name) +
+      " وإعادة " + points.toLocaleString() + " نقطة إلى رصيدك.");
+  } catch (error) { console.error("Redemption rejection notification failed", error); }
   return { success: true, message: "تم رفض الطلب وإعادة " + points.toLocaleString() + " نقطة للمستخدم." };
 }
 
