@@ -635,7 +635,13 @@ async function loadNotifications(openPanel=false){
    }
    list.appendChild(card);
   });
-  if(openPanel)document.getElementById("notificationsPanel").hidden=false;
+  if(openPanel){
+   document.getElementById("notificationsPanel").hidden=false;
+   await fetch("/api/notifications",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",body:JSON.stringify({action:"read_all"})});
+   oxideNotifications.forEach(n=>n.read_at=n.read_at||Math.floor(Date.now()/1000));
+   list.querySelectorAll(".notification-item").forEach(card=>card.classList.remove("unread"));
+   const badge=document.getElementById("notificationCount");if(badge)badge.style.display="none";
+  }
  }catch(error){if(list)list.innerHTML='<div class="notification-empty">تعذر تحميل الإشعارات. حاول مجددًا.</div>'}
  finally{notificationsBusy=false}
 }
