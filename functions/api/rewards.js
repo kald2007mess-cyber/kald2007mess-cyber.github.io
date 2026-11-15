@@ -127,11 +127,11 @@ export async function onRequestPost({ request, env }) {
     orderId = Number(inserted.id);
 
     const messageText =
-      "🎁 OXIDE HUB — طلب استبدال نقاط جديد\\n\\n" +
-      "🧾 الطلب: #" + orderId + "\\n" +
-      "👤 المستخدم: " + displayId + "\\n" +
-      "🎮 العرض: " + offer.name + "\\n" +
-      "⭐ النقاط: " + offer.points.toLocaleString() + "\\n\\n" +
+      "🎁 OXIDE HUB — طلب استبدال نقاط جديد\n\n" +
+      "🧾 الطلب: #" + orderId + "\n" +
+      "👤 المستخدم: " + displayId + "\n" +
+      "🎮 العرض: " + offer.name + "\n" +
+      "⭐ النقاط: " + offer.points.toLocaleString() + "\n\n" +
       "اختر الموافقة أو الرفض:";
 
     const tgResponse = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
