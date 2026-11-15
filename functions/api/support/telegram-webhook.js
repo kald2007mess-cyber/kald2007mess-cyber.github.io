@@ -167,7 +167,7 @@ async function handleGiftMessage(message, env) {
   }
 
   if (session.stage === "points") {
-    if (!/^-?\\d+$/.test(text) || text === "-0") {
+    if (!/^-?\d+$/.test(text) || text === "-0") {
       await adminMessage(env, message.chat.id,
         "⚠️ أرسل عددًا صحيحًا فقط. مثال للإضافة: 1000، وللخصم: -1000.");
       return true;
