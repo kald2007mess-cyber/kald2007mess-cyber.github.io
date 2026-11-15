@@ -242,7 +242,7 @@ export async function onRequestGet({ request, env }) {
       headers.set("Accept-Ranges", upstream.headers.get("Accept-Ranges") || "none");
 
       const contentLength = upstream.headers.get("Content-Length");
-      if (contentLength && /^\\d+$/.test(contentLength)) {
+      if (contentLength && /^\d+$/.test(contentLength)) {
         headers.set("Content-Length", contentLength);
       }
 
