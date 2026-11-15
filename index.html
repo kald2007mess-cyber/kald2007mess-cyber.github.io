@@ -655,7 +655,7 @@ async function loadNotifications(openPanel=false){
   oxideNotifications=Array.isArray(data.notifications)?data.notifications:[];
   const unread=oxideNotifications.filter(n=>!n.read_at).length;
   const badge=document.getElementById("notificationCount");
-  if(badge){badge.textContent="";badge.style.display=unread?"block":"none";badge.setAttribute("aria-label",unread?"إشعارات غير مقروءة":"لا توجد إشعارات غير مقروءة")}
+  if(badge){badge.textContent="";badge.style.display=unread?"block":"none";badge.setAttribute("aria-label",unread?"إشعارات غير مقروءة":"لا توجد إشعارات غير مقروءة")}const deleteButton=document.getElementById("deleteReadNotificationsButton");if(deleteButton)deleteButton.disabled=!oxideNotifications.some(n=>Boolean(n.read_at));
   if(!list)return;
   if(!oxideNotifications.length){list.innerHTML='<div class="notification-empty">لا توجد إشعارات حتى الآن.</div>';return}
   list.replaceChildren();
