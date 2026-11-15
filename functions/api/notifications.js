@@ -44,6 +44,13 @@ export async function onRequestPost({ request, env }) {
     if (!userId) return json({ success:false, error:"NO_VISITOR_SESSION" },401);
     await ensureTable(env.DB);
     const body = await request.json();
+    if (body.action === "delete_read") {
+      const result = await env.DB.prepare(`
+        DELETE FROM oxide_notifications
+        WHERE user_id = ? AND read_at IS NOT NULL
+      `).bind(userId).run();
+      return json({ success:true, deleted:Number(result.meta?.changes || 0) });
+    }
     if (body.action === "read_all") {
       await env.DB.prepare(`
         UPDATE oxide_notifications SET read_at = COALESCE(read_at, ?)
