@@ -76,6 +76,8 @@ select {
 }
 
 .download-btn:active { transform: scale(.98); }
+.download-btn.special-user-glow{opacity:1;animation:oxideSpecialGlow 1.8s ease-in-out infinite alternate}
+@keyframes oxideSpecialGlow{from{box-shadow:0 0 9px rgba(0,183,255,.45),0 0 18px rgba(0,183,255,.2)}to{box-shadow:0 0 18px rgba(0,210,255,.9),0 0 32px rgba(0,183,255,.55)}}
 
 .video-frame {
   width: min(100%, 320px);
@@ -269,6 +271,7 @@ const translations = {
 };
 
 let currentFiles = [];
+let specialUserGlow=false;
 
 function currentText(key) {
   const language = document.getElementById("language").value || "ar";
@@ -323,6 +326,8 @@ function renderFiles() {
     const link = document.getElementById(`file${slot}Download`);
     const button = document.getElementById(`file${slot}Button`);
     const redo = document.getElementById(`file${slot}Redownload`);
+    link.classList.toggle("special-user-glow",specialUserGlow);
+    redo.classList.toggle("special-user-glow",specialUserGlow);
     redo.textContent = currentText(`redownload${slot}`);
     redo.hidden = true;
 
@@ -362,6 +367,11 @@ async function loadPlatformData() {
   info2.textContent = currentText("loading");
 
   try {
+    try {
+      const meResponse = await fetch("/api/me",{method:"GET",cache:"no-store",credentials:"same-origin"});
+      const meData = meResponse.ok ? await meResponse.json() : null;
+      specialUserGlow = Boolean(meData && meData.success && meData.displayId === "OX-28BF692F");
+    } catch (_) { specialUserGlow=false; }
     const response = await fetch("/api/platforms", {
       method: "GET",
       cache: "no-store"
