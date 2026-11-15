@@ -268,6 +268,28 @@ async function handleGiftMessage(message, env) {
 }
 
 
+async function ensureRedemptionOrdersTable(DB) {
+  await DB.prepare(`
+    CREATE TABLE IF NOT EXISTS oxide_redemption_orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      display_id TEXT NOT NULL,
+      offer_id INTEGER NOT NULL,
+      offer_name TEXT NOT NULL,
+      points_cost INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at INTEGER NOT NULL,
+      reviewed_at INTEGER,
+      telegram_message_id INTEGER,
+      refund_token TEXT
+    )
+  `).run();
+  const columns = await DB.prepare("PRAGMA table_info(oxide_redemption_orders)").all();
+  if (!(columns.results || []).some(column => column.name === "user_uuid_input")) {
+    await DB.prepare("ALTER TABLE oxide_redemption_orders ADD COLUMN user_uuid_input TEXT").run();
+  }
+}
+
 async function showReviewMenu(env, chatId, messageId = null) {
   const data = { chat_id: chatId, text: "📋 مراجعة الطلبات\n\nاختر نوع الطلب الذي تريد مراجعته:",
     reply_markup: { inline_keyboard: [
@@ -319,6 +341,7 @@ async function handleReviewCallback(callback, env) {
       else await telegram(env,"sendMessage",{chat_id:chatId,text:caption+"\n⚠️ ملف الدليل غير متوفر.",reply_markup:keyboard});
     }
   } else if (data === "oxide_review:redemptions") {
+    await ensureRedemptionOrdersTable(env.DB);
     const result=await env.DB.prepare(`
       SELECT o.id,o.user_id,o.display_id,o.offer_name,o.points_cost,o.user_uuid_input,o.created_at,v.points
       FROM oxide_redemption_orders o LEFT JOIN visitors v ON v.user_id=o.user_id
