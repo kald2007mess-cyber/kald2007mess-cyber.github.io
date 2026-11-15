@@ -160,7 +160,7 @@ export async function onRequestPost({ request, env }) {
         });
       }
 
-      try{await createMissionNotification(env,submission.user_id,"mission_approved","✅ تمت الموافقة على مهمتك,`تم قبول مهمة ${submission.title} وإضافة ${reward} نقطة إلى رصيدك.`);}catch(error){console.error("Mission notification failed",error);}
+      try{await createMissionNotification(env,submission.user_id,"mission_approved","✅ تمت الموافقة على مهمتك",`تم قبول مهمة ${submission.title} وإضافة ${reward} نقطة إلى رصيدك.`);}catch(error){console.error("Mission notification failed",error);}
 
       resultText =
         `✅ تمت الموافقة على مهمة ${submission.title}\n` +
