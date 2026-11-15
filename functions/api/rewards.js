@@ -31,6 +31,11 @@ async function ensureOrdersTable(DB) {
     CREATE INDEX IF NOT EXISTS idx_oxide_redemption_user
     ON oxide_redemption_orders(user_id, created_at DESC)
   `).run();
+
+  const columns = await DB.prepare("PRAGMA table_info(oxide_redemption_orders)").all();
+  if (!(columns.results || []).some(column => column.name === "user_uuid_input")) {
+    await DB.prepare("ALTER TABLE oxide_redemption_orders ADD COLUMN user_uuid_input TEXT").run();
+  }
 }
 
 async function getUser(request, env) {
@@ -105,7 +110,8 @@ export async function onRequestPost({ request, env }) {
     offer = OFFERS.find(item => item.id === Number(body.offerId));
     if (!offer) return response({ success: false, error: "INVALID_OFFER" }, cookie, 400);
 
-    const displayId = await resolveOwnUuid(env.DB, body.userUuid, userId);
+    const enteredUuid = String(body.userUuid || "").trim();
+    const displayId = await resolveOwnUuid(env.DB, enteredUuid, userId);
     if (!displayId) return response({ success: false, error: "UUID_DOES_NOT_MATCH_ACCOUNT" }, cookie, 400);
 
     const debit = await env.DB.prepare(`
@@ -117,12 +123,28 @@ export async function onRequestPost({ request, env }) {
     deducted = true;
 
     const now = Math.floor(Date.now() / 1000);
+    const [missionStats, referralStats] = await Promise.all([
+      env.DB.prepare(`
+        SELECT COUNT(*) AS total
+        FROM mission_submissions
+        WHERE user_id = ? AND status = 'approved'
+      `).bind(userId).first(),
+      env.DB.prepare(`
+        SELECT COUNT(*) AS total
+        FROM referrals
+        WHERE referrer_id = ?
+      `).bind(userId).first()
+    ]);
+    const completedMissions = Number(missionStats?.total || 0);
+    const invitedFriends = Number(referralStats?.total || 0);
+    const pointsBeforeRequest = Number(debit.points || 0) + offer.points;
+
     const inserted = await env.DB.prepare(`
       INSERT INTO oxide_redemption_orders
-        (user_id, display_id, offer_id, offer_name, points_cost, status, created_at)
-      VALUES (?, ?, ?, ?, ?, 'pending', ?)
+        (user_id, display_id, offer_id, offer_name, points_cost, status, created_at, user_uuid_input)
+      VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)
       RETURNING id
-    `).bind(userId, displayId, offer.id, offer.name, offer.points, now).first();
+    `).bind(userId, displayId, offer.id, offer.name, offer.points, now, enteredUuid).first();
     if (!inserted?.id) throw new Error("ORDER_CREATE_FAILED");
     orderId = Number(inserted.id);
 
@@ -130,8 +152,12 @@ export async function onRequestPost({ request, env }) {
       "🎁 OXIDE HUB — طلب استبدال نقاط جديد\n\n" +
       "🧾 الطلب: #" + orderId + "\n" +
       "👤 المستخدم: " + displayId + "\n" +
+      "💰 رصيد المستخدم قبل الطلب: " + pointsBeforeRequest.toLocaleString() + " نقطة\n" +
+      "📋 المهمات المكتملة: " + completedMissions + "\n" +
+      "👥 الأصدقاء المدعوون: " + invitedFriends + "\n" +
       "🎮 العرض: " + offer.name + "\n" +
-      "⭐ النقاط: " + offer.points.toLocaleString() + "\n\n" +
+      "🎁 النقاط المطلوبة: " + offer.points.toLocaleString() + "\n" +
+      "🪪 UUID الذي أدخله: " + enteredUuid + "\n\n" +
       "اختر الموافقة أو الرفض:";
 
     const tgResponse = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
