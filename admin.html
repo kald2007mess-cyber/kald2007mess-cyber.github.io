@@ -319,8 +319,8 @@ function renderPlatformFiles(){
  document.getElementById("platformFilesCount").textContent=items.length;
  document.getElementById("platformDownloadsCount").textContent=items.reduce((n,item)=>n+Number(item.downloads_count||0),0).toLocaleString("en-US");
  const state=document.getElementById("platformStateLabel"),panel=state.closest(".platform-state-panel");
- if(enabledCount){state.textContent="🟢 المنصة متاحة";panel.classList.remove("is-soon");}
- else{state.textContent="🟠 SOON — المنصة متوقفة";panel.classList.add("is-soon");}
+ if(platformVisibility[currentPlatform]!==false){state.textContent="🟢 المنصة ON";panel.classList.remove("is-soon");}
+ else{state.textContent="🔴 SOON — المنصة OFF";panel.classList.add("is-soon");}
  const cards=[];
  for(let slot=1;slot<=2;slot++){
   const item=items.find(x=>Number(x.slot||1)===slot);
