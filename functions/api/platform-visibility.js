@@ -1,5 +1,5 @@
-import { json } from "../_lib/session.js";
-import { authorizeAdmin, adminAuthResponse } from "../_lib/admin-auth.js";
+import { json } from "./_lib/session.js";
+import { authorizeAdmin, adminAuthResponse } from "./_lib/admin-auth.js";
 
 const PLATFORMS = ["android", "ios", "beta"];
 
