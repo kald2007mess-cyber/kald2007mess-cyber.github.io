@@ -62,7 +62,7 @@ function attachmentHeader(fileName) {
 }
 
 async function findFile(env, platform, fileId) {
-  if (fileId) {
+  if (fileId && !fileId.startsWith("legacy-")) {
     return await env.DB.prepare(`
       SELECT *
       FROM platform_files
@@ -189,7 +189,8 @@ export async function onRequestGet({ request, env }) {
       }, 404);
     }
 
-    /* iOS */
+    /* iOS: proxy the remote file through this endpoint so the browser
+       can measure bytes received and verify the complete response. */
     if (platform === "ios") {
       if (!item.download_url) {
         return json({
@@ -198,11 +199,66 @@ export async function onRequestGet({ request, env }) {
         }, 404);
       }
 
-      if (fileId) {
+      let remoteUrl;
+      try {
+        remoteUrl = new URL(item.download_url);
+      } catch {
+        return json({ success: false, error: "INVALID_DOWNLOAD_URL" }, 500);
+      }
+
+      if (remoteUrl.protocol !== "https:") {
+        return json({ success: false, error: "INVALID_DOWNLOAD_URL" }, 500);
+      }
+
+      const upstreamHeaders = new Headers();
+      const requestedRange = request.headers.get("range");
+      if (requestedRange) upstreamHeaders.set("Range", requestedRange);
+
+      const upstream = await fetch(remoteUrl.toString(), {
+        method: "GET",
+        headers: upstreamHeaders,
+        redirect: "follow"
+      });
+
+      if (!upstream.ok || !upstream.body || !upstream.url.startsWith("https://")) {
+        return json({
+          success: false,
+          error: "REMOTE_FILE_UNAVAILABLE",
+          status: upstream.status
+        }, 502);
+      }
+
+      const headers = new Headers();
+      headers.set(
+        "Content-Type",
+        upstream.headers.get("Content-Type") || "application/octet-stream"
+      );
+      headers.set(
+        "Content-Disposition",
+        attachmentHeader(item.file_name || "OXIDE-iOS.ipa")
+      );
+      headers.set("Cache-Control", "no-store");
+      headers.set("X-Content-Type-Options", "nosniff");
+      headers.set("Accept-Ranges", upstream.headers.get("Accept-Ranges") || "none");
+
+      const contentLength = upstream.headers.get("Content-Length");
+      if (contentLength && /^\\d+$/.test(contentLength)) {
+        headers.set("Content-Length", contentLength);
+      }
+
+      if (upstream.status === 206) {
+        const contentRange = upstream.headers.get("Content-Range");
+        if (contentRange) headers.set("Content-Range", contentRange);
+      }
+
+      if (fileId && !fileId.startsWith("legacy-")) {
         await recordUniqueDownload(env, item.id, visitorId);
       }
 
-      return Response.redirect(item.download_url, 302);
+      return new Response(upstream.body, {
+        status: upstream.status,
+        headers
+      });
     }
 
     if (!item.file_key) {
