@@ -171,7 +171,7 @@ button,input,select,textarea{backdrop-filter:blur(8px);-webkit-backdrop-filter:b
 <div id="platformPage" class="hidden"><div class="card platform-manager">
 <button class="back" onclick="backToMenu()">⬅ العودة إلى لوحة الإدارة</button>
 <div class="platform-manager-head"><div><div class="platform-eyebrow">OXIDE PLATFORM MANAGER</div><h2 id="platformHeading">إدارة المنصة</h2><p class="platform-subtitle">إدارة الملفات والتحديثات والفيديو من مكان واحد</p></div><div class="platform-mark" id="platformMark">🤖</div></div>
-<div class="platform-state-panel"><div><span class="platform-state-caption">حالة المنصة</span><strong id="platformStateLabel">جارٍ تحميل الحالة...</strong></div><span class="platform-state-dot" id="platformStateDot"></span></div>
+<div class="platform-state-panel"><div><span class="platform-state-caption">حالة المنصة</span><strong id="platformStateLabel">جارٍ تحميل الحالة...</strong></div><span class="platform-state-dot" id="platformStateDot"></span></div><button id="platformVisibilityButton" class="secondary" onclick="togglePlatformVisibility()">جارٍ تحميل حالة الظهور...</button>
 <div class="users-summary platform-summary">
 <div class="users-stat"><span>الملفات المسجلة</span><strong id="platformFilesCount">0</strong></div>
 <div class="users-stat"><span>إجمالي التنزيلات</span><strong id="platformDownloadsCount">0</strong></div>
@@ -262,6 +262,31 @@ async function loadDownloads(){
  downloads=Array.isArray(result.downloads)?result.downloads:[];
  platformTutorials=result.tutorials||{android:"",ios:"",beta:""};
 }
+let platformVisibility={android:true,ios:true,beta:true};
+async function loadPlatformVisibility(){
+ const response=await fetch("/api/platform-visibility",{method:"GET",cache:"no-store",credentials:"same-origin"});
+ const result=await response.json();if(!response.ok||!result.success)throw new Error(result.error||"PLATFORM_VISIBILITY_ERROR");
+ platformVisibility={...platformVisibility,...(result.visibility||{})};
+ renderPlatformVisibility();
+}
+function renderPlatformVisibility(){
+ const button=document.getElementById("platformVisibilityButton");if(!button)return;
+ const enabled=platformVisibility[currentPlatform]!==false;
+ button.textContent=enabled?"🟢 ON — الزر ظاهر ومتوهج":"🔴 OFF — إظهار SOON";
+ button.style.background=enabled?"#176b49":"#87363e";
+}
+async function togglePlatformVisibility(){
+ const button=document.getElementById("platformVisibilityButton");if(!button)return;
+ const enabled=platformVisibility[currentPlatform]===false;
+ button.disabled=true;button.textContent="جارٍ الحفظ...";
+ try{
+  const response=await fetch("/api/platform-visibility",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({initData:tg.initData,platform:currentPlatform,enabled})});
+  const result=await response.json();if(!response.ok||!result.success)throw new Error(result.error||"PLATFORM_VISIBILITY_SAVE_FAILED");
+  platformVisibility[currentPlatform]=Boolean(result.enabled);renderPlatformVisibility();
+  document.getElementById("platformStatus").textContent=enabled?"تم تشغيل ظهور المنصة.":"تم إيقاف ظهور المنصة وإظهار SOON.";
+ }catch(error){alert("تعذر تغيير حالة المنصة: "+error.message);renderPlatformVisibility();}
+ finally{button.disabled=false;}
+}
 function platformName(platform){return platform==="ios"?"iOS":platform==="beta"?"BETA":"Android";}
 function platformExtension(){return currentPlatform==="ios"?".ipa":".apk";}
 function platformFiles(){return downloads.filter(item=>item.platform===currentPlatform);}
@@ -279,9 +304,10 @@ function openPlatform(platform){
  document.getElementById("tutorialUrl").value=platformTutorials[platform]||"";
  resetPlatformForm();
  document.getElementById("platformStatus").textContent="جارٍ تحميل ملفات "+platformName(platform)+"...";
- loadDownloads().then(()=>{
+ Promise.all([loadDownloads(),loadPlatformVisibility()]).then(()=>{
   document.getElementById("tutorialUrl").value=platformTutorials[platform]||"";
   renderPlatformFiles();
+  renderPlatformVisibility();
   document.getElementById("platformStatus").textContent="تم تحميل بيانات "+platformName(platform)+".";
  }).catch(error=>{
   document.getElementById("platformStatus").textContent="تعذر تحميل الملفات: "+error.message;
@@ -293,8 +319,8 @@ function renderPlatformFiles(){
  document.getElementById("platformFilesCount").textContent=items.length;
  document.getElementById("platformDownloadsCount").textContent=items.reduce((n,item)=>n+Number(item.downloads_count||0),0).toLocaleString("en-US");
  const state=document.getElementById("platformStateLabel"),panel=state.closest(".platform-state-panel");
- if(enabledCount){state.textContent="🟢 المنصة متاحة";panel.classList.remove("is-soon");}
- else{state.textContent="🟠 SOON — المنصة متوقفة";panel.classList.add("is-soon");}
+ if(platformVisibility[currentPlatform]!==false){state.textContent="🟢 المنصة ON";panel.classList.remove("is-soon");}
+ else{state.textContent="🔴 SOON — المنصة OFF";panel.classList.add("is-soon");}
  const cards=[];
  for(let slot=1;slot<=2;slot++){
   const item=items.find(x=>Number(x.slot||1)===slot);
