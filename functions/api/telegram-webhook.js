@@ -160,6 +160,8 @@ export async function onRequestPost({ request, env }) {
         });
       }
 
+      try{await createMissionNotification(env,submission.user_id,"mission_approved","✅ تمت الموافقة على مهمتك,`تم قبول مهمة ${submission.title} وإضافة ${reward} نقطة إلى رصيدك.`);}catch(error){console.error("Mission notification failed",error);}
+
       resultText =
         `✅ تمت الموافقة على مهمة ${submission.title}\n` +
         `🎁 تمت إضافة ${reward} نقطة للمستخدم.`;
@@ -179,6 +181,8 @@ export async function onRequestPost({ request, env }) {
           message: "Already reviewed"
         });
       }
+
+      try{await createMissionNotification(env,submission.user_id,"mission_rejected","❌ تم رفض إثبات المهمة",`لم يتم قبول إثبات مهمة ${submission.title}. راجع المطلوب وأرسل إثباتًا صحيحًا جديدًا.`);}catch(error){console.error("Mission notification failed",error);}
 
       resultText =
         `❌ تم رفض مهمة ${submission.title}.\n` +
