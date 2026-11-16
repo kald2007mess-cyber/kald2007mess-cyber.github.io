@@ -71,7 +71,7 @@ export async function onRequestGet({ env }) {
 
       if (
         Object.prototype.hasOwnProperty.call(platforms, key) &&
-        platforms[key].length === 0
+        !platforms[key].some(file => file.enabled)
       ) {
         platforms[key].push({
           id: "legacy-" + key,
