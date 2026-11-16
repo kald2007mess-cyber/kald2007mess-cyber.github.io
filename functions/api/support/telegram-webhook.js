@@ -2,10 +2,12 @@
 import { json } from "../_lib/session.js";
 
 
-async function createMissionNotification(env,userId,type,title,body,points=0){
- await env.DB.prepare(`CREATE TABLE IF NOT EXISTS oxide_notifications (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id TEXT NOT NULL,type TEXT NOT NULL,title TEXT NOT NULL,body TEXT NOT NULL DEFAULT '',reward_points INTEGER NOT NULL DEFAULT 0,created_at INTEGER NOT NULL,read_at INTEGER,claimed_at INTEGER,claim_token TEXT)`).run();
- await env.DB.prepare(`CREATE INDEX IF NOT EXISTS idx_oxide_notifications_user ON oxide_notifications(user_id, created_at DESC)`).run();
- await env.DB.prepare(`INSERT INTO oxide_notifications(user_id,type,title,body,reward_points,created_at) VALUES(?,?,?,?,?,?)`).bind(userId,type,title,body,points,Math.floor(Date.now()/1000)).run();
+async function createMissionNotification(env,userUuid,type,title,body,points=0){
+  await env.DB.prepare(`
+    INSERT INTO notifications
+      (user_uuid,type,title,body,reward_points,created_at)
+    VALUES(?,?,?,?,?,?)
+  `).bind(userUuid,type,title,body,points,Math.floor(Date.now()/1000)).run();
 }
 
 async function telegram(env, method, data) {
@@ -353,11 +355,7 @@ async function handleRedemptionCallback(callback, env) {
 // مراجعة المهام من أزرار تيليغرام
 async function handleMissionCallback(callback, env) {
   const message = callback.message;
-
-  if (
-    !message ||
-    String(message.chat?.id) !== String(env.TELEGRAM_ADMIN_ID)
-  ) {
+  if (!message || String(message.chat?.id) !== String(env.TELEGRAM_ADMIN_ID)) {
     await telegram(env, "answerCallbackQuery", {
       callback_query_id: callback.id,
       text: "غير مصرح لك بهذا الإجراء"
@@ -365,10 +363,7 @@ async function handleMissionCallback(callback, env) {
     return;
   }
 
-  const match = String(callback.data || "").match(
-    /^oxide_mission:(approve|reject):(\d+)$/
-  );
-
+  const match = String(callback.data || "").match(/^oxide_mission:(approve|reject):(\\d+)$/);
   if (!match) return;
 
   const action = match[1];
@@ -376,68 +371,101 @@ async function handleMissionCallback(callback, env) {
   const now = Math.floor(Date.now() / 1000);
 
   const submission = await env.DB.prepare(`
-    SELECT id, user_id, mission_id, status
-    FROM mission_submissions
-    WHERE id = ?
+    SELECT s.id, s.user_uuid, s.mission_id, s.status,
+           m.title, m.reward_points
+    FROM mission_submissions s
+    JOIN missions m ON m.id = s.mission_id
+    WHERE s.id = ?
+    LIMIT 1
   `).bind(submissionId).first();
 
-  if (!submission || Number(submission.mission_id) !== 1) {
+  if (!submission || submission.status !== "pending") {
     await telegram(env, "answerCallbackQuery", {
       callback_query_id: callback.id,
-      text: "الطلب غير موجود"
-    });
-    return;
-  }
-
-  if (submission.status !== "pending") {
-    await telegram(env, "answerCallbackQuery", {
-      callback_query_id: callback.id,
-      text: "تمت مراجعة هذا الطلب مسبقاً"
+      text: "الطلب غير موجود أو تمت مراجعته مسبقاً"
     });
     return;
   }
 
   let resultText = "";
-
   if (action === "approve") {
-    const results = await env.DB.batch([
-      env.DB.prepare(`
-        UPDATE visitors
-        SET points = points + 50
-        WHERE user_id = ?
-          AND EXISTS (
-            SELECT 1
-            FROM mission_submissions
-            WHERE id = ? AND status = 'pending'
-          )
-      `).bind(submission.user_id, submissionId),
+    const reward = Math.max(0, Math.floor(Number(submission.reward_points) || 0));
+    const user = await env.DB.prepare(`
+      SELECT user_uuid FROM users
+      WHERE user_uuid = ? AND status = 'active'
+      LIMIT 1
+    `).bind(submission.user_uuid).first();
 
-      env.DB.prepare(`
-        UPDATE mission_submissions
-        SET status = 'approved', reviewed_at = ?
-        WHERE id = ? AND status = 'pending'
-      `).bind(now, submissionId)
-    ]);
-
-    const awarded = Number(results[0]?.meta?.changes || 0);
-    const updated = Number(results[1]?.meta?.changes || 0);
-
-    if (awarded !== 1 || updated !== 1) {
+    if (!user) {
       await telegram(env, "answerCallbackQuery", {
         callback_query_id: callback.id,
-        text: "تمت مراجعة الطلب مسبقاً"
+        text: "المستخدم غير موجود أو غير نشط"
       });
       return;
     }
 
-    try{await createMissionNotification(env,submission.user_id,"mission_approved","✅ تمت الموافقة على مهمتك","تم قبول المهمة وإضافة 50 نقطة إلى رصيدك.");}catch(error){console.error("Mission notification failed",error);}
-    resultText = "✅ تمت الموافقة وإضافة 50 نقطة للمستخدم.";
+    const results = await env.DB.batch([
+      env.DB.prepare(`
+        UPDATE users
+        SET points = COALESCE(points, 0) + ?, updated_at = ?
+        WHERE user_uuid = ? AND status = 'active'
+          AND EXISTS (
+            SELECT 1 FROM mission_submissions
+            WHERE id = ? AND status = 'pending'
+          )
+      `).bind(reward, now, submission.user_uuid, submissionId),
+      env.DB.prepare(`
+        UPDATE mission_submissions
+        SET status = 'approved', reviewed_at = ?, reviewer_telegram_id = ?
+        WHERE id = ? AND status = 'pending'
+          AND EXISTS (
+            SELECT 1 FROM users
+            WHERE user_uuid = ? AND status = 'active'
+          )
+      `).bind(now, String(env.TELEGRAM_ADMIN_ID), submissionId, submission.user_uuid),
+      env.DB.prepare(`
+        INSERT INTO point_ledger
+          (user_uuid, delta, balance_after, reason, reference_type,
+           reference_id, admin_telegram_id, created_at)
+        SELECT user_uuid, ?, points, 'mission_approved',
+               'mission_submission', ?, ?, ?
+        FROM users
+        WHERE user_uuid = ?
+          AND EXISTS (
+            SELECT 1 FROM mission_submissions
+            WHERE id = ? AND status = 'approved'
+          )
+      `).bind(reward, String(submissionId), String(env.TELEGRAM_ADMIN_ID), now, submission.user_uuid, submissionId)
+    ]);
+
+    if (
+      Number(results[0]?.meta?.changes || 0) !== 1 ||
+      Number(results[1]?.meta?.changes || 0) !== 1
+    ) {
+      await telegram(env, "answerCallbackQuery", {
+        callback_query_id: callback.id,
+        text: "تعذر اعتماد الطلب أو تمت مراجعته مسبقاً"
+      });
+      return;
+    }
+
+    try {
+      await createMissionNotification(
+        env, submission.user_uuid, "mission_approved",
+        "✅ تمت الموافقة على مهمتك",
+        "تم قبول مهمة " + String(submission.title || "") +
+          " وإضافة " + reward + " نقطة إلى رصيدك."
+      );
+    } catch (error) {
+      console.error("Mission notification failed", error);
+    }
+    resultText = "✅ تمت الموافقة على المهمة وإضافة " + reward + " نقطة للمستخدم.";
   } else {
     const rejected = await env.DB.prepare(`
       UPDATE mission_submissions
-      SET status = 'rejected', reviewed_at = ?
+      SET status = 'rejected', reviewed_at = ?, reviewer_telegram_id = ?
       WHERE id = ? AND status = 'pending'
-    `).bind(now, submissionId).run();
+    `).bind(now, String(env.TELEGRAM_ADMIN_ID), submissionId).run();
 
     if (Number(rejected.meta?.changes || 0) !== 1) {
       await telegram(env, "answerCallbackQuery", {
@@ -447,19 +475,27 @@ async function handleMissionCallback(callback, env) {
       return;
     }
 
-    try{await createMissionNotification(env,submission.user_id,"mission_rejected","❌ تم رفض إثبات المهمة","لم يتم قبول إثبات المهمة. راجع المطلوب وأرسل إثباتًا صحيحًا جديدًا.");}catch(error){console.error("Mission notification failed",error);}
-    resultText = "❌ تم رفض المهمة. يمكن للمستخدم المحاولة مجدداً.";
+    try {
+      await createMissionNotification(
+        env, submission.user_uuid, "mission_rejected",
+        "❌ تم رفض إثبات المهمة",
+        "لم يتم قبول إثبات مهمة " + String(submission.title || "") +
+          ". راجع المطلوب وأرسل إثباتاً صحيحاً جديداً."
+      );
+    } catch (error) {
+      console.error("Mission notification failed", error);
+    }
+    resultText = "❌ تم رفض المهمة. يمكن للمستخدم إرسال إثبات جديد.";
   }
 
   await telegram(env, "answerCallbackQuery", {
     callback_query_id: callback.id,
     text: action === "approve" ? "تمت الموافقة ✅" : "تم الرفض ❌"
   });
-
   await telegram(env, "editMessageCaption", {
     chat_id: message.chat.id,
     message_id: message.message_id,
-    caption: (message.caption || "") + "\n\n" + resultText,
+    caption: (message.caption || "") + "\\n\\n" + resultText,
     reply_markup: { inline_keyboard: [] }
   });
 }
