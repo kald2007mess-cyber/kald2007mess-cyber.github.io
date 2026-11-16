@@ -228,7 +228,7 @@ export async function onRequestPost({ request, env }) {
       }
 
       resultText =
-        `✅ تمت الموافقة على مهمة ${submission.title}\\n` +
+        `✅ تمت الموافقة على مهمة ${submission.title}\n` +
         `🎁 تمت إضافة ${reward} نقطة للمستخدم.`;
     } else {
       const rejected = await env.DB.prepare(`
@@ -256,7 +256,7 @@ export async function onRequestPost({ request, env }) {
       }
 
       resultText =
-        `❌ تم رفض مهمة ${submission.title}.\\n` +
+        `❌ تم رفض مهمة ${submission.title}.\n` +
         "يمكن للمستخدم المحاولة مجدداً.";
     }
 
