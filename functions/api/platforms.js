@@ -1,7 +1,10 @@
 import { json } from "./_lib/session.js";
+import { ensurePlatformTables } from "./_lib/platform-schema.js";
 
 export async function onRequestGet({ env }) {
   try {
+    if (!env.DB) return json({ success: false, error: "DATABASE_NOT_CONFIGURED" }, 500);
+    await ensurePlatformTables(env.DB);
     const result = await env.DB.prepare(`
       SELECT
         id, platform, title, version, description,
