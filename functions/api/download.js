@@ -1,5 +1,20 @@
 
 import { json, getVisitor } from "./_lib/session.js";
+import { ensurePlatformTables } from "./_lib/platform-schema.js";
+
+const R2_PUBLIC_URL = "https://pub-052cdf3a8da44cd2bb81e3b138ebcb45.r2.dev";
+
+function r2KeyFromPublicUrl(value, platform) {
+  try {
+    const url = new URL(String(value || ""));
+    if (url.origin !== R2_PUBLIC_URL) return null;
+    const key = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
+    if (!key.startsWith(platform + "/") || key.includes("..") || key.includes("\\")) return null;
+    return key;
+  } catch {
+    return null;
+  }
+}
 
 function parseRange(rangeHeader, size) {
   if (!rangeHeader) return null;
@@ -60,6 +75,7 @@ function attachmentHeader(fileName) {
 }
 
 async function findFile(env, platform, fileId) {
+  if (fileId && fileId.startsWith("legacy-") && fileId !== "legacy-" + platform) return null;
   if (fileId && !fileId.startsWith("legacy-")) {
     return await env.DB.prepare(`
       SELECT *
@@ -108,6 +124,8 @@ export async function onRequestGet({ request, env }) {
       }, 500);
     }
 
+    await ensurePlatformTables(env.DB);
+
     const visitorId = await getVisitor(request, env);
 
     if (!visitorId) {
@@ -118,9 +136,9 @@ export async function onRequestGet({ request, env }) {
     }
 
     const visitor = await env.DB.prepare(`
-      SELECT user_id
-      FROM visitors
-      WHERE user_id = ?
+      SELECT user_uuid
+      FROM users
+      WHERE user_uuid = ? AND status = 'active'
     `).bind(visitorId).first();
 
     if (!visitor) {
@@ -154,6 +172,18 @@ export async function onRequestGet({ request, env }) {
         success: false,
         error: "NOT_AVAILABLE"
       }, 404);
+    }
+
+    if (!item.file_key) {
+      item.file_key = r2KeyFromPublicUrl(item.download_url, platform) || "";
+    }
+
+    if (item.file_key && (
+      !String(item.file_key).startsWith(platform + "/") ||
+      String(item.file_key).includes("..") ||
+      String(item.file_key).includes("\\")
+    )) {
+      return json({ success: false, error: "INVALID_FILE_KEY" }, 500);
     }
 
     /* iOS: proxy the remote file through this endpoint so the browser
@@ -229,10 +259,22 @@ export async function onRequestGet({ request, env }) {
     }
 
     if (!item.file_key) {
-      return json({
-        success: false,
-        error: "FILE_NOT_FOUND"
-      }, 404);
+      if (!item.download_url) {
+        return json({ success: false, error: "FILE_NOT_FOUND" }, 404);
+      }
+      let externalUrl;
+      try {
+        externalUrl = new URL(String(item.download_url));
+      } catch {
+        return json({ success: false, error: "INVALID_DOWNLOAD_URL" }, 500);
+      }
+      if (externalUrl.protocol !== "https:") {
+        return json({ success: false, error: "INVALID_DOWNLOAD_URL" }, 500);
+      }
+      if (fileId && !fileId.startsWith("legacy-")) {
+        await recordUniqueDownload(env, item.id, visitorId);
+      }
+      return Response.redirect(externalUrl.toString(), 302);
     }
 
     const info = await env.DOWNLOADS_BUCKET.head(item.file_key);
