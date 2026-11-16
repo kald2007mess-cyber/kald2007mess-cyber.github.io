@@ -32,6 +32,7 @@ async function ensureAuthSchema(DB) {
   const columns = await DB.prepare("PRAGMA table_info(visitors)").all();
   const names = new Set((columns.results || []).map(column => column.name));
   const additions = [
+    ["username", "TEXT"],
     ["email", "TEXT"],
     ["password_hash", "TEXT"],
     ["google_sub", "TEXT"],
@@ -48,6 +49,8 @@ async function ensureAuthSchema(DB) {
       }
     }
   }
+  await DB.prepare("UPDATE visitors SET username = 'ox' || lower(substr(replace(user_id, '-', ''), 1, 8)) WHERE username IS NULL OR username = ''").run();
+  await DB.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_visitors_username_unique ON visitors(username COLLATE NOCASE) WHERE username IS NOT NULL").run();
   await DB.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_visitors_email_unique ON visitors(email COLLATE NOCASE) WHERE email IS NOT NULL").run();
   await DB.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_visitors_google_sub_unique ON visitors(google_sub) WHERE google_sub IS NOT NULL").run();
 }
@@ -114,46 +117,59 @@ export async function onRequestPost({ request, env }) {
     const action = String(body.action || "").toLowerCase();
 
     if (action === "register" || action === "login") {
-      const email = String(body.email || "").trim().toLowerCase();
+      const username = String(body.username || "").trim().toLowerCase();
       const password = String(body.password || "");
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
-        return json({ success: false, error: "INVALID_EMAIL" }, 400);
+      if (!/^[a-z0-9_]{3,20}$/.test(username)) {
+        return json({ success: false, error: "INVALID_USERNAME" }, 400);
       }
       if (password.length < 8 || password.length > 128) {
         return json({ success: false, error: "INVALID_PASSWORD" }, 400);
       }
 
       if (action === "register") {
-        const existing = await env.DB.prepare("SELECT user_id FROM visitors WHERE email = ? COLLATE NOCASE LIMIT 1").bind(email).first();
-        if (existing) return json({ success: false, error: "ACCOUNT_EXISTS" }, 409);
         const { id, cookie } = await newOrCurrentVisitor(request, env);
-        const current = await env.DB.prepare("SELECT email, google_sub FROM visitors WHERE user_id = ?").bind(id).first();
-        if (current?.email) return json({ success: false, error: "ACCOUNT_ALREADY_LINKED" }, 409);
+        const existing = await env.DB.prepare(
+          "SELECT user_id FROM visitors WHERE username = ? COLLATE NOCASE LIMIT 1"
+        ).bind(username).first();
+        if (existing && existing.user_id !== id) {
+          return json({ success: false, error: "USERNAME_TAKEN" }, 409);
+        }
+        const current = await env.DB.prepare(
+          "SELECT password_hash, google_sub FROM visitors WHERE user_id = ?"
+        ).bind(id).first();
+        if (current?.password_hash || current?.google_sub) {
+          return json({ success: false, error: "ACCOUNT_ALREADY_LINKED" }, 409);
+        }
         const hash = await passwordHash(password);
         const now = Math.floor(Date.now() / 1000);
         const updated = await env.DB.prepare(`
           UPDATE visitors
-          SET email = ?, password_hash = ?, email_verified = 0, auth_created_at = ?
-          WHERE user_id = ? AND email IS NULL
-        `).bind(email, hash, now, id).run();
-        if (Number(updated.meta?.changes || 0) !== 1) return json({ success: false, error: "ACCOUNT_LINK_FAILED" }, 409);
+          SET username = ?, password_hash = ?, auth_created_at = COALESCE(auth_created_at, ?)
+          WHERE user_id = ?
+        `).bind(username, hash, now, id).run();
+        if (Number(updated.meta?.changes || 0) !== 1) {
+          return json({ success: false, error: "ACCOUNT_LINK_FAILED" }, 409);
+        }
         return makeResponse({
-          success: true, authenticated: true, method: "email",
-          userId: id, displayId: displayId(id), points: await currentPoints(env.DB, id)
+          success: true, authenticated: true, method: "password",
+          username, userId: id, displayId: displayId(id),
+          points: await currentPoints(env.DB, id)
         }, cookie);
       }
 
       const user = await env.DB.prepare(`
-        SELECT user_id, password_hash FROM visitors
-        WHERE email = ? COLLATE NOCASE LIMIT 1
-      `).bind(email).first();
+        SELECT user_id, password_hash, username FROM visitors
+        WHERE username = ? COLLATE NOCASE OR email = ? COLLATE NOCASE
+        LIMIT 1
+      `).bind(username, username).first();
       if (!user || !await verifyPassword(password, user.password_hash)) {
         return json({ success: false, error: "INVALID_CREDENTIALS" }, 401);
       }
       const cookie = await createVisitorCookieForId(env, user.user_id);
       return makeResponse({
-        success: true, authenticated: true, method: "email",
-        userId: user.user_id, displayId: displayId(user.user_id),
+        success: true, authenticated: true, method: "password",
+        username: user.username, userId: user.user_id,
+        displayId: displayId(user.user_id),
         points: await currentPoints(env.DB, user.user_id)
       }, cookie);
     }
@@ -172,8 +188,8 @@ export async function onRequestPost({ request, env }) {
       }
 
       const email = String(profile.email).trim().toLowerCase();
-      const byGoogle = await env.DB.prepare("SELECT user_id, email FROM visitors WHERE google_sub = ? LIMIT 1").bind(profile.sub).first();
-      const byEmail = await env.DB.prepare("SELECT user_id, google_sub FROM visitors WHERE email = ? COLLATE NOCASE LIMIT 1").bind(email).first();
+      const byGoogle = await env.DB.prepare("SELECT user_id, email, username FROM visitors WHERE google_sub = ? LIMIT 1").bind(profile.sub).first();
+      const byEmail = await env.DB.prepare("SELECT user_id, google_sub, username FROM visitors WHERE email = ? COLLATE NOCASE LIMIT 1").bind(email).first();
       if (byGoogle && byEmail && byGoogle.user_id !== byEmail.user_id) {
         return json({ success: false, error: "GOOGLE_ACCOUNT_CONFLICT" }, 409);
       }
@@ -185,7 +201,8 @@ export async function onRequestPost({ request, env }) {
           return json({ success: false, error: "EMAIL_LINKED_TO_ANOTHER_GOOGLE" }, 409);
         }
         await env.DB.prepare(`
-          UPDATE visitors SET google_sub = ?, email = COALESCE(email, ?), email_verified = 1
+          UPDATE visitors SET google_sub = ?, email = COALESCE(email, ?), email_verified = 1,
+            username = COALESCE(username, 'ox' || lower(substr(replace(user_id, '-', ''), 1, 8)))
           WHERE user_id = ?
         `).bind(profile.sub, email, id).run();
       } else {
@@ -201,6 +218,7 @@ export async function onRequestPost({ request, env }) {
         }
         const update = await env.DB.prepare(`
           UPDATE visitors SET google_sub = ?, email = ?, email_verified = 1,
+            username = COALESCE(username, 'ox' || lower(substr(replace(user_id, '-', ''), 1, 8))),
             auth_created_at = COALESCE(auth_created_at, ?)
           WHERE user_id = ?
         `).bind(profile.sub, email, Math.floor(Date.now() / 1000), id).run();
