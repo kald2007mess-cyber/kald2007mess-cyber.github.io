@@ -189,6 +189,9 @@ export async function onRequestPost({ request, env }) {
         if (existing?.google_sub && existing.google_sub !== profile.sub) {
           return json({ success: false, error: "ACCOUNT_ALREADY_LINKED" }, 409);
         }
+        if (existing?.email && existing.email.toLowerCase() !== email) {
+          return json({ success: false, error: "ACCOUNT_ALREADY_LINKED" }, 409);
+        }
         const update = await env.DB.prepare(`
           UPDATE visitors SET google_sub = ?, email = ?, email_verified = 1,
             auth_created_at = COALESCE(auth_created_at, ?)
