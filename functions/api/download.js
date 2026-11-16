@@ -1,8 +1,6 @@
 
 import { json, getVisitor } from "./_lib/session.js";
 
-const CYCLE_SECONDS = 1800;
-
 function parseRange(rangeHeader, size) {
   if (!rangeHeader) return null;
 
@@ -120,7 +118,7 @@ export async function onRequestGet({ request, env }) {
     }
 
     const visitor = await env.DB.prepare(`
-      SELECT progress, cycle_started_at
+      SELECT user_id
       FROM visitors
       WHERE user_id = ?
     `).bind(visitorId).first();
@@ -130,40 +128,6 @@ export async function onRequestGet({ request, env }) {
         success: false,
         error: "VISITOR_NOT_FOUND"
       }, 401);
-    }
-
-    const displayId = "OX-" + visitorId.replace(/-/g, "").slice(0, 8).toUpperCase();
-    const isSpecialDownloadUser = displayId === "OX-28BF692F";
-
-    const now = Math.floor(Date.now() / 1000);
-    const cycleStartedAt = Number(visitor.cycle_started_at || 0);
-
-    if (!isSpecialDownloadUser && (
-      !cycleStartedAt ||
-      now - cycleStartedAt >= CYCLE_SECONDS
-    )) {
-      await env.DB.prepare(`
-        UPDATE visitors
-        SET progress = 0,
-            cycle_started_at = ?
-        WHERE user_id = ?
-      `).bind(now, visitorId).run();
-
-      return json({
-        success: false,
-        error: "AD_PROGRESS_REQUIRED",
-        required: 3,
-        progress: 0
-      }, 403);
-    }
-
-    if (!isSpecialDownloadUser && Number(visitor.progress || 0) < 3) {
-      return json({
-        success: false,
-        error: "AD_PROGRESS_REQUIRED",
-        required: 3,
-        progress: Number(visitor.progress || 0)
-      }, 403);
     }
 
     const url = new URL(request.url);
