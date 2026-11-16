@@ -638,89 +638,53 @@ async function handleNewsMessage(message, env) {
 
 // استقبال ردود الدعم من المسؤول
 async function handleSupportReply(message, env) {
-  if (!message || !message.reply_to_message) {
-    return;
-  }
-
   if (
+    !message ||
+    !message.reply_to_message ||
     String(message.chat?.id) !== String(env.TELEGRAM_ADMIN_ID)
-  ) {
+  ) return;
+
+  const repliedText = String(
+    message.reply_to_message.text ||
+    message.reply_to_message.caption ||
+    ""
+  );
+  const match = repliedText.match(/(?:Conversation|المحادثة):\\s*#?(\\d+)/i);
+  if (!match) return;
+
+  const conversationId = Number(match[1]);
+  if (!Number.isSafeInteger(conversationId) || conversationId < 1) return;
+
+  const conversation = await env.DB.prepare(`
+    SELECT id, user_uuid
+    FROM support_conversations
+    WHERE id = ?
+    LIMIT 1
+  `).bind(conversationId).first();
+  if (!conversation) return;
+
+  const text = String(message.text || message.caption || "").trim();
+  if (!text) {
+    await adminMessage(
+      env,
+      message.chat.id,
+      "تنبيه: قاعدة البيانات الحالية تحفظ ردود الدعم النصية فقط. أرسل الرد كنص أو أضف شرحاً مكتوباً للمرفق."
+    );
     return;
   }
-
-  const originalMessageId =
-    message.reply_to_message.message_id;
-
-  const original = await env.DB.prepare(`
-    SELECT
-      m.conversation_id,
-      c.user_id
-    FROM support_messages m
-    JOIN support_conversations c
-      ON c.id = m.conversation_id
-    WHERE m.telegram_chat_id = ?
-      AND m.telegram_message_id = ?
-      AND m.sender = 'user'
-    LIMIT 1
-  `).bind(
-    String(message.chat.id),
-    originalMessageId
-  ).first();
-
-  if (!original) return;
-
-  const text = String(
-    message.text || message.caption || ""
-  ).trim();
-
-  const photo = message.photo?.length
-    ? message.photo[message.photo.length - 1].file_id
-    : null;
-
-  const video = message.video?.file_id || null;
-
-  let messageType = "text";
-  let mediaFileId = null;
-
-  if (photo) {
-    messageType = "photo";
-    mediaFileId = photo;
-  } else if (video) {
-    messageType = "video";
-    mediaFileId = video;
-  }
-
-  if (!text && !mediaFileId) return;
 
   const now = Math.floor(Date.now() / 1000);
-
   await env.DB.prepare(`
     INSERT INTO support_messages
-    (
-      conversation_id,
-      sender,
-      message_type,
-      message_text,
-      media_file_id,
-      created_at
-    )
-    VALUES (?, 'admin', ?, ?, ?, ?)
-  `).bind(
-    original.conversation_id,
-    messageType,
-    text || null,
-    mediaFileId,
-    now
-  ).run();
+      (conversation_id, sender, message_type, message_text, created_at)
+    VALUES (?, 'admin', 'text', ?, ?)
+  `).bind(conversationId, text, now).run();
 
   await env.DB.prepare(`
     UPDATE support_conversations
     SET updated_at = ?, status = 'open'
     WHERE id = ?
-  `).bind(
-    now,
-    original.conversation_id
-  ).run();
+  `).bind(now, conversationId).run();
 }
 
 export async function onRequestPost({ request, env }) {
