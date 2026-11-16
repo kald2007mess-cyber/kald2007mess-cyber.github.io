@@ -282,7 +282,7 @@ async function handleRedemptionCallback(callback, env) {
     return;
   }
 
-  const match = String(callback.data || "").match(/^oxide_redeem:(approve|reject):(\\d+)$/);
+  const match = String(callback.data || "").match(/^oxide_redeem:(approve|reject):(\d+)$/);
   if (!match) return;
 
   const action = match[1];
@@ -393,7 +393,7 @@ async function handleRedemptionCallback(callback, env) {
   await telegram(env, "editMessageText", {
     chat_id: message.chat.id,
     message_id: message.message_id,
-    text: (message.text || "") + "\\n\\n" + resultText,
+    text: (message.text || "") + "\n\n" + resultText,
     reply_markup: { inline_keyboard: [] }
   });
 }
@@ -409,7 +409,7 @@ async function handleMissionCallback(callback, env) {
     return;
   }
 
-  const match = String(callback.data || "").match(/^oxide_mission:(approve|reject):(\\d+)$/);
+  const match = String(callback.data || "").match(/^oxide_mission:(approve|reject):(\d+)$/);
   if (!match) return;
 
   const action = match[1];
@@ -541,7 +541,7 @@ async function handleMissionCallback(callback, env) {
   await telegram(env, "editMessageCaption", {
     chat_id: message.chat.id,
     message_id: message.message_id,
-    caption: (message.caption || "") + "\\n\\n" + resultText,
+    caption: (message.caption || "") + "\n\n" + resultText,
     reply_markup: { inline_keyboard: [] }
   });
 }
@@ -695,7 +695,7 @@ async function handleSupportReply(message, env) {
     message.reply_to_message.caption ||
     ""
   );
-  const match = repliedText.match(/(?:Conversation|المحادثة):\\s*#?(\\d+)/i);
+  const match = repliedText.match(/(?:Conversation|المحادثة):\s*#?(\d+)/i);
   if (!match) return;
 
   const conversationId = Number(match[1]);
