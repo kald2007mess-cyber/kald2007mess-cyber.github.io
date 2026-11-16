@@ -185,7 +185,7 @@ function renderFiles(){
     file.file_name?'— '+file.file_name:''
    ].filter(Boolean);
    info.textContent=details.join(' ');
-   button.disabled=!allowed;
+   button.disabled=false;
    button.title=allowed?t.ready:t.needAds;
    button.addEventListener('click',()=>downloadFile(file,button,progressBox,fill,label,redo));
    redo.addEventListener('click',async()=>{
@@ -222,7 +222,7 @@ async function loadPage(){
   if(!platformData.success)throw new Error('platforms');
 
   iosFiles=getPlatformFiles(platformData);
-  allowed=specialUserGlow || Number(progressData.progress||0)>=REQUIRED;
+  allowed=true;
 
   renderFiles();
 
@@ -254,7 +254,7 @@ async function loadPage(){
 
 async function downloadFile(file,button,box,fill,label,redo){
  const t=translations[lang];
- if(!file || !file.id || !allowed){
+ if(!file || !file.id){
   alert(t.needAds);
   return;
  }
