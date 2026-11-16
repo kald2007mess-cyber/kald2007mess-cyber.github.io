@@ -464,139 +464,245 @@ async function handleMissionCallback(callback, env) {
   });
 }
 
-// نشر الأخبار: المسؤول فقط
-async function handleNewsMessage(message, env) {
-  if (!message) return false;
+// إدارة منشورات الأخبار من لوحة تيليغرام
+async function ensureNewsAdminSessions(DB) {
+  await DB.prepare("CREATE TABLE IF NOT EXISTS telegram_news_sessions (admin_id TEXT PRIMARY KEY, stage TEXT NOT NULL, post_id INTEGER, title TEXT, updated_at INTEGER NOT NULL)").run();
+}
 
-  if (
-    String(message.chat?.id) !== String(env.TELEGRAM_ADMIN_ID)
-  ) {
-    return false;
+async function showNewsMenu(env, chatId, messageId = null) {
+  const data = {
+    chat_id: chatId,
+    text: "📰 إدارة المنشورات\n\nاختر العملية التي تريد تنفيذها:",
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "➕ إضافة منشور", callback_data: "oxide_news:add" }],
+        [{ text: "✏️ تعديل منشور", callback_data: "oxide_news:list_edit" }],
+        [{ text: "🗑 حذف منشور", callback_data: "oxide_news:list_delete" }],
+        [{ text: "📋 عرض المنشورات", callback_data: "oxide_news:list" }]
+      ]
+    }
+  };
+  if (messageId) {
+    data.message_id = messageId;
+    await telegram(env, "editMessageText", data);
+  } else {
+    await telegram(env, "sendMessage", data);
   }
+}
 
-  const chatId = message.chat.id;
+async function sendNewsPostList(env, chatId, messageId, mode) {
+  const result = await env.DB.prepare(
+    "SELECT id, title, created_at FROM news_posts ORDER BY created_at DESC LIMIT 10"
+  ).all();
+  const posts = result.results || [];
+  if (!posts.length) {
+    await telegram(env, "editMessageText", {
+      chat_id: chatId,
+      message_id: messageId,
+      text: "لا توجد منشورات حاليًا.",
+      reply_markup: { inline_keyboard: [[{ text: "⬅️ رجوع", callback_data: "oxide_news:menu" }]] }
+    });
+    return;
+  }
+  const keyboard = posts.map(function(post) {
+    const title = String(post.title || "بدون عنوان").slice(0, 35);
+    if (mode === "edit") {
+      return [{ text: "✏️ #" + post.id + " " + title, callback_data: "oxide_news:edit:" + post.id }];
+    }
+    if (mode === "delete") {
+      return [{ text: "🗑 #" + post.id + " " + title, callback_data: "oxide_news:delete:" + post.id }];
+    }
+    return [{ text: "📰 #" + post.id + " " + title, callback_data: "oxide_news:details:" + post.id }];
+  });
+  keyboard.push([{ text: "⬅️ رجوع", callback_data: "oxide_news:menu" }]);
+  await telegram(env, "editMessageText", {
+    chat_id: chatId,
+    message_id: messageId,
+    text: "📋 أحدث المنشورات (آخر 10):\nاختر منشورًا من القائمة:",
+    reply_markup: { inline_keyboard: keyboard }
+  });
+}
+
+async function handleNewsCallback(callback, env) {
+  const message = callback.message;
+  if (!message || String(message.chat && message.chat.id) !== String(env.TELEGRAM_ADMIN_ID)) {
+    await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id, text: "غير مصرح لك" });
+    return;
+  }
+  await ensureNewsAdminSessions(env.DB);
+  const data = String(callback.data || "");
+  const chatId = String(message.chat.id);
+  const messageId = message.message_id;
+
+  if (data === "oxide_news:menu") {
+    await showNewsMenu(env, chatId, messageId);
+  } else if (data === "oxide_news:add") {
+    await env.DB.prepare(
+      "INSERT INTO telegram_news_sessions(admin_id,stage,post_id,title,updated_at) VALUES(?,'add_title',NULL,NULL,?) ON CONFLICT(admin_id) DO UPDATE SET stage='add_title',post_id=NULL,title=NULL,updated_at=excluded.updated_at"
+    ).bind(chatId, Math.floor(Date.now() / 1000)).run();
+    await telegram(env, "editMessageText", {
+      chat_id: chatId, message_id: messageId,
+      text: "➕ إضافة منشور جديد\n\nأرسل عنوان المنشور الآن.\nللإلغاء أرسل /cancel.",
+      reply_markup: { inline_keyboard: [[{ text: "⬅️ رجوع", callback_data: "oxide_news:menu" }]] }
+    });
+  } else if (data === "oxide_news:list_edit") {
+    await sendNewsPostList(env, chatId, messageId, "edit");
+  } else if (data === "oxide_news:list_delete") {
+    await sendNewsPostList(env, chatId, messageId, "delete");
+  } else if (data === "oxide_news:list") {
+    await sendNewsPostList(env, chatId, messageId, "view");
+  } else {
+    const editMatch = data.match(/^oxide_news:edit:(\d+)$/);
+    const deleteMatch = data.match(/^oxide_news:delete:(\d+)$/);
+    const detailsMatch = data.match(/^oxide_news:details:(\d+)$/);
+    if (editMatch) {
+      const postId = Number(editMatch[1]);
+      const post = await env.DB.prepare("SELECT id,title FROM news_posts WHERE id=?").bind(postId).first();
+      if (!post) {
+        await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id, text: "المنشور غير موجود" });
+        return;
+      }
+      await env.DB.prepare(
+        "INSERT INTO telegram_news_sessions(admin_id,stage,post_id,title,updated_at) VALUES(?,'edit_title',?,?,?) ON CONFLICT(admin_id) DO UPDATE SET stage='edit_title',post_id=excluded.post_id,title=excluded.title,updated_at=excluded.updated_at"
+      ).bind(chatId, postId, post.title, Math.floor(Date.now() / 1000)).run();
+      await telegram(env, "editMessageText", {
+        chat_id: chatId, message_id: messageId,
+        text: "✏️ تعديل المنشور #" + postId + "\nالعنوان الحالي: " + post.title + "\n\nأرسل العنوان الجديد، أو /skip للإبقاء عليه. بعد ذلك يمكنك تغيير الصورة/الفيديو أو تخطيها.",
+        reply_markup: { inline_keyboard: [[{ text: "⬅️ رجوع", callback_data: "oxide_news:list_edit" }]] }
+      });
+    } else if (deleteMatch) {
+      const postId = Number(deleteMatch[1]);
+      const post = await env.DB.prepare("SELECT id,title FROM news_posts WHERE id=?").bind(postId).first();
+      if (!post) {
+        await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id, text: "المنشور غير موجود" });
+        return;
+      }
+      await telegram(env, "editMessageText", {
+        chat_id: chatId, message_id: messageId,
+        text: "⚠️ هل تريد حذف هذا المنشور نهائيًا؟\n\n#" + post.id + " — " + post.title + "\nسيتم حذف التعليقات والتفاعلات المرتبطة به أيضًا.",
+        reply_markup: { inline_keyboard: [
+          [{ text: "نعم، احذف المنشور", callback_data: "oxide_news:confirm_delete:" + postId }],
+          [{ text: "إلغاء", callback_data: "oxide_news:list_delete" }]
+        ]}
+      });
+    } else if (data.match(/^oxide_news:confirm_delete:(\d+)$/)) {
+      const postId = Number(data.match(/^oxide_news:confirm_delete:(\d+)$/)[1]);
+      const post = await env.DB.prepare("SELECT id FROM news_posts WHERE id=?").bind(postId).first();
+      if (!post) {
+        await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id, text: "المنشور محذوف أو غير موجود" });
+        return;
+      }
+      await env.DB.batch([
+        env.DB.prepare("DELETE FROM news_comments WHERE post_id=?").bind(postId),
+        env.DB.prepare("DELETE FROM news_reactions WHERE post_id=?").bind(postId),
+        env.DB.prepare("DELETE FROM news_posts WHERE id=?").bind(postId)
+      ]);
+      await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id, text: "تم حذف المنشور" });
+      await telegram(env, "editMessageText", {
+        chat_id: chatId, message_id: messageId,
+        text: "🗑 تم حذف المنشور #" + postId + " والتعليقات والتفاعلات المرتبطة به.",
+        reply_markup: { inline_keyboard: [[{ text: "⬅️ إدارة المنشورات", callback_data: "oxide_news:menu" }]] }
+      });
+      return;
+    } else if (detailsMatch) {
+      const postId = Number(detailsMatch[1]);
+      const post = await env.DB.prepare("SELECT id,title,media_type,views,created_at FROM news_posts WHERE id=?").bind(postId).first();
+      if (!post) {
+        await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id, text: "المنشور غير موجود" });
+        return;
+      }
+      await telegram(env, "editMessageText", {
+        chat_id: chatId, message_id: messageId,
+        text: "📰 المنشور #" + post.id + "\nالعنوان: " + post.title + "\nالوسائط: " + post.media_type + "\nالمشاهدات: " + Number(post.views || 0) + "\nالتاريخ: " + new Date(Number(post.created_at) * 1000).toLocaleString("ar"),
+        reply_markup: { inline_keyboard: [[{ text: "⬅️ رجوع", callback_data: "oxide_news:menu" }]] }
+      });
+    }
+  }
+  await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id });
+}
+
+async function handleNewsMessage(message, env) {
+  if (!message || String(message.chat && message.chat.id) !== String(env.TELEGRAM_ADMIN_ID)) return false;
+  await ensureNewsAdminSessions(env.DB);
+  const chatId = String(message.chat.id);
   const text = String(message.text || "").trim();
 
-  // بدء نشر خبر جديد
-  if (/^\/news(?:@\w+)?(?:\s|$)/i.test(text)) {
-    await env.DB.prepare(`
-      INSERT INTO news_drafts (admin_id, stage, title, created_at)
-      VALUES (?, 'title', NULL, ?)
-      ON CONFLICT(admin_id) DO UPDATE SET
-        stage = 'title',
-        title = NULL,
-        created_at = excluded.created_at
-    `).bind(
-      String(chatId),
-      Math.floor(Date.now() / 1000)
-    ).run();
-
-    await adminMessage(
-      env,
-      chatId,
-      "📰 نشر خبر جديد\n\nأرسل عنوان الخبر الآن."
-    );
-
+  if (/^\/(?:news|posts)(?:@\w+)?$/i.test(text)) {
+    await showNewsMenu(env, chatId);
     return true;
   }
-
-  // إلغاء عملية النشر
   if (/^\/cancel(?:@\w+)?$/i.test(text)) {
-    await env.DB.prepare(`
-      DELETE FROM news_drafts WHERE admin_id = ?
-    `).bind(String(chatId)).run();
-
-    await adminMessage(env, chatId, "تم إلغاء نشر الخبر.");
+    await env.DB.prepare("DELETE FROM telegram_news_sessions WHERE admin_id=?").bind(chatId).run();
+    await adminMessage(env, chatId, "تم إلغاء العملية.");
     return true;
   }
 
-  const draft = await env.DB.prepare(`
-    SELECT admin_id, stage, title
-    FROM news_drafts
-    WHERE admin_id = ?
-  `).bind(String(chatId)).first();
+  const session = await env.DB.prepare(
+    "SELECT admin_id,stage,post_id,title FROM telegram_news_sessions WHERE admin_id=?"
+  ).bind(chatId).first();
+  if (!session) return false;
 
-  if (!draft) return false;
-
-  // استقبال عنوان الخبر
-  if (draft.stage === "title") {
-    if (!text || text.startsWith("/")) {
-      await adminMessage(
-        env,
-        chatId,
-        "⚠️ أرسل عنوان الخبر كنص، أو استخدم /cancel للإلغاء."
-      );
+  if (session.stage === "add_title") {
+    if (!text || text.startsWith("/") || text.length > 250) {
+      await adminMessage(env, chatId, "⚠️ أرسل عنوانًا من 1 إلى 250 حرفًا، أو /cancel.");
       return true;
     }
-
-    if (text.length > 250) {
-      await adminMessage(
-        env,
-        chatId,
-        "⚠️ العنوان طويل. الحد الأقصى 250 حرفاً."
-      );
-      return true;
-    }
-
-    await env.DB.prepare(`
-      UPDATE news_drafts
-      SET title = ?, stage = 'media'
-      WHERE admin_id = ?
-    `).bind(text, String(chatId)).run();
-
-    await adminMessage(
-      env,
-      chatId,
-      "✅ تم حفظ العنوان.\n\nأرسل صورة أو فيديو لنشر الخبر."
-    );
-
+    await env.DB.prepare("UPDATE telegram_news_sessions SET stage='add_media',title=?,updated_at=? WHERE admin_id=?")
+      .bind(text, Math.floor(Date.now() / 1000), chatId).run();
+    await adminMessage(env, chatId, "✅ تم حفظ العنوان. أرسل صورة أو فيديو للمنشور.");
     return true;
   }
 
-  // استقبال الصورة أو الفيديو
-  if (draft.stage === "media") {
-    const photo = message.photo?.length
-      ? message.photo[message.photo.length - 1].file_id
-      : null;
-
-    const video = message.video?.file_id || null;
-
+  if (session.stage === "add_media") {
+    const photo = message.photo && message.photo.length ? message.photo[message.photo.length - 1].file_id : null;
+    const video = message.video && message.video.file_id ? message.video.file_id : null;
     if (!photo && !video) {
-      await adminMessage(
-        env,
-        chatId,
-        "⚠️ أرسل صورة أو فيديو فقط، أو استخدم /cancel للإلغاء."
-      );
+      await adminMessage(env, chatId, "⚠️ أرسل صورة أو فيديو، أو /cancel للإلغاء.");
       return true;
     }
-
     const now = Math.floor(Date.now() / 1000);
-
-    await env.DB.prepare(`
-      INSERT INTO news_posts
-      (title, media_type, media_file_id, created_at)
-      VALUES (?, ?, ?, ?)
-    `).bind(
-      draft.title,
-      photo ? "photo" : "video",
-      photo || video,
-      now
-    ).run();
-
-    await env.DB.prepare(`
-      DELETE FROM news_drafts
-      WHERE admin_id = ?
-    `).bind(String(chatId)).run();
-
-    await adminMessage(
-      env,
-      chatId,
-      "🎉 تم نشر الخبر بنجاح!\n\n📰 " + draft.title
-    );
-
+    const inserted = await env.DB.prepare(
+      "INSERT INTO news_posts(title,media_type,media_file_id,created_at) VALUES(?,?,?,?)"
+    ).bind(session.title, photo ? "photo" : "video", photo || video, now).run();
+    await env.DB.prepare("DELETE FROM telegram_news_sessions WHERE admin_id=?").bind(chatId).run();
+    await adminMessage(env, chatId, "🎉 تم نشر المنشور بنجاح!\n🆔 رقم المنشور: " + Number(inserted.meta && inserted.meta.last_row_id || 0) + "\n📰 " + session.title);
     return true;
   }
 
+  if (session.stage === "edit_title") {
+    let title = session.title;
+    if (text !== "/skip") {
+      if (!text || text.startsWith("/") || text.length > 250) {
+        await adminMessage(env, chatId, "⚠️ أرسل عنوانًا من 1 إلى 250 حرفًا، أو /skip للإبقاء على الحالي.");
+        return true;
+      }
+      title = text;
+      await env.DB.prepare("UPDATE news_posts SET title=? WHERE id=?").bind(title, session.post_id).run();
+    }
+    await env.DB.prepare("UPDATE telegram_news_sessions SET stage='edit_media',title=?,updated_at=? WHERE admin_id=?")
+      .bind(title, Math.floor(Date.now() / 1000), chatId).run();
+    await adminMessage(env, chatId, "✅ تم التعامل مع العنوان. أرسل صورة/فيديو جديدًا لتغيير الوسائط، أو /skip للإبقاء على الوسائط الحالية.");
+    return true;
+  }
+
+  if (session.stage === "edit_media") {
+    if (text === "/skip") {
+      await env.DB.prepare("DELETE FROM telegram_news_sessions WHERE admin_id=?").bind(chatId).run();
+      await adminMessage(env, chatId, "✅ تم حفظ تعديلات المنشور #" + session.post_id + ".");
+      return true;
+    }
+    const photo = message.photo && message.photo.length ? message.photo[message.photo.length - 1].file_id : null;
+    const video = message.video && message.video.file_id ? message.video.file_id : null;
+    if (!photo && !video) {
+      await adminMessage(env, chatId, "⚠️ أرسل صورة أو فيديو جديدًا، أو /skip للإبقاء على الوسائط الحالية.");
+      return true;
+    }
+    await env.DB.prepare("UPDATE news_posts SET media_type=?,media_file_id=? WHERE id=?")
+      .bind(photo ? "photo" : "video", photo || video, session.post_id).run();
+    await env.DB.prepare("DELETE FROM telegram_news_sessions WHERE admin_id=?").bind(chatId).run();
+    await adminMessage(env, chatId, "✅ تم تحديث المنشور #" + session.post_id + " بنجاح.");
+    return true;
+  }
   return false;
 }
 
@@ -708,9 +814,12 @@ export async function onRequestPost({ request, env }) {
 
     const update = await request.json();
 
-    // أزرار مراجعة طلبات الاستبدال والمهام
+    // أزرار إدارة المنشورات وطلبات الاستبدال والمهام
     if (update.callback_query) {
-      if (String(update.callback_query.data || "").startsWith("oxide_redeem:")) {
+      const callbackData = String(update.callback_query.data || "");
+      if (callbackData.startsWith("oxide_news:")) {
+        await handleNewsCallback(update.callback_query, env);
+      } else if (callbackData.startsWith("oxide_redeem:")) {
         await handleRedemptionCallback(update.callback_query, env);
       } else {
         await handleMissionCallback(update.callback_query, env);
