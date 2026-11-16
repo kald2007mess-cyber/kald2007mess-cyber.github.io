@@ -463,24 +463,8 @@ body{padding:18px 10px}
 .reward-orders-empty{padding:12px;color:#91a8c1;font-size:12px;text-align:center}
 
 
-/* OXIDE HUB account sign-in */
-.auth-open-button{border:1px solid #8d54ff;background:linear-gradient(135deg,#682bd5,#351477);color:#fff;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;margin-top:10px;width:100%}
-.auth-modal{position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(1,4,15,.82);backdrop-filter:blur(8px)}
-.auth-modal[hidden]{display:none}
-.auth-card{width:min(100%,390px);max-height:90vh;overflow:auto;background:linear-gradient(160deg,#111d3a,#090d20);border:1px solid #8652ff;border-radius:18px;padding:20px;box-shadow:0 0 35px rgba(117,62,255,.28);text-align:center}
-.auth-heading{font-size:22px;font-weight:900;color:#fff;margin:3px 0 8px}
-.auth-subtitle{font-size:12px;color:#b7c8e0;line-height:1.7;margin:0 0 16px}
-.auth-input{display:block;width:100%;padding:13px 12px;margin:9px 0;background:#071329;border:1px solid #31527f;border-radius:9px;color:white;font-size:14px;outline:none;direction:ltr;text-align:left}
-.auth-input:focus{border-color:#a16cff;box-shadow:0 0 0 2px rgba(161,108,255,.15)}
-.auth-primary{width:100%;padding:13px;border:0;border-radius:9px;background:linear-gradient(135deg,#8b45ff,#5422bd);color:white;font-size:14px;font-weight:900;margin-top:8px;cursor:pointer}
-.auth-secondary{width:100%;padding:11px;border:1px solid #49628b;border-radius:9px;background:#111f3a;color:#dce9ff;font-size:13px;font-weight:700;margin-top:9px;cursor:pointer}
-.auth-google-wrap{display:flex;justify-content:center;min-height:42px;margin:13px auto 5px}
-.auth-divider{display:flex;align-items:center;gap:10px;color:#8da4c4;font-size:11px;margin:13px 0}
-.auth-divider:before,.auth-divider:after{content:"";height:1px;background:#30405e;flex:1}
-.auth-message{min-height:22px;color:#ffd36c;font-size:12px;line-height:1.6;margin-top:10px}
-.auth-close{float:left;border:1px solid #4b5d7d;background:#17223c;color:white;width:30px;height:30px;border-radius:50%;font-size:18px;cursor:pointer}
-.auth-switch{color:#b9a1ff;text-decoration:underline;background:none;border:0;padding:10px;cursor:pointer;font-size:12px}
-@media(max-width:360px){.auth-card{padding:15px}}
+
+.settings-menu{position:absolute;top:48px;left:0;z-index:10020;min-width:190px;padding:8px;border:1px solid rgba(87,202,255,.55);border-radius:11px;background:rgba(5,20,40,.98);box-shadow:0 10px 25px rgba(0,0,0,.35)}.settings-menu[hidden]{display:none!important}.settings-link-button{width:100%;padding:11px 12px;border:1px solid rgba(87,202,255,.35);border-radius:8px;background:linear-gradient(135deg,#087ed0,#064a83);color:#fff;font-family:Arial,sans-serif;font-size:12px;font-weight:800;cursor:pointer;text-align:center}.top-actions{position:relative}
 </style>
 </head>
 <body>
@@ -488,8 +472,8 @@ body{padding:18px 10px}
 <div class="rain-glass" aria-hidden="true"><canvas id="oxideRainCanvas"></canvas></div>
 <main class="container">
 <div class="top-bar">
-  <div class="top-actions"><div class="language-box"><select id="language" onchange="changeLanguage(this.value)"><option value="ar">🇩🇿 العربية</option><option value="en">🇬🇧 English</option><option value="ru">🇷🇺 Русский</option><option value="es">🇪🇸 Español</option><option value="tr">🇹🇷 Türkçe</option><option value="id">🇮🇩 Bahasa Indonesia</option></select></div><button class="messages-top-button" id="messagesTopButton" type="button" aria-label="Notifications" title="Notifications" onclick="toggleNotifications()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg><span class="notification-count" id="notificationCount">0</span></button><button class="support-top-button" id="supportTopButton" type="button" onclick="showPage('support')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-2a8 8 0 0 1 16 0v2"></path><rect x="3" y="12" width="4" height="7" rx="2"></rect><rect x="17" y="12" width="4" height="7" rx="2"></rect><path d="M19 19a3 3 0 0 1-3 2h-2"></path></svg><span id="supportTopButtonText">الدعم الفني</span><span class="oxide-new-badge" id="supportUnreadBadge" aria-label="رسائل دعم جديدة"></span></button></div>
-  <div class="user-id-card"><div class="user-id-label" id="userIdLabel">رقم المستخدم الخاص بك</div><div class="user-id-row"><span class="user-id-value" id="userIdValue">Loading...</span><button class="copy-id-button" id="copyIdButton" type="button" onclick="copyUserId()"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg><span id="copyIdButtonText">نسخ</span></button></div><button class="auth-open-button" id="authOpenButton" type="button" onclick="openAuthModal()">🔐 تسجيل الدخول / إنشاء حساب</button></div>
+  <div class="top-actions"><div class="language-box"><select id="language" onchange="changeLanguage(this.value)"><option value="ar">🇩🇿 العربية</option><option value="en">🇬🇧 English</option><option value="ru">🇷🇺 Русский</option><option value="es">🇪🇸 Español</option><option value="tr">🇹🇷 Türkçe</option><option value="id">🇮🇩 Bahasa Indonesia</option></select></div><button class="messages-top-button" id="messagesTopButton" type="button" aria-label="Notifications" title="Notifications" onclick="toggleNotifications()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg><span class="notification-count" id="notificationCount">0</span></button><button class="messages-top-button" id="settingsTopButton" type="button" aria-label="الإعدادات" title="الإعدادات" onclick="toggleSettingsMenu()">⚙️</button><div class="settings-menu" id="settingsMenu" hidden><button type="button" class="settings-link-button" onclick="linkGooglePlayAccount()">ربط حساب Google Play</button></div><button class="support-top-button" id="supportTopButton" type="button" onclick="showPage('support')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-2a8 8 0 0 1 16 0v2"></path><rect x="3" y="12" width="4" height="7" rx="2"></rect><rect x="17" y="12" width="4" height="7" rx="2"></rect><path d="M19 19a3 3 0 0 1-3 2h-2"></path></svg><span id="supportTopButtonText">الدعم الفني</span><span class="oxide-new-badge" id="supportUnreadBadge" aria-label="رسائل دعم جديدة"></span></button></div>
+  <div class="user-id-card"><div class="user-id-label" id="userIdLabel">رقم المستخدم الخاص بك</div><div class="user-id-row"><span class="user-id-value" id="userIdValue">Loading...</span><button class="copy-id-button" id="copyIdButton" type="button" onclick="copyUserId()"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg><span id="copyIdButtonText">نسخ</span></button></div></div>
 </div>
 <section id="notificationsPanel" class="notifications-panel" hidden aria-live="polite">
  <div class="notifications-heading"><span>🔔 مركز الإشعارات</span><div class="notifications-heading-actions"><button class="notification-icon-button notification-delete-read" id="deleteReadNotificationsButton" type="button" onclick="deleteReadNotifications()" aria-label="حذف الإشعارات المقروءة" title="حذف الإشعارات المقروءة"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg></button><button class="notification-icon-button" type="button" onclick="closeNotifications()" aria-label="إغلاق" title="إغلاق"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div></div>
@@ -600,23 +584,6 @@ body{padding:18px 10px}
 <footer>OXIDE HUB © 2026<br>Created by SKIMI_17</footer>
 </main>
 
-<div class="auth-modal" id="authModal" hidden role="dialog" aria-modal="true" aria-labelledby="authHeading">
- <div class="auth-card">
-  <button class="auth-close" type="button" onclick="closeAuthModal()" aria-label="Close">×</button>
-  <div class="auth-heading" id="authHeading">حساب OXIDE HUB</div>
-  <p class="auth-subtitle" id="authSubtitle">احفظ رمز OX ورصيدك وسجّل الدخول من أي هاتف.</p>
-  <form id="authEmailForm" onsubmit="submitEmailAuth(event)">
-   <input class="auth-input" id="authUsername" type="text" autocomplete="username" placeholder="اسم المستخدم أو البريد القديم" maxlength="254" required>
-   <input class="auth-input" id="authPassword" type="password" autocomplete="current-password" placeholder="كلمة السر (8 أحرف على الأقل)" minlength="8" maxlength="128" required>
-   <button class="auth-primary" id="authSubmitButton" type="submit">تسجيل الدخول</button>
-  </form>
-  <button class="auth-switch" id="authModeSwitch" type="button" onclick="toggleAuthMode()">ليس لديك حساب؟ إنشاء حساب</button>
-  <div class="auth-divider">أو</div>
-  <div class="auth-google-wrap"><div id="googleSignInButton"></div></div>
-  <div class="auth-message" id="authMessage" role="status" aria-live="polite"></div>
-  <button class="auth-secondary" type="button" onclick="closeAuthModal()">إغلاق</button>
- </div>
-</div>
 <script>
 let MAINTENANCE_MODE=false;
 let maintenanceActive=false;
@@ -1538,14 +1505,18 @@ initializeOxideHub();
 })();
 
 
-/* OXIDE HUB secure account authentication */
-let oxideAuthMode="login",oxideGoogleClientId="",oxideGoogleReady=false,oxideAuthBusy=false;
-function openAuthModal(){const modal=document.getElementById("authModal");if(!modal)return;modal.hidden=false;document.getElementById("authMessage").textContent="";loadGoogleSignIn();}
-function closeAuthModal(){const modal=document.getElementById("authModal");if(modal)modal.hidden=true;}
-function toggleAuthMode(){oxideAuthMode=oxideAuthMode==="login"?"register":"login";document.getElementById("authHeading").textContent=oxideAuthMode==="login"?"تسجيل الدخول":"إنشاء حساب جديد";document.getElementById("authSubmitButton").textContent=oxideAuthMode==="login"?"تسجيل الدخول":"إنشاء الحساب";document.getElementById("authPassword").autocomplete=oxideAuthMode==="login"?"current-password":"new-password";document.getElementById("authModeSwitch").textContent=oxideAuthMode==="login"?"ليس لديك حساب؟ إنشاء حساب":"لديك حساب؟ تسجيل الدخول";document.getElementById("authMessage").textContent="";document.getElementById("authUsername").placeholder=oxideAuthMode==="login"?"اسم المستخدم أو البريد القديم":"اختر اسم مستخدم فريدًا";document.getElementById("authUsername").maxLength=oxideAuthMode==="login"?254:20;}
-async function submitEmailAuth(event){event.preventDefault();if(oxideAuthBusy)return;const username=document.getElementById("authUsername").value.trim(),password=document.getElementById("authPassword").value;const button=document.getElementById("authSubmitButton"),message=document.getElementById("authMessage");oxideAuthBusy=true;button.disabled=true;message.textContent="جارٍ التحقق...";try{const response=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({action:oxideAuthMode,username,password})});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||"AUTH_FAILED");message.textContent="تم حفظ الحساب وتسجيل الدخول بنجاح.";userDisplayId=data.displayId||userDisplayId;userIdLoaded=true;document.getElementById("userIdValue").textContent=userDisplayId;setTimeout(()=>location.reload(),700);}catch(error){const errors={INVALID_USERNAME:"اسم المستخدم يجب أن يكون من 3 إلى 20 حرفًا أو رقمًا أو _ فقط.",USERNAME_TAKEN:"اسم المستخدم مستعمل. اختر اسمًا آخر.",INVALID_PASSWORD:"كلمة السر يجب أن تكون 8 أحرف على الأقل.",ACCOUNT_ALREADY_LINKED:"هذا الحساب مرتبط مسبقًا. سجّل الدخول بالطريقة المرتبطة به.",INVALID_CREDENTIALS:"اسم المستخدم أو كلمة السر غير صحيحة.",ACCOUNT_LINK_FAILED:"تعذر حفظ الحساب الحالي. حاول مرة أخرى."};message.textContent=errors[error.message]||("تعذر تسجيل الدخول: "+String(error.message||"UNKNOWN_ERROR"));}finally{oxideAuthBusy=false;button.disabled=false;}}
-async function handleGoogleCredential(result){if(oxideAuthBusy)return;const message=document.getElementById("authMessage");oxideAuthBusy=true;message.textContent="جارٍ التحقق من حساب Google...";try{const response=await fetch("/api/auth",{method:"POST",headers:{"Content-Type":"application/json"},credentials:"same-origin",cache:"no-store",body:JSON.stringify({action:"google",credential:result.credential})});const data=await response.json();if(!response.ok||!data.success)throw new Error(data.error||"GOOGLE_FAILED");message.textContent="تم ربط حساب Google بنجاح.";userDisplayId=data.displayId||userDisplayId;userIdLoaded=true;document.getElementById("userIdValue").textContent=userDisplayId;setTimeout(()=>location.reload(),700);}catch(error){const errors={GOOGLE_NOT_CONFIGURED:"تسجيل Google يحتاج إعداد Client ID في Cloudflare أولاً.",GOOGLE_TOKEN_INVALID:"تعذر التحقق من حساب Google.",GOOGLE_ACCOUNT_CONFLICT:"هذا البريد مرتبط بحساب OX آخر. تواصل مع الدعم.",EMAIL_LINKED_TO_ANOTHER_GOOGLE:"هذا البريد مرتبط بحساب Google آخر.",ACCOUNT_ALREADY_LINKED:"حساب OX مرتبط بحساب آخر."};message.textContent=errors[error.message]||("فشل تسجيل Google: "+String(error.message||"UNKNOWN_ERROR"));}finally{oxideAuthBusy=false;}}
-async function loadGoogleSignIn(){if(oxideGoogleReady)return;try{const configResponse=await fetch("/api/auth/config",{cache:"no-store"});const config=await configResponse.json();oxideGoogleClientId=config.googleClientId||"";if(!oxideGoogleClientId){document.getElementById("googleSignInButton").innerHTML='<span style="color:#8ea4c2;font-size:11px">Google يحتاج إعدادًا من مدير الموقع</span>';return;}if(!window.google?.accounts?.id){await new Promise((resolve,reject)=>{const script=document.createElement("script");script.src="https://accounts.google.com/gsi/client";script.async=true;script.defer=true;script.onload=resolve;script.onerror=reject;document.head.appendChild(script);});}google.accounts.id.initialize({client_id:oxideGoogleClientId,callback:handleGoogleCredential,auto_select:false,cancel_on_tap_outside:true});google.accounts.id.renderButton(document.getElementById("googleSignInButton"),{theme:"filled_black",size:"large",shape:"pill",text:"continue_with",width:280});oxideGoogleReady=true;}catch(error){document.getElementById("googleSignInButton").innerHTML='<span style="color:#ffb8b8;font-size:11px">تعذر تحميل تسجيل Google</span>';}}
+
+function toggleSettingsMenu(){
+ const menu=document.getElementById("settingsMenu");
+ if(menu)menu.hidden=!menu.hidden;
+}
+function linkGooglePlayAccount(){
+ const menu=document.getElementById("settingsMenu");
+ if(menu)menu.hidden=true;
+ const status=document.getElementById("status");
+ if(status)status.textContent="ربط Google Play Games سيتاح بعد دمج الخدمة في تطبيق Android.";
+}
+
 </script>
 </body>
 </html>
