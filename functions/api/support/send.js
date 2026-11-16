@@ -3,60 +3,54 @@ import { getVisitor, json } from "../_lib/session.js";
 export async function onRequestPost({ request, env }) {
   try {
     if (!env.DB || !env.SESSION_SECRET) {
-      return json({ error: "Server configuration missing" }, 500);
+      return json({ error: "SERVER_CONFIGURATION_MISSING" }, 500);
     }
 
     const userId = await getVisitor(request, env);
-    if (!userId) return json({ error: "No visitor session" }, 401);
+    if (!userId) return json({ error: "NO_VISITOR_SESSION" }, 401);
 
     const body = await request.json();
     const message = String(body.message || "").trim();
     if (!message || message.length > 2000) {
-      return json({ error: "Invalid message" }, 400);
+      return json({ error: "INVALID_MESSAGE" }, 400);
     }
 
     const user = await env.DB.prepare(`
-      SELECT
-        v.user_id,
-        v.points,
-        v.progress,
-        v.created_at,
-        COALESCE(r.completed_ads, 0) AS island_ads,
-        (
-          SELECT COUNT(*)
-          FROM offerwall_events e
-          WHERE e.user_id = v.user_id
-            AND e.status = 1
-            AND e.offer_type = 'ptc'
-        ) AS ptc_ads
-      FROM visitors v
-      LEFT JOIN reward_ad_cycles r ON r.user_id = v.user_id
-      WHERE v.user_id = ?
+      SELECT user_uuid, public_id, points, created_at, status
+      FROM users
+      WHERE user_uuid = ?
+      LIMIT 1
     `).bind(userId).first();
 
-    if (!user) return json({ error: "User not found" }, 404);
+    if (!user || user.status !== "active") {
+      return json({ error: "USER_NOT_AVAILABLE" }, 404);
+    }
 
     const now = Math.floor(Date.now() / 1000);
-
-    await env.DB.prepare(`
-      INSERT OR IGNORE INTO support_conversations
-      (user_id, status, created_at, updated_at)
-      VALUES (?, 'open', ?, ?)
-    `).bind(userId, now, now).run();
-
-    const conversation = await env.DB.prepare(`
-      SELECT id FROM support_conversations WHERE user_id = ?
+    let conversation = await env.DB.prepare(`
+      SELECT id
+      FROM support_conversations
+      WHERE user_uuid = ?
+      ORDER BY id DESC
+      LIMIT 1
     `).bind(userId).first();
 
     if (!conversation) {
-      return json({ error: "Conversation creation failed" }, 500);
+      const created = await env.DB.prepare(`
+        INSERT INTO support_conversations (user_uuid, status, created_at, updated_at)
+        VALUES (?, 'open', ?, ?)
+        RETURNING id
+      `).bind(userId, now, now).first();
+      conversation = created;
     }
 
-    // Save the user's message first. Telegram must never control whether
-    // the message is stored or shown in the website conversation.
-    const saved = await env.DB.prepare(`
+    if (!conversation?.id) {
+      return json({ error: "CONVERSATION_CREATE_FAILED" }, 500);
+    }
+
+    await env.DB.prepare(`
       INSERT INTO support_messages
-      (conversation_id, sender, message_type, message_text, created_at)
+        (conversation_id, sender, message_type, message_text, created_at)
       VALUES (?, 'user', 'text', ?, ?)
     `).bind(conversation.id, message, now).run();
 
@@ -67,31 +61,18 @@ export async function onRequestPost({ request, env }) {
     `).bind(now, conversation.id).run();
 
     let notificationSent = false;
-    let telegramMessageId = null;
-    let telegramChatId = null;
-
     if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_ADMIN_ID) {
-      const displayId =
-        "OX-" + userId.replace(/-/g, "").slice(0, 8).toUpperCase();
-
+      const displayId = user.public_id ||
+        ("OX-" + userId.replace(/-/g, "").slice(0, 8).toUpperCase());
       const telegramText =
-        "📩 OXIDE HUB SUPPORT\n\n" +
-        "👤 User: " + displayId + "\n" +
-        "🆔 ID: " + userId + "\n\n" +
-        "💬 Message:\n" + message + "\n\n" +
-        "📊 ACCOUNT INFORMATION\n" +
-        "⭐ Points: " + Number(user.points || 0) + "\n" +
-        "🎬 OXIDE HUB PTC completed: " + Number(user.ptc_ads || 0) + "\n" +
-        "🏝️ OXIDE ISLAND completed: " + Number(user.island_ads || 0) + "\n" +
-        "📈 Current progress: " + Number(user.progress || 0) + "/3\n" +
-        "📅 Registration: " +
-        (user.created_at
-          ? new Date(Number(user.created_at) * 1000).toISOString()
-          : "Unknown") +
-        "\n\n↩️ Reply to this message to answer the user.";
+        "📩 OXIDE HUB SUPPORT\\n\\n" +
+        "👤 User: " + displayId + "\\n" +
+        "🧵 Conversation: #" + conversation.id + "\\n" +
+        "🔎 Reply to this message to answer the user.\\n\\n" +
+        "💬 Message:\\n" + message;
 
       try {
-        const telegramResponse = await fetch(
+        const response = await fetch(
           `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
           {
             method: "POST",
@@ -102,39 +83,16 @@ export async function onRequestPost({ request, env }) {
             })
           }
         );
-
-        const telegramResult = await telegramResponse.json();
-        if (telegramResponse.ok && telegramResult.ok) {
-          notificationSent = true;
-          telegramMessageId = telegramResult.result.message_id;
-          telegramChatId = String(telegramResult.result.chat.id);
-        }
-      } catch {
-        // The message is already safely stored in D1.
+        const result = await response.json();
+        notificationSent = Boolean(response.ok && result.ok);
+      } catch (error) {
+        console.error("Support Telegram notification failed:", error);
       }
     }
 
-    if (notificationSent && saved.meta?.last_row_id) {
-      await env.DB.prepare(`
-        UPDATE support_messages
-        SET telegram_chat_id = ?, telegram_message_id = ?
-        WHERE id = ?
-      `).bind(
-        telegramChatId,
-        telegramMessageId,
-        saved.meta.last_row_id
-      ).run();
-    }
-
-    return json({
-      success: true,
-      saved: true,
-      notificationSent,
-      message: "Message saved"
-    });
+    return json({ success: true, saved: true, notificationSent });
   } catch (error) {
-    return json({
-      error: "Could not save support message"
-    }, 500);
+    console.error("Support send failed:", error);
+    return json({ error: "SUPPORT_SEND_FAILED" }, 500);
   }
 }
