@@ -51,7 +51,9 @@ export async function onRequestGet({ request, env }) {
       success: true,
       userId: row.user_id,
       displayId: shortId,
-      points: Number(row.points || 0)
+      points: Number(row.points || 0),
+      authenticated: Boolean(row.email && (row.password_hash || row.google_sub)),
+      authMethod: row.google_sub && row.password_hash ? "both" : row.google_sub ? "google" : row.password_hash ? "email" : "guest"
     });
 
     if (cookie) {
