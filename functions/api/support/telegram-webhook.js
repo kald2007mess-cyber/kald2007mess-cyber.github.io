@@ -32,24 +32,8 @@ async function adminMessage(env, chatId, text) {
 
 
 async function ensureNotificationsTable(DB) {
-  await DB.prepare(`
-    CREATE TABLE IF NOT EXISTS oxide_notifications (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id TEXT NOT NULL,
-      type TEXT NOT NULL,
-      title TEXT NOT NULL,
-      body TEXT NOT NULL DEFAULT '',
-      reward_points INTEGER NOT NULL DEFAULT 0,
-      created_at INTEGER NOT NULL,
-      read_at INTEGER,
-      claimed_at INTEGER,
-      claim_token TEXT
-    )
-  `).run();
-  await DB.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_oxide_notifications_user
-    ON oxide_notifications(user_id, created_at DESC)
-  `).run();
+  // The current notifications table is provisioned by the D1 schema.
+  await DB.prepare("SELECT id FROM notifications LIMIT 0").all();
 }
 
 async function ensureGiftSessions(DB) {
@@ -220,15 +204,33 @@ async function handleGiftMessage(message, env) {
     }
 
     const deduction = Math.abs(amount);
-    const updatedUser = await env.DB.prepare(`
-      UPDATE visitors
-      SET points = points - ?
-      WHERE user_id = ? AND points >= ?
-      RETURNING points
-    `).bind(deduction, targetUserId, deduction).first();
+    const ledgerReference = "gift-" + chatId + "-" + now;
+    const results = await env.DB.batch([
+      env.DB.prepare(`
+        UPDATE users
+        SET points = points - ?, updated_at = ?
+        WHERE user_uuid = ? AND status = 'active' AND points >= ?
+      `).bind(deduction, now, targetUserId, deduction),
+      env.DB.prepare(`
+        INSERT INTO point_ledger
+          (user_uuid, delta, balance_after, reason, reference_type,
+           reference_id, admin_telegram_id, created_at)
+        SELECT user_uuid, ?, points, 'admin_points_deduction',
+               'telegram_gift', ?, ?, ?
+        FROM users
+        WHERE user_uuid = ?
+          AND EXISTS (
+            SELECT 1 FROM telegram_gift_sessions
+            WHERE admin_id = ? AND stage = 'points' AND target_user_id = ?
+          )
+      `).bind(-deduction, ledgerReference, chatId, now, targetUserId, chatId, targetUserId)
+    ]);
+    const updatedUser = Number(results[0]?.meta?.changes || 0) === 1
+      ? await env.DB.prepare("SELECT points FROM users WHERE user_uuid = ?").bind(targetUserId).first()
+      : null;
 
     if (!updatedUser) {
-      const current = await env.DB.prepare("SELECT points FROM visitors WHERE user_id = ?")
+      const current = await env.DB.prepare("SELECT points FROM users WHERE user_uuid = ?")
         .bind(targetUserId).first();
       await adminMessage(env, message.chat.id,
         "❌ لا يمكن الخصم. رصيد المستخدم الحالي " +
@@ -248,9 +250,8 @@ async function handleGiftMessage(message, env) {
           Number(updatedUser.points || 0).toLocaleString() + " نقطة."
       );
     } catch (error) {
-      await env.DB.prepare("UPDATE visitors SET points = points + ? WHERE user_id = ?")
-        .bind(deduction, targetUserId).run();
-      throw error;
+      console.error("Could not create deduction notification", error);
+      // The point adjustment remains recorded in point_ledger.
     }
 
     await env.DB.prepare(`
