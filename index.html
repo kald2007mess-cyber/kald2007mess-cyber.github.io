@@ -1,3 +1,604 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OXIDE HUB</title>
+<style>
+*{box-sizing:border-box}
+html{min-height:100%;background-color:#030816}
+body{margin:0;min-height:100vh;background-color:#030816;font-family:Arial,sans-serif;color:white;text-align:center;background-image:linear-gradient(rgba(3,8,22,.68),rgba(3,8,22,.88)),url("background.png");background-position:center,center;background-repeat:no-repeat;background-attachment:scroll,fixed;background-size:auto,105% 105%;padding:25px 12px;animation:backgroundDrift 35s ease-in-out infinite alternate;isolation:isolate}
+@keyframes backgroundDrift{from{background-position:center,48% 48%}to{background-position:center,52% 52%}}
+.stars{position:fixed;inset:-100px;z-index:-1;pointer-events:none;opacity:.25;background-image:radial-gradient(2px 2px at 30px 40px,#fff,transparent),radial-gradient(1px 1px at 100px 130px,#fff,transparent),radial-gradient(2px 2px at 190px 80px,#54caff,transparent),radial-gradient(1px 1px at 250px 190px,#fff,transparent),radial-gradient(2px 2px at 320px 40px,#fff,transparent);background-size:350px 250px;animation:starMove 65s linear infinite}
+@keyframes starMove{from{transform:translate(0,0)}to{transform:translate(-100px,80px)}}
+.container{max-width:430px;margin:auto;position:relative;z-index:1}
+.top-bar{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:15px;direction:rtl}
+.top-actions{display:flex;align-items:flex-start;gap:7px;direction:ltr;flex-shrink:0}
+.language-box{display:flex;justify-content:flex-start;margin:0}
+.language-box select{background:rgba(12,25,48,.9);color:white;border:1px solid #176caa;border-radius:8px;padding:9px 12px;font-size:14px}
+.language-box option{background:#0c1930;color:white}
+.support-top-button{position:relative;border:1px solid #00b7ff;border-radius:8px;padding:9px 10px;background:linear-gradient(135deg,#087ed0,#0055a0);color:#fff;font-size:13px;font-weight:bold;white-space:nowrap;cursor:pointer;font-family:Arial,sans-serif}
+.support-top-button:active{transform:scale(.97)}
+.top-bar .user-id-card{margin:0;max-width:65%}
+.user-id-card{width:fit-content;max-width:100%;background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:12px;padding:10px 12px;margin:0 0 15px auto;text-align:right;box-shadow:0 0 12px rgba(0,145,255,.12)}
+.user-id-label{color:#b8c9dd;font-size:11px;margin-bottom:7px}
+.user-id-row{display:flex;align-items:center;justify-content:flex-start;gap:8px;direction:ltr}
+.user-id-value{color:#35ef91;font-size:14px;font-weight:bold;letter-spacing:1px}
+.copy-id-button{border:1px solid #00aaff;background:#075a9d;color:white;padding:7px 9px;border-radius:7px;font-size:11px;font-weight:bold;cursor:pointer;font-family:Arial,sans-serif}
+.copy-id-button:active{transform:scale(.96)}
+.logo{font-size:35px;font-weight:900;letter-spacing:3px;color:#fff;text-shadow:0 0 15px #00aaff;margin:25px 0 8px}
+.subtitle{color:#b8c9dd;margin-bottom:24px}
+.navigation{display:flex;direction:rtl;align-items:stretch;width:100%;gap:3px;padding:5px;margin:0 0 20px;background:rgba(5,15,32,.92);border:1px solid #176caa;border-radius:13px;box-shadow:0 0 12px rgba(0,145,255,.12)}
+.nav-item{position:relative;flex:1;min-width:0;min-height:68px;padding:7px 2px;border:1px solid transparent;border-radius:9px;background:transparent;color:#c6d5e7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-family:Arial,sans-serif;cursor:pointer}
+.nav-item.active{color:white;background:linear-gradient(145deg,#075a9d,#06305d);border-color:#00aaff;box-shadow:0 0 12px rgba(0,170,255,.45)}
+.nav-icon{width:23px;height:23px;display:flex;align-items:center;justify-content:center;color:#d6eaff}
+.nav-icon svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-label{font-size:10px;font-weight:bold;white-space:nowrap}
+.oxide-new-badge{position:absolute;top:3px;right:4px;z-index:4;display:none;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 5px;border:1px solid rgba(255,255,255,.85);border-radius:20px;background:#f02d3a;color:#fff;font-size:10px;font-weight:900;line-height:1;box-shadow:0 2px 7px rgba(0,0,0,.4);pointer-events:none}
+.support-top-button .oxide-new-badge{top:-4px;right:-4px;width:10px;height:10px;min-width:10px;padding:0;border:0;border-radius:50%;font-size:0}
+.island-tab .oxide-new-badge{top:5px;right:5px}
+.nav-soon{font-size:8px;color:#111;background:#ffc52e;border-radius:4px;padding:2px 4px;font-weight:bold;white-space:nowrap}
+.nav-item:disabled{opacity:.85;cursor:not-allowed}
+#homePage{display:block}#rewardsPage,#referralPage,#newsPage{display:none}
+.progress-box{background:rgba(12,25,48,.85);border:1px solid #176caa;border-radius:14px;padding:15px;margin-bottom:20px}
+.progress-text{font-size:19px;font-weight:bold;margin-bottom:12px}
+.bar{height:10px;background:#25364b;border-radius:20px;overflow:hidden}
+.bar-fill{height:100%;width:0%;background:#00b7ff;transition:width .3s;box-shadow:0 0 10px #00b7ff}
+.stage{display:flex;justify-content:space-between;align-items:center;background:rgba(13,29,52,.88);border:1px solid #244765;padding:16px;margin:12px 0;border-radius:13px;gap:8px}
+.stage button{border:0;padding:11px 14px;border-radius:8px;color:white;background:#087ed0;font-weight:bold;cursor:pointer;white-space:nowrap}
+.stage button:disabled{background:#28634c;cursor:default}.stage button.locked{background:#344253;color:#b6c1ce;cursor:not-allowed}
+.platform-button{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;margin-top:13px;padding:16px;border-radius:12px;color:white;background:#26394f;font-size:17px;font-weight:bold;text-decoration:none;border:1px solid #40536b;opacity:.55;cursor:not-allowed;font-family:Arial,sans-serif;transition:.3s}
+.platform-button.available{opacity:1;cursor:pointer;background:linear-gradient(135deg,#087ed0,#0055a0);border-color:#00b7ff;box-shadow:0 0 17px rgba(0,183,255,.45)}
+.platform-button.available:active{transform:scale(.98)}.platform-button:disabled{opacity:.55;cursor:not-allowed}
+.android-icon{width:29px;height:29px;fill:#3ddc84;flex-shrink:0}.platform-icon{font-size:25px;line-height:1}
+.soon-label{font-size:11px;background:rgba(0,0,0,.3);padding:5px 8px;border-radius:6px}
+#status{min-height:25px;color:#ffd36a;margin-top:15px;line-height:1.6}
+.guide-box{background:rgba(12,25,48,.88);border:1px solid #176caa;border-radius:14px;padding:18px;margin-top:28px;text-align:start}
+.guide-title{color:#00b7ff;font-size:19px;font-weight:bold;text-align:center;margin:0 0 18px}
+.guide-step{display:flex;align-items:flex-start;gap:12px;margin:14px 0;color:#d8e5f3;font-size:14px;line-height:1.7}
+.step-number{display:flex;align-items:center;justify-content:center;min-width:27px;height:27px;border-radius:50%;background:#087ed0;color:white;font-weight:bold;font-size:13px}
+.guide-note{color:#35ef91;text-align:center;font-weight:bold;font-size:14px;line-height:1.7;margin-top:18px}
+.support-box{background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:14px;padding:15px;margin-top:20px;text-align:start;box-shadow:0 0 12px rgba(0,145,255,.12)}
+.support-title{color:#00b7ff;text-align:center;font-size:19px;margin:0 0 8px}
+.support-description{color:#b8c9dd;text-align:center;font-size:12px;line-height:1.6;margin:0 0 12px}
+.support-messages{height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:9px;padding:10px;background:rgba(3,13,29,.72);border:1px solid #244765;border-radius:10px}
+.support-empty{color:#9fb2c8;text-align:center;font-size:12px;margin:auto;line-height:1.7}
+.support-message{max-width:88%;padding:9px 11px;border-radius:10px;font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.support-message.user{align-self:flex-end;background:#075a9d;border:1px solid #168bd0}
+.support-message.admin{align-self:flex-start;background:#26394f;border:1px solid #40536b}
+.support-sender{display:block;font-size:10px;color:#a9dfff;margin-bottom:3px;font-weight:bold}
+.support-form{display:flex;gap:7px;margin-top:10px;align-items:stretch}
+.support-input{flex:1;min-width:0;resize:vertical;min-height:44px;max-height:110px;padding:10px;border:1px solid #176caa;border-radius:9px;background:#07172c;color:#fff;font-family:Arial,sans-serif;font-size:13px;outline:none}
+.support-input:focus{border-color:#00b7ff}
+.support-send{border:1px solid #00b7ff;border-radius:9px;padding:0 15px;background:linear-gradient(135deg,#087ed0,#0055a0);color:white;font-weight:bold;font-family:Arial,sans-serif;cursor:pointer}
+.support-send:disabled{opacity:.55;cursor:not-allowed}
+.support-status{min-height:20px;margin-top:8px;text-align:center;color:#ffd36a;font-size:11px;line-height:1.5}
+.support-media-note{color:#8ea6bf;font-size:10px;text-align:center;margin-top:5px}
+.rewards-heading{color:#00b7ff;font-size:23px;margin:8px 0 18px;text-shadow:0 0 12px rgba(0,183,255,.4)}
+.balance-card{background:linear-gradient(145deg,rgba(8,65,112,.95),rgba(8,25,50,.95));border:1px solid #168bd0;border-radius:15px;padding:20px;margin-bottom:20px;box-shadow:0 0 17px rgba(0,145,255,.15)}
+.balance-label{color:#b8d9f3;font-size:14px;margin-bottom:8px}.balance-number{font-size:32px;font-weight:900;color:#fff;text-shadow:0 0 12px #00aaff}.balance-unit{color:#70d5ff;font-size:13px;margin-top:5px}
+.rewards-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.reward-card{background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:13px;padding:12px 9px;display:flex;flex-direction:column;align-items:center;min-width:0}
+.reward-image{width:100%;height:125px;object-fit:contain;display:block;margin-bottom:8px}
+.reward-name{font-size:14px;font-weight:bold;color:#fff;min-height:34px;display:flex;align-items:center;justify-content:center}
+.reward-price{color:#68d3ff;font-size:13px;font-weight:bold;margin:7px 0 12px}
+.reward-button{width:100%;border:0;border-radius:8px;padding:11px 5px;color:white;background:linear-gradient(135deg,#087ed0,#0055a0);font-weight:bold;font-size:12px;cursor:pointer}
+.reward-button:disabled{background:#344253;color:#aab7c6;cursor:not-allowed}
+.reward-message{min-height:26px;margin-top:17px;font-size:13px;line-height:1.6;color:#ffd36a}
+.pending-note{color:#b8c9dd;font-size:12px;line-height:1.7;background:rgba(12,25,48,.85);border:1px solid #244765;border-radius:10px;padding:12px;margin-top:15px}
+.island-section{background:rgba(7,20,42,.94);border:1px solid #168bd0;border-radius:15px;padding:16px 12px;margin-bottom:20px;box-shadow:0 0 18px rgba(0,145,255,.13)}
+.island-title{color:#00b7ff;font-size:24px;font-weight:900;letter-spacing:2px;margin:3px 0 16px;text-shadow:0 0 12px #007fc7}
+.island-tabs{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.island-tab{position:relative;min-width:0;min-height:94px;padding:13px 5px;border-radius:11px;border:1px solid #176caa;background:rgba(15,38,67,.95);color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-family:Arial,sans-serif;font-weight:bold}
+.island-tab.active{background:linear-gradient(145deg,#075a9d,#06305d);border-color:#00b7ff;box-shadow:0 0 12px rgba(0,183,255,.3)}
+.island-tab svg{width:25px;height:25px;fill:none;stroke:#70d5ff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.island-tab-label{font-size:12px;line-height:1.4}.island-counter{color:#35ef91;font-size:13px}.island-soon{color:#ffc52e;font-size:11px}
+.island-panel{margin-top:15px;padding:14px 10px;background:rgba(3,13,29,.8);border:1px solid #244765;border-radius:11px}
+.island-progress{height:9px;background:#25364b;border-radius:20px;overflow:hidden;margin:12px 0}
+.island-progress-fill{width:0%;height:100%;background:linear-gradient(90deg,#087ed0,#35ef91);transition:width .3s}
+.island-watch-button{width:100%;padding:14px;margin-top:10px;border:1px solid #00b7ff;border-radius:9px;background:linear-gradient(135deg,#087ed0,#0055a0);color:white;font-size:15px;font-weight:bold;cursor:pointer}
+.island-watch-button:disabled{background:#344253;border-color:#46576b;color:#aab7c6;cursor:not-allowed}
+.island-timer{color:#ffd36a;font-size:13px;margin-top:12px}
+.island-message{color:#b8c9dd;font-size:12px;line-height:1.7;min-height:22px;margin-top:10px}
+.island-task-lock{padding:24px 10px;color:#ffc52e;font-weight:bold}
+.mission-center{background:linear-gradient(155deg,rgba(7,19,39,.97),rgba(3,11,25,.96));border:1px solid #285276;border-radius:18px;padding:15px;text-align:start;box-shadow:0 8px 28px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.035);overflow:hidden}
+.mission-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:15px}
+.mission-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mission-brand-icon{width:42px;height:42px;display:grid;place-items:center;flex-shrink:0;border-radius:13px;background:linear-gradient(145deg,#153c60,#10233e);border:1px solid #2d80b5;color:#55d6ff;font-size:21px;box-shadow:0 0 15px rgba(0,183,255,.12)}
+.mission-brand-name{color:#fff;font-size:17px;font-weight:900;letter-spacing:1.1px}
+.mission-brand-sub{color:#8ea6c8;font-size:9px;letter-spacing:1.5px;margin-top:3px}
+.mission-live{font-size:9px;font-weight:800;color:#55e5a3;border:1px solid rgba(67,214,154,.35);background:rgba(67,214,154,.08);padding:5px 8px;border-radius:20px;white-space:nowrap}
+.mission-language{background:#101f36;color:#d9e8f8;border:1px solid #315879;border-radius:8px;padding:7px 8px;font-size:11px;max-width:112px}
+.mission-progress-card{background:linear-gradient(135deg,rgba(19,38,64,.98),rgba(13,28,49,.98));border:1px solid #284766;border-radius:13px;padding:12px;margin-bottom:11px}
+.mission-progress-top{display:flex;justify-content:space-between;align-items:center;gap:8px;color:#eaf4ff;font-size:12px;font-weight:bold}
+.mission-progress-number{font-size:20px;color:#55d6ff;font-weight:900;white-space:nowrap}
+.mission-progress-track{height:7px;background:#263b55;border-radius:20px;overflow:hidden;margin:9px 0 6px}
+.mission-progress-fill{height:100%;width:0;background:linear-gradient(90deg,#087ed0,#55d6ff);border-radius:20px;box-shadow:0 0 12px rgba(85,214,255,.5);transition:width .35s}
+.mission-progress-foot{display:flex;justify-content:space-between;color:#8ea6c8;font-size:9px}
+.mission-summary{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:17px}
+.mission-summary-item{display:flex;flex-direction:column;gap:5px;text-align:start;background:rgba(19,34,57,.9);border:1px solid #294967;border-radius:12px;padding:11px;color:#9fb4ce;font-size:10px;line-height:1.5}
+.mission-summary-value{display:block;color:#fff;font-size:22px;font-weight:900;margin-top:1px}
+.mission-group-title{display:flex;align-items:center;justify-content:space-between;color:#dceeff;font-size:12px;font-weight:800;letter-spacing:.4px;margin:16px 1px 9px}
+.mission-group-count{font-size:9px;color:#8ea6c8;font-weight:normal}
+.mission-list{display:grid;grid-template-columns:1fr;gap:9px}
+.mission-item{display:block;background:linear-gradient(145deg,rgba(18,35,59,.98),rgba(12,26,46,.98));border:1px solid #2b4b6b;border-radius:14px;padding:12px;color:#d8e5f3;font-size:12px;min-width:0}
+.mission-item-main{display:flex;align-items:center;justify-content:space-between;gap:9px}
+.mission-item-heading{display:flex;align-items:center;gap:9px;min-width:0}
+.mission-item-icon{width:43px;height:43px;display:grid;place-items:center;flex-shrink:0;background:linear-gradient(145deg,rgba(13,75,119,.8),rgba(8,28,54,.95));border:1px solid rgba(93,190,255,.55);border-radius:12px;box-shadow:inset 0 1px rgba(255,255,255,.14),0 4px 12px rgba(0,0,0,.2)}
+.mission-platform-svg{width:27px;height:27px;display:block;overflow:visible}
+.mission-item-title{color:#f3f8ff;font-size:12px;font-weight:800;line-height:1.4}
+.mission-item-meta{color:#829bb9;font-size:9px;margin-top:4px;letter-spacing:.45px}
+.mission-status-pill{font-size:9px;font-weight:800;padding:5px 8px;border-radius:20px;white-space:nowrap;background:rgba(85,214,255,.09);border:1px solid rgba(85,214,255,.3);color:#55d6ff}
+.mission-status-pill.approved{background:rgba(67,214,154,.09);border-color:rgba(67,214,154,.35);color:#43d69a}
+.mission-status-pill.pending{background:rgba(255,197,46,.09);border-color:rgba(255,197,46,.35);color:#ffd36a}
+.mission-description{color:#b4c6dc;font-size:11px;line-height:1.7;margin:11px 0}
+.mission-reward-row{display:flex;align-items:center;justify-content:space-between;color:#8ea6c8;font-size:10px;margin:9px 0}
+.mission-reward{color:#43d69a;font-size:14px;font-weight:900}
+.mission-link-button,.mission-submit-button{display:block;width:100%;text-align:center;text-decoration:none;border:1px solid #34739b;border-radius:9px;padding:11px;color:#fff;font-size:11px;font-weight:800;background:#1b3049;font-family:Arial,sans-serif}
+.mission-submit-button{margin-top:8px;border-color:#1599d0;background:linear-gradient(135deg,#087ed0,#07518e);cursor:pointer}
+.mission-submit-button:disabled{opacity:.6;cursor:not-allowed}
+.mission-file-label{display:block;color:#a9bfd9;font-size:10px;margin:11px 0 6px}
+.mission-file-input{width:100%;padding:9px;background:#07172c;color:#dceeff;border:1px solid #315879;border-radius:8px;font-size:10px}
+/* Mission proof upload: polished app-style upload and local image preview. */
+.mission-item{position:relative;padding:15px;background:linear-gradient(145deg,rgba(15,39,67,.96),rgba(5,19,38,.98));border-color:rgba(77,159,218,.42);box-shadow:0 8px 20px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.045);transition:border-color .2s,transform .2s}
+.mission-item:not(.soon):hover{border-color:rgba(85,214,255,.7)}
+.mission-item-main{align-items:flex-start}
+.mission-item-heading{flex:1}
+.mission-item-icon{width:46px;height:46px;border-radius:14px}
+.mission-item-title{font-size:13px;line-height:1.55}
+.mission-description{font-size:12px;line-height:1.8;margin:13px 0;color:#c1d2e6}
+.mission-reward-row{margin:12px 0;padding:10px 11px;border:1px solid rgba(67,214,154,.2);border-radius:10px;background:rgba(37,139,104,.08)}
+.mission-reward{font-size:15px;text-shadow:0 0 10px rgba(67,214,154,.22)}
+.mission-link-button{margin-top:8px;padding:12px;border-color:rgba(85,190,255,.35);background:linear-gradient(135deg,rgba(14,74,119,.85),rgba(8,39,70,.95));font-size:12px;box-shadow:inset 0 1px rgba(255,255,255,.08)}
+.mission-proof-box{margin-top:13px;padding:12px;border:1px solid rgba(91,184,255,.25);border-radius:12px;background:rgba(3,15,32,.58)}
+.mission-file-label{display:flex;align-items:center;gap:7px;margin:0 0 9px;color:#d5e9fc;font-size:11px;font-weight:800}
+.mission-file-input{display:block;width:100%;min-height:43px;padding:8px;border:1px dashed #397ba8;border-radius:9px;background:rgba(7,23,44,.9);font-size:11px}
+.mission-file-input::file-selector-button{margin-inline-end:9px;padding:8px 10px;border:0;border-radius:7px;background:#0b659f;color:#fff;font-weight:700}
+.mission-preview{display:none;margin-top:11px;padding:9px;border:1px solid rgba(85,214,255,.28);border-radius:10px;background:rgba(7,28,49,.82)}
+.mission-preview.visible{display:block}
+.mission-preview-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;color:#8edcff;font-size:10px;font-weight:800}
+.mission-preview-image{display:block;width:100%;max-height:230px;object-fit:contain;border-radius:8px;background:#020b17}
+.mission-preview-info{margin-top:7px;color:#9db6d0;font-size:9px;overflow-wrap:anywhere;text-align:start}
+.mission-submit-button{min-height:45px;margin-top:10px;border-radius:10px;font-size:12px;box-shadow:0 7px 16px rgba(0,125,220,.2),inset 0 1px rgba(255,255,255,.15)}
+.mission-submit-button:active{transform:scale(.99)}
+.mission-message{padding:0 2px;font-size:11px}
+.mission-message{color:#ffd36a;font-size:10px;line-height:1.7;margin-top:9px;min-height:12px}
+.mission-item.soon{opacity:.78;border-style:dashed;background:linear-gradient(145deg,rgba(15,28,47,.92),rgba(9,19,34,.92))}
+.mission-item.soon .mission-item-icon{background:#1b2a3e;border-color:#344b63;color:#91a6bf}
+.mission-item.soon .mission-item-title{color:#a9bbcf}
+.mission-item.soon .mission-status-pill{color:#ffc95c;border-color:rgba(255,201,92,.28);background:rgba(255,201,92,.07)}
+.mission-upload-hint{margin-top:7px;color:#7895b4;font-size:9px;line-height:1.6;text-align:start}
+.mission-status-pill.rejected{color:#ff929c;border-color:rgba(255,100,115,.35);background:rgba(255,75,95,.08)}
+.mission-proof-box:focus-within{border-color:rgba(85,214,255,.58);box-shadow:0 0 0 2px rgba(35,153,218,.08)}
+.mission-file-input:focus-visible,.mission-submit-button:focus-visible,.mission-link-button:focus-visible{outline:2px solid #65d9ff;outline-offset:2px}
+.mission-link-button:active,.mission-submit-button:active{filter:brightness(1.12)}
+@media(max-width:360px){.mission-center{padding:11px}.mission-brand-name{font-size:15px}.mission-summary-item{padding:9px}.mission-language{max-width:96px}}
+
+.referral-card{background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:14px;padding:16px;margin:12px 0;text-align:center;box-shadow:0 0 12px rgba(0,145,255,.12)}
+.referral-title{color:#00b7ff;font-size:20px;margin:4px 0 12px}
+.referral-description{color:#b8c9dd;font-size:13px;line-height:1.7;margin:0 0 14px}
+.referral-link-row{display:flex;gap:7px;direction:ltr}
+.referral-link{flex:1;min-width:0;background:#07172c;color:#35ef91;border:1px solid #176caa;border-radius:8px;padding:11px 8px;font-size:11px;text-align:left;direction:ltr}
+.referral-button{border:1px solid #00b7ff;border-radius:8px;padding:10px 12px;background:linear-gradient(135deg,#087ed0,#0055a0);color:white;font-weight:bold;cursor:pointer;font-family:Arial,sans-serif}
+.referral-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.referral-stat{background:rgba(7,20,42,.85);border:1px solid #244765;border-radius:10px;padding:14px 6px}
+.referral-stat-label{font-size:12px;color:#b8c9dd;margin-bottom:7px}
+.referral-stat-value{font-size:24px;color:#35ef91;font-weight:bold}
+.referral-ranking{background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:13px;padding:13px;margin-top:14px;text-align:start}
+.referral-ranking h3{font-size:15px;color:#00b7ff;text-align:center;margin:3px 0 12px}
+.ranking-row{display:flex;justify-content:space-between;gap:8px;padding:9px 5px;border-bottom:1px solid rgba(65,105,140,.35);font-size:12px;color:#d8e5f3}
+.ranking-row:last-child{border-bottom:0}
+.ranking-place{color:#ffc52e;font-weight:bold;min-width:24px}
+.ranking-id{direction:ltr;unicode-bidi:embed;color:#8fdcff}
+.ranking-score{color:#35ef91;font-weight:bold;white-space:nowrap}
+.referral-status{min-height:24px;color:#ffd36a;font-size:12px;line-height:1.6;margin-top:10px}
+footer{margin-top:30px;color:#879bb2;font-size:12px}
+@media(max-width:360px){.nav-item{min-height:62px}.nav-icon,.nav-icon svg{width:20px;height:20px}.nav-label{font-size:9px}.nav-soon{font-size:7px}.navigation{gap:1px;padding:3px}.reward-image{height:105px}.top-bar .user-id-card{padding:7px;max-width:55%}.top-bar .user-id-value{font-size:11px}.top-bar .language-box select{padding:8px 5px;font-size:12px}.support-top-button{padding:8px 7px;font-size:11px}.support-form{gap:5px}.support-send{padding:0 10px;font-size:12px}.referral-link-row{flex-direction:column}.referral-button{width:100%}}
+@media(prefers-reduced-motion:reduce){body,.stars{animation:none}}
+
+.news-wrap{background:rgba(12,25,48,.94);border:1px solid #176caa;border-radius:14px;padding:14px;margin:12px 0;text-align:start;box-shadow:0 0 12px rgba(0,145,255,.12)}
+.news-heading{color:#00b7ff;text-align:center;font-size:22px;margin:5px 0 14px}
+.news-card{background:rgba(4,15,31,.92);border:1px solid #244765;border-radius:12px;padding:12px;margin:12px 0;overflow:hidden}
+.news-card-title{font-size:16px;font-weight:bold;line-height:1.6;margin:0 0 10px;color:#fff;overflow-wrap:anywhere}
+.news-media{width:100%;max-height:420px;object-fit:contain;background:#020914;border-radius:9px;display:block}
+.news-meta{display:flex;gap:14px;flex-wrap:wrap;color:#9fb8d2;font-size:12px;margin:10px 0}
+.news-reactions{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.news-reaction{background:#102844;color:#fff;border:1px solid #315879;border-radius:20px;padding:7px 9px;font-size:13px;cursor:pointer}
+.news-reaction.active{background:#075a9d;border-color:#00b7ff}
+.news-comments{border-top:1px solid #244765;padding-top:10px;margin-top:10px}
+.news-comment{font-size:12px;line-height:1.6;color:#d8e5f3;padding:7px 0;border-bottom:1px solid rgba(65,105,140,.25);overflow-wrap:anywhere}
+.news-comment-user{color:#70d5ff;font-size:10px;display:block}
+.news-comment-form{display:flex;gap:6px;margin-top:9px}
+.news-comment-input{flex:1;min-width:0;background:#07172c;color:#fff;border:1px solid #176caa;border-radius:8px;padding:9px;font:13px Arial}
+.news-comment-send{background:#087ed0;color:#fff;border:0;border-radius:8px;padding:8px 12px;font-weight:bold}
+.news-empty,.news-status{color:#b8c9dd;text-align:center;font-size:13px;line-height:1.7;padding:16px}
+
+
+/* Maintenance notice — uses the existing OXIDE HUB theme. */
+.maintenance-panel{display:none;background:rgba(12,25,48,.96);border:1px solid #d69b28;border-radius:16px;padding:24px 18px;margin:18px 0 22px;box-shadow:0 0 20px rgba(214,155,40,.13)}
+.maintenance-icon{font-size:42px;margin-bottom:10px}
+.maintenance-title{color:#ffd36a;font-size:23px;font-weight:900;margin:0 0 12px}
+.maintenance-message{color:#d8e5f3;font-size:15px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.nav-item.maintenance-locked{opacity:.78;cursor:not-allowed}
+.nav-item.maintenance-locked .nav-label{display:none}
+.nav-item.maintenance-locked .nav-soon{display:inline-block}
+
+
+/* OXIDE HUB visual refinement: preserve original layout, image and functions. */
+.container{max-width:470px}
+body{padding:18px 10px}
+.navigation{gap:5px;padding:7px;background:rgba(5,22,45,.72);border-color:rgba(105,190,255,.58);backdrop-filter:blur(15px) saturate(1.35);-webkit-backdrop-filter:blur(15px) saturate(1.35)}
+.nav-item{min-height:80px;padding:10px 4px;gap:7px;border:1px solid rgba(135,205,255,.16);border-radius:11px}
+.nav-item.active{background:linear-gradient(145deg,rgba(10,111,185,.88),rgba(5,48,91,.88));border-color:rgba(92,202,255,.9);box-shadow:0 5px 18px rgba(0,145,255,.24),inset 0 1px rgba(255,255,255,.2)}
+.nav-icon,.nav-icon svg{width:27px;height:27px}
+.nav-label{font-size:11px}
+.nav-soon{font-size:9px}
+.user-id-card,.progress-box,.stage,.guide-box,.support-box,.balance-card,.reward-card,.island-section,.mission-center,.referral-card,.referral-ranking,.news-wrap,.maintenance-panel{backdrop-filter:blur(14px) saturate(1.35);-webkit-backdrop-filter:blur(14px) saturate(1.35);border-color:rgba(91,184,255,.5);box-shadow:0 10px 28px rgba(0,8,25,.24),inset 0 1px 0 rgba(220,245,255,.13)}
+.user-id-card,.progress-box,.stage,.guide-box,.support-box,.reward-card,.referral-card,.referral-ranking,.news-wrap{background:rgba(7,28,56,.68)}
+.island-section{background:linear-gradient(145deg,rgba(8,38,73,.78),rgba(3,18,40,.76));padding:19px 14px;border-radius:19px}
+.island-title{font-size:25px;letter-spacing:1.5px;margin:5px 0 19px;text-shadow:0 0 16px rgba(0,183,255,.7)}
+.island-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+.island-tab{min-height:100px;padding:13px 8px;border-radius:15px;border:1px solid rgba(113,196,255,.52);background:linear-gradient(150deg,rgba(14,65,108,.78),rgba(5,29,58,.82));box-shadow:inset 0 1px rgba(255,255,255,.12),0 8px 18px rgba(0,0,0,.16);gap:8px;transition:transform .2s,border-color .2s,box-shadow .2s}
+.island-tab:first-child{background:linear-gradient(150deg,rgba(9,105,170,.82),rgba(5,42,82,.9))}
+.island-tab:last-child{background:linear-gradient(150deg,rgba(31,52,79,.84),rgba(8,25,48,.9));border-color:rgba(151,177,207,.38)}
+.island-tab.active{border-color:#63d5ff;box-shadow:0 0 0 1px rgba(65,190,255,.2),0 8px 22px rgba(0,145,255,.22),inset 0 1px rgba(255,255,255,.22)}
+.island-tab:active{transform:scale(.985)}
+.island-tab svg{width:29px;height:29px}
+.island-tab-label{font-size:13px}
+.island-counter{font-size:14px;font-weight:800}
+.island-panel{margin-top:15px;padding:16px 12px;background:rgba(3,17,37,.72);border:1px solid rgba(91,184,255,.35);border-radius:15px;box-shadow:inset 0 1px rgba(255,255,255,.08)}
+.island-progress{height:11px;background:rgba(130,170,210,.2);border:1px solid rgba(160,210,255,.12)}
+.island-watch-button{min-height:49px;border-radius:12px;box-shadow:0 7px 18px rgba(0,125,220,.2)}
+.mission-center{border-radius:16px;padding:16px;background:rgba(5,23,47,.72)}
+/* News: clearer editorial cards without changing the feed or its actions. */
+.news-wrap{padding:17px 13px;border-radius:18px;background:rgba(5,24,49,.72)}
+.news-heading{font-size:24px;margin:4px 0 17px;text-shadow:0 0 14px rgba(0,183,255,.45)}
+.news-card{background:linear-gradient(155deg,rgba(12,43,76,.84),rgba(3,17,36,.86));border:1px solid rgba(91,184,255,.42);border-radius:16px;padding:14px;margin:14px 0;box-shadow:0 9px 22px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.1)}
+.news-card-title{font-size:17px;line-height:1.75;color:#f3f9ff}
+.news-media{max-height:440px;border:1px solid rgba(120,190,240,.24);border-radius:12px;background:rgba(0,8,20,.55)}
+.news-meta{gap:9px 14px;color:#b3cce3}
+.news-reaction{background:rgba(13,48,81,.8);border-color:rgba(105,180,235,.35);padding:8px 11px}
+.news-reaction.active{background:#075a9d;border-color:#55caff}
+.news-comments{border-color:rgba(105,180,235,.25)}
+.news-comment-input{background:rgba(3,18,38,.82);border-color:rgba(91,184,255,.4);min-height:42px}
+.news-comment-send{border-radius:9px;padding:9px 14px}
+/* Slow, visible rain on a glass pane. The original background.png remains untouched. */
+.rain-glass{position:fixed;inset:0;z-index:2;pointer-events:none;overflow:hidden;opacity:1;background:linear-gradient(115deg,rgba(120,190,255,.025),transparent 38%,rgba(125,195,255,.035) 72%,transparent)}
+#oxideRainCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none}
+
+
+
+/* Locked game offers shown directly below the missions list. */
+.mission-offers-section{margin-top:20px;padding:14px 11px;border:1px solid rgba(77,159,218,.32);border-radius:14px;background:rgba(4,17,34,.62)}
+.mission-offers-title{margin:0 0 12px;color:#55d6ff;font-size:17px;font-weight:900;text-align:start}
+.mission-offers-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.mission-offer-card{min-width:0;padding:9px;border:1px solid rgba(77,125,164,.35);border-radius:12px;background:rgba(14,31,52,.82)}
+.mission-offer-art{height:112px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;border:1px solid rgba(100,145,184,.2);border-radius:9px;background:radial-gradient(circle at 50% 35%,rgba(49,94,133,.35),rgba(5,15,29,.96) 72%);color:#9eb5cc}
+.mission-offer-icon{font-size:31px;line-height:1;filter:saturate(.55);opacity:.72}
+.mission-offer-soon{font-size:11px;font-weight:900;letter-spacing:1.1px;color:#a9b8c9}
+.mission-offer-button{width:100%;margin-top:8px;padding:10px 6px;border:1px solid #45566a;border-radius:8px;background:#344253;color:#aebac8;font-family:Arial,sans-serif;font-size:11px;font-weight:800;cursor:not-allowed;box-shadow:none}
+.mission-offer-button:disabled{opacity:1;cursor:not-allowed}
+
+
+/* OXIDE HUB home refinement: retain original background, stars and rain canvas. */
+.messages-top-button{position:relative;width:38px;height:38px;display:grid;place-items:center;padding:7px;border:1px solid #00b7ff;border-radius:9px;background:rgba(8,49,82,.9);color:#8fe1ff;cursor:pointer;flex-shrink:0}
+.messages-top-button svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.messages-top-button:active{transform:scale(.96)}
+.platform-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:14px}
+.platform-grid .platform-button{min-width:0;min-height:88px;margin:0;padding:11px 5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;border-radius:13px;font-size:11px;line-height:1.25;overflow-wrap:anywhere;transition:opacity .3s,box-shadow .3s,transform .3s,background .3s}
+.platform-svg{width:27px;height:27px;fill:none;stroke:#d8f1ff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.platform-svg.android-svg{fill:#3ddc84;stroke:#3ddc84}
+.platform-grid .platform-button.available{animation:oxideUnlockGlow 1.8s ease-in-out infinite alternate}
+.platform-grid .platform-button.available:disabled{opacity:1;cursor:pointer}
+@keyframes oxideUnlockGlow{from{box-shadow:0 0 9px rgba(0,183,255,.45),0 0 18px rgba(0,183,255,.2)}to{box-shadow:0 0 17px rgba(0,210,255,.85),0 0 30px rgba(0,183,255,.48)}}
+.stage{position:relative;min-height:82px;padding:17px 15px}
+.stage.completed{border-color:rgba(53,239,145,.55);background:linear-gradient(110deg,rgba(13,55,53,.88),rgba(13,29,52,.9))}
+.stage-complete-mark{position:absolute;top:7px;left:9px;width:25px;height:25px;display:grid;place-items:center;border-radius:50%;background:#24bd75;color:#fff;font-size:16px;font-weight:900;line-height:1;box-shadow:0 0 12px rgba(53,239,145,.55)}
+.stage-complete-mark[hidden],.stage button[hidden]{display:none!important}
+@media(max-width:360px){.top-actions{gap:5px}.messages-top-button{width:34px;height:34px;padding:6px}.platform-grid{gap:6px}.platform-grid .platform-button{min-height:80px;font-size:10px;padding:9px 3px}.platform-svg{width:24px;height:24px}}
+
+
+/* Complete OXIDE HUB home screen styling. Background, stars and rain layers remain intact. */
+.top-bar{display:flex;flex-direction:column;align-items:stretch;gap:12px;margin-bottom:12px;direction:rtl}
+.top-actions{order:0;display:flex;align-items:center;justify-content:flex-start;gap:8px;direction:ltr;width:100%}
+.language-box select{min-height:40px;padding:9px 10px;border-radius:11px;background:rgba(7,25,48,.92);border-color:rgba(82,183,245,.55);font-weight:700}
+.messages-top-button{width:40px;height:40px;border-radius:11px;background:linear-gradient(145deg,rgba(12,57,91,.95),rgba(5,31,57,.95));border-color:rgba(87,202,255,.65);box-shadow:inset 0 1px rgba(255,255,255,.1),0 5px 14px rgba(0,0,0,.18)}
+.support-top-button{min-height:40px;display:flex;align-items:center;justify-content:center;gap:7px;padding:8px 12px;border-radius:11px;background:linear-gradient(135deg,#087ed0,#064a83);box-shadow:0 5px 14px rgba(0,80,145,.2)}
+.support-top-button svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.top-bar .user-id-card{order:1;width:100%;max-width:100%;margin:0;padding:12px 14px;border-radius:14px;background:linear-gradient(115deg,rgba(8,31,58,.94),rgba(7,20,42,.94));border-color:rgba(63,158,220,.45);box-shadow:0 8px 22px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.05)}
+.user-id-label{font-size:11px;letter-spacing:.3px}
+.user-id-row{justify-content:space-between}
+.user-id-value{font-size:15px}
+.copy-id-button{display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:9px;background:rgba(5,91,145,.65)}
+.copy-id-button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.brand-block{padding:7px 0 4px}
+.logo{font-size:clamp(30px,8vw,39px);letter-spacing:3px;margin:8px 0 5px;text-shadow:0 0 9px rgba(0,183,255,.85),0 0 24px rgba(0,183,255,.35)}
+.subtitle{font-size:10px;letter-spacing:2px;color:#9bbbd5;margin:0 0 20px}
+.navigation{gap:5px;padding:6px;margin-bottom:17px;border-radius:15px;background:rgba(4,14,30,.88);backdrop-filter:blur(12px);box-shadow:0 9px 24px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.06)}
+.nav-item{min-height:65px;border-radius:10px;gap:6px}
+.nav-item.active{background:linear-gradient(145deg,rgba(10,103,166,.92),rgba(5,43,79,.96));box-shadow:0 0 15px rgba(0,170,255,.25),inset 0 1px rgba(255,255,255,.1)}
+.progress-box{position:relative;overflow:hidden;margin:0 0 17px;padding:16px;border-radius:16px;background:linear-gradient(135deg,rgba(10,38,68,.94),rgba(5,19,39,.94));border-color:rgba(66,166,226,.5);box-shadow:0 9px 25px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.06)}
+.progress-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:13px}
+.progress-kicker{color:#72cfff;font-size:9px;font-weight:900;letter-spacing:1.8px;margin-bottom:5px}
+.progress-text{margin:0;color:#eaf6ff;font-size:16px;font-weight:800}
+.progress-count{min-width:62px;padding:7px 11px;border:1px solid rgba(91,204,255,.4);border-radius:11px;background:rgba(0,145,220,.13);color:#74ddff;font-size:22px;font-weight:900;letter-spacing:.5px}
+.bar{height:9px;background:rgba(132,171,205,.2);border:1px solid rgba(170,210,240,.1);border-radius:30px}
+.bar-fill{background:linear-gradient(90deg,#087ed0,#40d6ff);box-shadow:0 0 13px rgba(0,183,255,.6)}
+.stages-heading{display:flex;align-items:center;gap:10px;margin:19px 2px 10px;color:#a8dfff;font-size:10px;font-weight:900;letter-spacing:1.6px;text-align:start}
+.stages-heading-line{height:1px;flex:1;background:linear-gradient(90deg,rgba(77,185,239,.45),transparent)}
+#stages{display:grid;gap:10px}
+.stage{position:relative;display:flex;flex-direction:column;align-items:stretch;gap:12px;min-height:unset;margin:0;padding:15px;border-radius:15px;border:1px solid rgba(64,133,181,.42);background:linear-gradient(125deg,rgba(12,35,61,.94),rgba(5,19,39,.94));box-shadow:0 7px 18px rgba(0,0,0,.17),inset 0 1px rgba(255,255,255,.045);text-align:start;transition:border-color .2s,background .2s,transform .2s}
+.stage-label{display:block;color:#e8f5ff;font-size:14px;font-weight:800;padding-inline-end:34px}
+.stage-watch-button{width:100%;min-height:44px;display:flex;align-items:center;justify-content:center;gap:9px;padding:10px 14px;border:1px solid rgba(74,190,255,.55);border-radius:11px;background:linear-gradient(135deg,#087ed0,#07518e);color:#fff;font-size:13px;font-weight:900;letter-spacing:.2px;box-shadow:0 6px 16px rgba(0,105,185,.2),inset 0 1px rgba(255,255,255,.13);font-family:Arial,sans-serif}
+.stage-watch-button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.stage-watch-button.locked{background:rgba(30,48,68,.85);border-color:rgba(117,145,171,.25);color:#8fa4b8;box-shadow:none}
+.stage-watch-button:disabled{opacity:.72;cursor:not-allowed}
+.stage.completed{border-color:rgba(53,239,145,.5);background:linear-gradient(120deg,rgba(10,58,51,.82),rgba(6,28,43,.94));box-shadow:0 0 16px rgba(53,239,145,.08),inset 0 1px rgba(255,255,255,.05)}
+.stage-complete-mark{top:12px;left:12px;width:26px;height:26px;background:linear-gradient(145deg,#35df91,#159b65);box-shadow:0 0 14px rgba(53,239,145,.4)}
+.platform-grid{margin-top:20px;gap:9px}
+.platform-grid .platform-button{min-height:91px;padding:12px 5px;border:1px solid rgba(87,162,210,.38);background:linear-gradient(145deg,rgba(18,42,68,.96),rgba(8,22,42,.96));opacity:.58;box-shadow:inset 0 1px rgba(255,255,255,.05)}
+.platform-grid .platform-button.available{background:linear-gradient(145deg,#0876b9,#06416f);border-color:#4bd5ff;opacity:1}
+.platform-grid .platform-button.available:disabled{opacity:1;cursor:pointer}
+.platform-grid .platform-button.available span{color:#fff}
+.platform-svg{stroke:#d8f1ff}
+.platform-svg.android-svg{fill:#3ddc84;stroke:#3ddc84}
+#oxideDownloadProgress{display:none!important}
+#status{min-height:0;margin:0;color:#ffd36a;font-size:11px;line-height:1.5}
+#status:empty{display:none}
+.guide-box{margin-top:23px;padding:17px 15px;border-radius:16px;background:linear-gradient(145deg,rgba(8,29,53,.94),rgba(4,16,34,.94));border-color:rgba(67,155,210,.4);box-shadow:0 9px 24px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.05)}
+.guide-title{margin:0 0 5px;color:#eaf7ff;font-size:18px}
+.guide-intro{text-align:center;color:#8fb5d3;font-size:10px;margin-bottom:15px}
+.guide-step{align-items:center;gap:11px;margin:12px 0;padding:10px;border:1px solid rgba(74,132,174,.2);border-radius:11px;background:rgba(14,37,62,.55);font-size:12px;line-height:1.65}
+.step-number{flex-shrink:0;min-width:29px;height:29px;background:linear-gradient(145deg,#087ed0,#064b80);box-shadow:0 0 10px rgba(0,170,255,.18)}
+.guide-note{margin-top:14px;font-size:11px;color:#81dcb5}
+@media(max-width:360px){.top-actions{gap:5px}.language-box select{padding:8px 7px;font-size:12px}.messages-top-button{width:36px;height:36px}.support-top-button{min-height:36px;padding:7px 8px;font-size:11px}.nav-item{min-height:60px}.nav-label{font-size:9px}.platform-grid{gap:6px}.platform-grid .platform-button{min-height:80px;font-size:10px}.stage{padding:13px}}
+
+
+/* Requested final sizing: slightly larger platform choices; notification icon is visual only. */
+.messages-top-button{cursor:default;touch-action:manipulation}
+.messages-top-button:active{transform:none}
+.platform-grid .platform-button{min-height:102px;padding:14px 6px;gap:10px;font-size:12px;border-radius:14px}
+.platform-grid .platform-svg{width:32px;height:32px}
+.platform-grid .platform-svg.android-svg{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:1.8}
+@media(max-width:360px){.platform-grid{gap:5px}.platform-grid .platform-button{min-height:94px;padding:11px 3px;font-size:10px}.platform-grid .platform-svg{width:29px;height:29px}}
+
+/* Compact mission center refresh: visual-only sizing and restrained offer buttons. */
+.mission-center{padding:11px;border-radius:15px;box-shadow:0 5px 16px rgba(0,0,0,.16)}
+.mission-header{margin-bottom:10px;gap:6px}
+.mission-brand{gap:8px}
+.mission-brand-icon{width:35px;height:35px;border-radius:10px;font-size:18px;box-shadow:none}
+.mission-brand-name{font-size:15px}
+.mission-brand-sub{font-size:8px;letter-spacing:1px}
+.mission-live{padding:4px 7px;font-size:8px}
+.mission-language{padding:6px 7px;font-size:9px;max-width:100px}
+.mission-progress-card{padding:9px;margin-bottom:9px}
+.mission-progress-top{font-size:10px}
+.mission-progress-number{font-size:17px}
+.mission-progress-track{height:6px;margin:7px 0 5px}
+.mission-progress-fill{box-shadow:none}
+.mission-progress-foot{font-size:8px}
+.mission-summary{gap:7px;margin-bottom:12px}
+.mission-summary-item{gap:4px;padding:8px 9px;border-radius:9px;font-size:8px}
+.mission-summary-value{font-size:18px}
+.mission-group-title{font-size:11px;margin:12px 1px 7px}
+.mission-list{gap:7px}
+.mission-item{padding:10px;border-radius:11px;box-shadow:none}
+.mission-item-main{gap:7px}
+.mission-item-heading{gap:8px}
+.mission-item-icon{width:37px;height:37px;border-radius:10px;box-shadow:none}
+.mission-platform-svg{width:23px;height:23px}
+.mission-item-title{font-size:11px;line-height:1.4}
+.mission-item-meta{font-size:8px;margin-top:3px}
+.mission-status-pill{padding:4px 6px;font-size:8px}
+.mission-description{font-size:10px;line-height:1.6;margin:8px 0}
+.mission-reward-row{margin:8px 0;padding:7px 8px;border-radius:8px;font-size:9px}
+.mission-reward{font-size:12px;text-shadow:none}
+.mission-link-button{margin-top:6px;padding:9px;font-size:10px;box-shadow:none}
+.mission-proof-box{margin-top:9px;padding:9px;border-radius:9px}
+.mission-file-label{font-size:10px;margin-bottom:7px}
+.mission-file-input{min-height:37px;padding:6px;font-size:10px}
+.mission-file-input::file-selector-button{padding:6px 8px}
+.mission-upload-hint{font-size:8px}
+.mission-preview{margin-top:8px;padding:7px}
+.mission-preview-image{max-height:180px}
+.mission-submit-button{min-height:37px;margin-top:8px;padding:8px;font-size:10px;box-shadow:none}
+.mission-message{font-size:9px;margin-top:7px}
+.mission-offers-section{margin-top:13px;padding:10px 9px;border-radius:11px}
+.mission-offers-title{display:flex;align-items:center;gap:7px;margin:0 0 9px;font-size:14px;color:#dce8f7}
+.mission-offers-heading-icon{width:18px;height:18px;fill:none;stroke:#9fb4d0;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.mission-offers-grid{gap:7px}
+.mission-offer-card{padding:6px;border-radius:9px}
+.mission-offer-art{height:48px;gap:3px;border:0;background:transparent}
+.mission-offer-svg{width:23px;height:23px;fill:none;stroke:#aebfd5;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.mission-offer-soon{font-size:8px;letter-spacing:.8px;color:#9eafc4}
+.mission-offer-button{margin-top:4px;padding:7px 5px;border-color:#3c4d63;border-radius:6px;background:#25354b;color:#bdc9d8;font-size:9px;box-shadow:none}
+.mission-offer-button:disabled{opacity:1;cursor:not-allowed}
+@media(max-width:360px){
+  .mission-center{padding:9px}
+  .mission-brand-name{font-size:14px}
+  .mission-summary-item{padding:7px}
+  .mission-language{max-width:88px}
+  .mission-offer-card{padding:5px}
+}
+
+
+/* OXIDE HUB notifications */
+.messages-top-button{position:relative}
+.notification-count{position:absolute;top:-3px;right:-3px;width:9px;height:9px;padding:0;border-radius:50%;background:#ef4444;display:none;border:1px solid #071426;box-shadow:0 0 7px #ef4444}
+.notifications-panel{margin:12px 0 18px;padding:14px;border:1px solid rgba(105,190,255,.24);border-radius:16px;background:rgba(7,18,37,.88);backdrop-filter:blur(14px);box-shadow:0 10px 28px #0005}
+.notifications-panel[hidden]{display:none!important}
+.notifications-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;color:#e9f6ff;font-weight:800}
+.notification-item{padding:12px;margin:8px 0;border:1px solid rgba(125,180,220,.17);border-radius:12px;background:rgba(24,43,67,.68);color:#e7f1fc}
+.notification-item.unread{border-color:rgba(56,189,248,.5)}
+.notification-title{font-weight:800;margin-bottom:5px}
+.notification-body{font-size:13px;color:#b8c9dc;line-height:1.6;white-space:pre-wrap}
+.notification-meta{font-size:10px;color:#819bb5;margin-top:7px}
+.notification-claim{margin-top:10px;width:100%;padding:10px;border:1px solid #2da879;border-radius:9px;background:linear-gradient(135deg,#176d50,#124b3d);color:#eafff5;font-weight:800}
+.notification-claim:disabled{opacity:.65}
+.notification-empty{padding:18px;text-align:center;color:#91a8c1;font-size:13px}
+.notifications-heading-actions{display:flex;align-items:center;gap:7px}
+.notification-icon-button{width:34px;height:32px;display:grid;place-items:center;padding:5px;border:1px solid #35516d;border-radius:8px;background:rgba(20,39,62,.9);color:#dcecff}
+.notification-icon-button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.notification-icon-button:disabled{opacity:.35;cursor:not-allowed}
+.notification-delete-read{border-color:#76515a;color:#ffb7c0}
+.redeem-inline-form{margin-top:14px;padding:13px;border:1px solid #176caa;border-radius:11px;background:rgba(12,25,48,.9)}
+.redeem-inline-form[hidden]{display:none!important}
+.redeem-inline-title{font-weight:800;color:#e8f6ff;margin-bottom:8px}
+.redeem-inline-input{width:100%;padding:12px;border:1px solid #41617e;border-radius:8px;background:#07172b;color:#fff;font-size:14px;direction:ltr;text-align:left;outline:none}
+.redeem-inline-actions{display:flex;gap:8px;margin-top:10px}
+.redeem-inline-actions button{flex:1;padding:10px;border:0;border-radius:8px;font-weight:800}
+.redeem-confirm{background:linear-gradient(135deg,#087ed0,#0055a0);color:#fff}
+.redeem-cancel{background:#344253;color:#e5edf6}
+.reward-orders{margin-top:17px;padding-top:13px;border-top:1px solid #244765}
+.reward-orders-title{font-weight:800;color:#e8f6ff;margin-bottom:9px}
+.reward-order-item{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:11px;margin:7px 0;border:1px solid rgba(125,180,220,.18);border-radius:9px;background:rgba(24,43,67,.62);font-size:12px}
+.reward-order-info{min-width:0;display:flex;flex-direction:column;gap:4px}
+.reward-order-name{color:#edf6ff;font-weight:800}
+.reward-order-meta{color:#9fb4ca;font-size:11px}
+.reward-order-status{display:flex;align-items:center;gap:6px;white-space:nowrap;font-weight:800}
+.reward-order-spinner{width:13px;height:13px;border:2px solid #71859a;border-top-color:#38bdf8;border-radius:50%;animation:oxideOrderSpin .8s linear infinite}
+@keyframes oxideOrderSpin{to{transform:rotate(360deg)}}
+.reward-order-approved{color:#45e39a}
+.reward-order-rejected{color:#ff8585}
+.reward-orders-empty{padding:12px;color:#91a8c1;font-size:12px;text-align:center}
+
+
+/* OXIDE HUB account sign-in */
+.auth-open-button{border:1px solid #8d54ff;background:linear-gradient(135deg,#682bd5,#351477);color:#fff;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;margin-top:10px;width:100%}
+.auth-modal{position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(1,4,15,.82);backdrop-filter:blur(8px)}
+.auth-modal[hidden]{display:none}
+.auth-card{width:min(100%,390px);max-height:90vh;overflow:auto;background:linear-gradient(160deg,#111d3a,#090d20);border:1px solid #8652ff;border-radius:18px;padding:20px;box-shadow:0 0 35px rgba(117,62,255,.28);text-align:center}
+.auth-heading{font-size:22px;font-weight:900;color:#fff;margin:3px 0 8px}
+.auth-subtitle{font-size:12px;color:#b7c8e0;line-height:1.7;margin:0 0 16px}
+.auth-input{display:block;width:100%;padding:13px 12px;margin:9px 0;background:#071329;border:1px solid #31527f;border-radius:9px;color:white;font-size:14px;outline:none;direction:ltr;text-align:left}
+.auth-input:focus{border-color:#a16cff;box-shadow:0 0 0 2px rgba(161,108,255,.15)}
+.auth-primary{width:100%;padding:13px;border:0;border-radius:9px;background:linear-gradient(135deg,#8b45ff,#5422bd);color:white;font-size:14px;font-weight:900;margin-top:8px;cursor:pointer}
+.auth-secondary{width:100%;padding:11px;border:1px solid #49628b;border-radius:9px;background:#111f3a;color:#dce9ff;font-size:13px;font-weight:700;margin-top:9px;cursor:pointer}
+.auth-google-wrap{display:flex;justify-content:center;min-height:42px;margin:13px auto 5px}
+.auth-divider{display:flex;align-items:center;gap:10px;color:#8da4c4;font-size:11px;margin:13px 0}
+.auth-divider:before,.auth-divider:after{content:"";height:1px;background:#30405e;flex:1}
+.auth-message{min-height:22px;color:#ffd36c;font-size:12px;line-height:1.6;margin-top:10px}
+.auth-close{float:left;border:1px solid #4b5d7d;background:#17223c;color:white;width:30px;height:30px;border-radius:50%;font-size:18px;cursor:pointer}
+.auth-switch{color:#b9a1ff;text-decoration:underline;background:none;border:0;padding:10px;cursor:pointer;font-size:12px}
+@media(max-width:360px){.auth-card{padding:15px}}
+</style>
+</head>
+<body>
+<div class="stars"></div>
+<div class="rain-glass" aria-hidden="true"><canvas id="oxideRainCanvas"></canvas></div>
+<main class="container">
+<div class="top-bar">
+  <div class="top-actions"><div class="language-box"><select id="language" onchange="changeLanguage(this.value)"><option value="ar">🇩🇿 العربية</option><option value="en">🇬🇧 English</option><option value="ru">🇷🇺 Русский</option><option value="es">🇪🇸 Español</option><option value="tr">🇹🇷 Türkçe</option><option value="id">🇮🇩 Bahasa Indonesia</option></select></div><button class="messages-top-button" id="messagesTopButton" type="button" aria-label="Notifications" title="Notifications" onclick="toggleNotifications()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg><span class="notification-count" id="notificationCount">0</span></button><button class="support-top-button" id="supportTopButton" type="button" onclick="showPage('support')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-2a8 8 0 0 1 16 0v2"></path><rect x="3" y="12" width="4" height="7" rx="2"></rect><rect x="17" y="12" width="4" height="7" rx="2"></rect><path d="M19 19a3 3 0 0 1-3 2h-2"></path></svg><span id="supportTopButtonText">الدعم الفني</span><span class="oxide-new-badge" id="supportUnreadBadge" aria-label="رسائل دعم جديدة"></span></button></div>
+  <div class="user-id-card"><div class="user-id-label" id="userIdLabel">رقم المستخدم الخاص بك</div><div class="user-id-row"><span class="user-id-value" id="userIdValue">Loading...</span><button class="copy-id-button" id="copyIdButton" type="button" onclick="copyUserId()"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"></rect><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path></svg><span id="copyIdButtonText">نسخ</span></button></div><button class="auth-open-button" id="authOpenButton" type="button" onclick="openAuthModal()">🔐 تسجيل الدخول / إنشاء حساب</button></div>
+</div>
+<section id="notificationsPanel" class="notifications-panel" hidden aria-live="polite">
+ <div class="notifications-heading"><span>🔔 مركز الإشعارات</span><div class="notifications-heading-actions"><button class="notification-icon-button notification-delete-read" id="deleteReadNotificationsButton" type="button" onclick="deleteReadNotifications()" aria-label="حذف الإشعارات المقروءة" title="حذف الإشعارات المقروءة"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6m4 4v6m6-6v6"/></svg></button><button class="notification-icon-button" type="button" onclick="closeNotifications()" aria-label="إغلاق" title="إغلاق"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div></div>
+ <div id="notificationsList"><div class="notification-empty">جارٍ تحميل الإشعارات...</div></div>
+</section>
+<div class="brand-block"><div class="logo">OXIDE HUB</div><div class="subtitle">SURVIVE • EXPLORE • DOMINATE</div></div>
+<section class="maintenance-panel" id="maintenancePanel" role="status" aria-live="polite">
+  <div class="maintenance-icon">🛠️</div>
+  <h2 class="maintenance-title">الموقع تحت الصيانة</h2>
+  <p class="maintenance-message" id="maintenanceMessage">نعتذر عن الإزعاج، الموقع تحت الصيانة حالياً. سنعود قريباً.</p>
+</section>
+<nav class="navigation" aria-label="Main navigation">
+<button class="nav-item active" id="homeTab" type="button" onclick="showPage('home')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5.5 9.5V21h13V9.5"/><path d="M9 21v-7h6v7"/></svg></span><span class="nav-label" id="navHome">الرئيسية</span></button>
+<button class="nav-item" id="rewardsTab" type="button" onclick="showPage('rewards')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M20 12v9H4v-9"/><path d="M2 7h20v5H2z"/><path d="M12 7v14"/><path d="M12 7H7.5a2.5 2.5 0 1 1 2.5-2.5C10 6 12 7 12 7Z"/><path d="M12 7h4.5A2.5 2.5 0 1 0 14 4.5C14 6 12 7 12 7Z"/></svg></span><span class="nav-label" id="navRewards">مكافأة</span></button>
+<button class="nav-item" id="vipTab" type="button" onclick="showPage('vip')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="m12 3 2.5 5 5.5.8-4 3.9.9 5.5-4.9-2.6-4.9 2.6.9-5.5-4-3.9 5.5-.8L12 3Z"/><path d="M7 21h10"/></svg></span><span class="nav-label">VIP</span><span class="nav-soon" id="soon2">🔒 SOON</span></button>
+<button class="nav-item" id="referralTab" type="button" onclick="showPage('referral')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M20 8v6M17 11h6"/></svg></span><span class="nav-label" id="navReferral">إحالة</span></button>
+<button class="nav-item" id="newsTab" type="button" onclick="showPage('news')"><span class="nav-icon"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg></span><span class="nav-label" id="navNews">أخبار</span><span class="oxide-new-badge" id="newsUnreadBadge" aria-label="أخبار جديدة"></span></button>
+</nav>
+<div id="homePage">
+<section class="progress-box"><div class="progress-heading"><div><div class="progress-kicker">DOWNLOAD ACCESS</div><div class="progress-text"><span id="progressLabel">التقدم:</span></div></div><div class="progress-count" id="count">0/3</div></div><div class="bar"><div class="bar-fill" id="bar"></div></div></section><div class="stages-heading"><span>UNLOCK YOUR DOWNLOAD</span><span class="stages-heading-line"></span></div><div id="stages"></div>
+<div class="platform-grid"><a id="download" class="platform-button" href="#" aria-disabled="true"><svg class="platform-svg android-svg" viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.2 7.2 6.8 3.5M22.8 7.2l2.4-3.7"/><path d="M5.5 14.2a10.5 10.5 0 0 1 21 0H5.5Z"/><rect x="5.5" y="15.1" width="21" height="10.4" rx="2.1"/><rect x="1.8" y="15.2" width="3.5" height="10" rx="1.7"/><rect x="26.7" y="15.2" width="3.5" height="10" rx="1.7"/><path d="M10 25v3.3a2 2 0 0 0 4 0V25m4 0v3.3a2 2 0 0 0 4 0V25"/><circle cx="11.7" cy="10.1" r=".8"/><circle cx="20.3" cy="10.1" r=".8"/></g></svg><span id="androidText">تحميل ANDROID</span></a><button class="platform-button" id="iphoneButton" disabled><svg class="platform-svg ios-svg" viewBox="0 0 32 32" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.7 8.4c1.1-1.3 1.2-2.8 1.1-3.9-1.5.1-3.2 1-4.2 2.2-.9 1.1-1.3 2.4-1.2 3.6 1.5.1 3.2-.7 4.3-1.9Z"/><path d="M25.7 17.1c-.1-4-3.2-6.1-6.1-6.1-1.3 0-2.5.6-3.4.6-.9 0-1.9-.6-3.1-.6-3.1 0-6.8 2.6-6.8 7.5 0 2.9 1.1 6 2.5 8.1 1.1 1.6 2 2.9 3.4 2.9 1.1 0 1.6-.6 3.3-.6 1.7 0 2.1.6 3.3.6 1.4 0 2.4-1.4 3.4-2.9.8-1.2 1.4-2.5 1.8-3.9-2.1-.9-3.5-2.9-3.5-5.2 0-1.8.9-3.5 2.2-4.5 1.6 1 2.9 2.4 3 4.1Z"/></g></svg><span id="iphoneText">تحميل iPHONE</span></button><a class="platform-button" id="betaButton" href="#" aria-disabled="true" tabindex="-1" role="button"><svg class="platform-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"></path><path d="M8 15h8"></path></svg><span id="betaText">تحميل BETA</span></a></div>
+<div id="oxideDownloadProgress" aria-hidden="true" style="display:none"><div id="oxideDownloadLabel">جاري التحميل 0%</div><div><div id="oxideDownloadBar"></div></div></div>
+<div id="status" role="status"></div>
+<section class="guide-box"><h2 class="guide-title" id="guideTitle">طريقة الاستخدام</h2><div class="guide-intro">أربع خطوات بسيطة للوصول إلى التحميل</div><div id="guideSteps"></div><div class="guide-note" id="guideNote"></div></section>
+</div>
+<section id="supportPage" style="display:none"><button class="support-top-button" id="supportBackButton" type="button" onclick="showPage('home')" style="margin:12px 0">⬅ العودة للرئيسية</button><section class="support-box" id="supportBox"><h2 class="support-title" id="supportTitle">💬 الدعم الفني</h2><p class="support-description" id="supportDescription">أرسل رسالتك وسيرد عليك فريق OXIDE HUB هنا.</p><div class="support-messages" id="supportMessages" aria-live="polite"><div class="support-empty" id="supportEmpty">جاري تحميل المحادثة...</div></div><form class="support-form" id="supportForm" onsubmit="sendSupportMessage(event); return false;"><textarea class="support-input" id="supportInput" maxlength="2000" rows="2" placeholder="اكتب رسالتك هنا..." required></textarea><button class="support-send" id="supportSend" type="submit">إرسال</button></form><div class="support-status" id="supportStatus" role="status"></div><div class="support-media-note" id="supportMediaNote">هذه النسخة تدعم الرسائل النصية. دعم الصور والفيديو يحتاج إضافة تقنية منفصلة.</div></section></section>
+<section id="vipPage" style="display:none"><section class="island-section"><h2 class="island-title">👑 OXIDE VIP</h2><div class="pending-note" style="text-align:center;font-size:18px;font-weight:bold;color:#ffc52e">🔒 SOON</div><p style="color:#b8c9dd;line-height:1.8">اشتراك VIP سيكون متاحًا قريبًا.</p></section></section><section id="newsPage">
+  <section class="news-wrap">
+    <h2 class="news-heading" id="newsHeading">📰 NEWS</h2>
+    <div id="newsStatus" class="news-status" role="status"></div>
+    <div id="newsPosts"><div class="news-empty" id="newsEmpty">لا توجد أخبار بعد.</div></div>
+  </section>
+</section>
+<section id="rewardsPage"><h2 class="rewards-heading" id="rewardsHeading">🎁 المكافآت</h2><section class="island-section"><h2 class="island-title">🌌 OXIDE ISLAND</h2><div class="balance-card"><div class="balance-label" id="balanceLabel">رصيدك الحالي</div><div class="balance-number" id="pointsBalance">0</div><div class="balance-unit">OXIDE POINTS</div></div><div class="island-tabs"><button class="island-tab active" id="islandAdsTab" onclick="showIslandTab('ads')" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="5"/><path d="M8 5.5v5M6.5 8h3M13 13l5 5M15 18h3v-3"/></svg><span class="island-tab-label" id="islandAdsLabel">اجمع واستبدل</span><span class="island-counter" id="islandTabCount">0/10</span></button><button class="island-tab" id="islandTasksTab" onclick="showIslandTab('tasks')" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/><path d="m16 8 5-5"/></svg><span class="island-tab-label" id="islandTasksLabel">المهمات والعروض</span><span class="oxide-new-badge" id="missionsUnreadBadge" aria-label="مهمات جديدة"></span></button></div><div class="island-panel" id="islandAdsPanel"><div style="font-weight:bold" id="islandProgressText">إعلانات مكتملة: 0 / 10</div><div class="island-progress"><div class="island-progress-fill" id="islandProgressFill"></div></div><div style="font-size:12px;color:#b8c9dd" id="islandRewardText">كل إعلان مكتمل = 5 نقاط</div><button class="island-watch-button" id="islandWatchButton" type="button" onclick="watchIslandAd()">▶ مشاهدة إعلان</button><div class="island-timer" id="islandTimer">جاري تحميل وقت الدورة...</div><div class="island-message" id="islandMessage" role="status"></div><div class="rewards-grid" id="rewardsGrid"><div style="grid-column:1/-1;color:#b8c9dd;padding:20px">جاري تحميل المكافآت...</div></div><div class="redeem-inline-form" id="redeemInlineForm" hidden><div class="redeem-inline-title" id="redeemInlineTitle">تأكيد استبدال النقاط</div><input class="redeem-inline-input" id="redeemUuidInput" type="text" maxlength="36" autocomplete="off" autocapitalize="characters" placeholder="OX-XXXXXXXX أو UUID كامل"><div class="redeem-inline-actions"><button class="redeem-confirm" id="redeemConfirmButton" type="button" onclick="submitRedemption()">تأكيد الطلب</button><button class="redeem-cancel" type="button" onclick="cancelRedemption()">إلغاء</button></div></div><div class="reward-message" id="rewardMessage" role="status"></div><section class="reward-orders" id="rewardOrdersSection"><div class="reward-orders-title">سجل طلبات استبدال النقاط</div><div id="rewardOrdersList"><div class="reward-orders-empty">جاري تحميل الطلبات...</div></div></section><div class="pending-note" id="pendingNote">بعد الاستبدال سيتم تسجيل طلبك بحالة قيد المعالجة حتى تتم مراجعته.</div></div><div class="island-panel" id="islandTasksPanel" style="display:none">
+<div class="mission-center" id="missionCenter">
+  <div class="mission-header">
+    <div class="mission-brand">
+      <div class="mission-brand-icon">◎</div>
+      <div>
+        <div class="mission-brand-name">OXIDE HUB</div>
+        <div class="mission-brand-sub" id="missionSubtitle">MISSION CENTER</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:7px">
+      <span class="mission-live">● LIVE</span>
+      <span class="mission-language" id="missionLanguageLabel">SITE LANGUAGE</span>
+    </div>
+  </div>
+
+  <div class="mission-progress-card">
+    <div class="mission-progress-top">
+      <span id="missionJourneyLabel">Mission Journey</span>
+      <span class="mission-progress-number" id="missionProgressNumber">0 / 10</span>
+    </div>
+    <div class="mission-progress-track"><div class="mission-progress-fill" id="missionProgressFill"></div></div>
+    <div class="mission-progress-foot">
+      <span id="missionProgressPercent">0% Completed</span>
+      <span id="missionRemaining">10 Missions Left</span>
+    </div>
+  </div>
+
+  <div class="mission-summary">
+    <div class="mission-summary-item">
+      <span id="missionBalanceLabel">TOTAL BALANCE · PTS</span>
+      <span class="mission-summary-value" id="missionsBalance">0</span>
+    </div>
+    <div class="mission-summary-item">
+      <span id="missionCompletedLabel">COMPLETED MISSIONS</span>
+      <span class="mission-summary-value" id="completedMissionsCount">0/0</span>
+    </div>
+  </div>
+
+  <div class="mission-group-title">
+    <span id="missionAvailableTitle">AVAILABLE MISSIONS</span>
+    <span class="mission-group-count" id="missionListCount">...</span>
+  </div>
+
+  <div class="mission-list" id="missionList">
+    <div class="mission-item">
+      <div class="mission-description">جاري تحميل المهمات...</div>
+    </div>
+  </div>
+  <section class="mission-offers-section" aria-label="عروض">
+    <h3 class="mission-offers-title"><svg class="mission-offers-heading-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12a4 4 0 0 1 3.8 5l-1.2 4a2.5 2.5 0 0 1-4.2 1l-2.2-2H9.8l-2.2 2a2.5 2.5 0 0 1-4.2-1l-1.2-4A4 4 0 0 1 6 8Z"/><path d="M7 11v4M5 13h4M16.5 11.5h.01M19 14h.01"/></svg><span>عروض</span></h3>
+    <div class="mission-offers-grid">
+      <article class="mission-offer-card">
+        <div class="mission-offer-art"><svg class="mission-offer-svg" viewBox="0 0 32 32" aria-hidden="true"><path d="M7 8h18a5 5 0 0 1 4.7 6.5l-1.8 6a3 3 0 0 1-5 1.2L19 18h-6l-3.9 3.7a3 3 0 0 1-5-1.2l-1.8-6A5 5 0 0 1 7 8Z"/><path d="M10 11v7M6.5 14.5h7M21 12h.1M25 16h.1"/></svg><span class="mission-offer-soon">SOON</span></div>
+        <button class="mission-offer-button" type="button" disabled>SOON</button>
+      </article>
+      <article class="mission-offer-card">
+        <div class="mission-offer-art"><svg class="mission-offer-svg" viewBox="0 0 32 32" aria-hidden="true"><path d="M18 3c5 3 8 8 8 14l-8 8c-6 0-11-3-14-8 4-8 8-12 14-14Z"/><path d="m10 22-5 5M8 16l-5 1 4-7M17 24l-1 5 7-4"/><circle cx="19" cy="12" r="3"/></svg><span class="mission-offer-soon">SOON</span></div>
+        <button class="mission-offer-button" type="button" disabled>SOON</button>
+      </article>
+      <article class="mission-offer-card">
+        <div class="mission-offer-art"><svg class="mission-offer-svg" viewBox="0 0 32 32" aria-hidden="true"><path d="M4 20l2-8 5-4h10l5 4 2 8H4Z"/><path d="M8 20v3M24 20v3M9 12l2-4M23 12l-2-4"/><circle cx="10" cy="20" r="2.5"/><circle cx="22" cy="20" r="2.5"/></svg><span class="mission-offer-soon">SOON</span></div>
+        <button class="mission-offer-button" type="button" disabled>SOON</button>
+      </article>
+      <article class="mission-offer-card">
+        <div class="mission-offer-art"><svg class="mission-offer-svg" viewBox="0 0 32 32" aria-hidden="true"><path d="M5 5h9v9H5zM18 5h9v9h-9zM5 18h9v9H5zM18 18h9v9h-9z"/><path d="M9.5 9.5h.01M22.5 9.5h.01M9.5 22.5h.01M22.5 22.5h.01"/></svg><span class="mission-offer-soon">SOON</span></div>
+        <button class="mission-offer-button" type="button" disabled>SOON</button>
+      </article>
+    </div>
+  </section>
+</div>
+</div></section>
+</section>
+<section id="referralPage" style="display:none"><h2 class="rewards-heading" id="referralHeading">👥 الإحالات</h2><div class="referral-card"><h3 class="referral-title" id="referralInviteTitle">ادعُ أصدقاءك واربح</h3><p class="referral-description" id="referralDescription">صديقك يحصل على 30 نقطة وأنت تحصل على 50 نقطة عند إدخال رمز دعوتك.</p><div class="referral-link-row"><input class="referral-link" id="referralLink" type="text" readonly value="Loading..."><button class="referral-button" id="copyReferralButton" type="button" onclick="copyReferralLink()">📋 نسخ</button></div><div style="margin-top:14px;text-align:right"><label for="referralCodeInput" style="display:block;color:#b8c9dd;font-size:12px;margin-bottom:7px">هل لديك رمز دعوة؟ أدخله هنا لتحصل على 30 نقطة</label><input class="referral-link" id="referralCodeInput" type="text" maxlength="45" placeholder="OX-XXXXXXXX" autocomplete="off" style="width:100%;margin-bottom:8px"><button class="referral-button" id="applyReferralCodeButton" type="button" onclick="submitReferralCode()" style="width:100%">تفعيل رمز الدعوة (+30 نقطة)</button></div><button class="referral-button" id="shareReferralButton" type="button" onclick="shareReferralLink()" style="width:100%;margin-top:9px">↗ مشاركة الرابط</button><div class="referral-status" id="referralStatus" role="status"></div></div><div class="referral-stats"><div class="referral-stat"><div class="referral-stat-label" id="referralCountLabel">الإحالات الناجحة</div><div class="referral-stat-value" id="referralCount">0</div></div><div class="referral-stat"><div class="referral-stat-label" id="referralEarnedLabel">النقاط المكتسبة</div><div class="referral-stat-value" id="referralEarned">0</div></div></div><div class="referral-ranking"><h3 id="pointsRankingTitle">🏆 أفضل 10 حسب النقاط</h3><div id="pointsRanking"><div class="ranking-row">جاري التحميل...</div></div></div><div class="referral-ranking"><h3 id="referralRankingTitle">👥 أفضل 10 حسب الإحالات</h3><div id="referralRanking"><div class="ranking-row">جاري التحميل...</div></div></div></section>
+<footer>OXIDE HUB © 2026<br>Created by SKIMI_17</footer>
+</main>
 
 <div class="auth-modal" id="authModal" hidden role="dialog" aria-modal="true" aria-labelledby="authHeading">
  <div class="auth-card">
