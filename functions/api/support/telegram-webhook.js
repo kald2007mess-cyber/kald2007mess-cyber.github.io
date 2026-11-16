@@ -219,6 +219,7 @@ async function handleGiftMessage(message, env) {
                'telegram_gift', ?, ?, ?
         FROM users
         WHERE user_uuid = ?
+          AND changes() = 1
           AND EXISTS (
             SELECT 1 FROM telegram_gift_sessions
             WHERE admin_id = ? AND stage = 'points' AND target_user_id = ?
