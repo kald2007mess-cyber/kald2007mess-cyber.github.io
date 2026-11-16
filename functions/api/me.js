@@ -2,6 +2,7 @@
 import {
   getVisitor,
   createVisitorCookie,
+  createVisitorCookieForId,
   json
 } from "./_lib/session.js";
 
@@ -44,6 +45,7 @@ export async function onRequestGet({ request, env }) {
     }
 
     const shortId = "OX-" + userId.replace(/-/g, "").slice(0, 8).toUpperCase();
+    cookie = await createVisitorCookieForId(env, userId);
 
     const response = json({
       success: true,
