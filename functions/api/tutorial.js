@@ -6,7 +6,7 @@ const ALLOWED_PLATFORMS = new Set(["android", "ios", "beta"]);
 
 function parseRange(value, size) {
   if (!value) return null;
-  const match = /^bytes=(\\d*)-(\\d*)$/.exec(String(value).trim());
+  const match = /^bytes=(\d*)-(\d*)$/.exec(String(value).trim());
   if (!match || (!match[1] && !match[2])) return { invalid: true };
 
   let start;
@@ -30,9 +30,9 @@ function keyFromUrl(value, platform) {
   try {
     const url = new URL(String(value || ""));
     if (url.origin !== R2_PUBLIC_URL) return null;
-    const key = decodeURIComponent(url.pathname.replace(/^\\/+/, ""));
+    const key = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
     if (!key.startsWith(`tutorials/${platform}/`) ||
-        key.includes("..") || key.includes("\\\\")) return null;
+        key.includes("..") || key.includes("\\")) return null;
     return key;
   } catch {
     return null;
