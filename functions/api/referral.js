@@ -127,119 +127,94 @@ export async function onRequestGet({ request, env }) {
 }
 
 export async function onRequestPost({ request, env }) {
+  let cookie = null;
   try {
     if (!env.DB || !env.SESSION_SECRET) {
-      return json({
-        success: false,
-        error: "Server configuration missing"
-      }, 500);
+      return json({ success: false, error: "SERVER_CONFIGURATION_MISSING" }, 500);
     }
 
-    // منع تسجيل الإحالة لحساب لديه جلسة سابقة
-    const existingUser = await getVisitor(request, env);
+    const body = await request.json().catch(() => ({}));
+    const enteredCode = String(body.referrerId || body.code || "").trim().toUpperCase();
+    const uuidPattern = /^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/i;
+    let referrer = null;
 
-    if (existingUser) {
-      return json({
-        success: false,
-        error: "REFERRAL_NOT_ALLOWED_FOR_EXISTING_USER"
-      }, 403);
+    if (uuidPattern.test(enteredCode)) {
+      referrer = await env.DB.prepare(
+        "SELECT user_id FROM visitors WHERE UPPER(user_id) = ? LIMIT 1"
+      ).bind(enteredCode).first();
+    } else {
+      const match = enteredCode.match(/^OX-?([0-9A-F]{8})$/);
+      if (!match) {
+        return json({ success: false, error: "INVALID_REFERRAL" }, 400);
+      }
+      const matches = await env.DB.prepare(`
+        SELECT user_id FROM visitors
+        WHERE UPPER(SUBSTR(REPLACE(user_id, '-', ''), 1, 8)) = ?
+        LIMIT 2
+      `).bind(match[1]).all();
+      if ((matches.results || []).length === 1) referrer = matches.results[0];
+      else if ((matches.results || []).length > 1) {
+        return json({ success: false, error: "REFERRAL_CODE_AMBIGUOUS" }, 409);
+      }
     }
-
-    const body = await request.json();
-
-    const referrerId = String(
-      body.referrerId || ""
-    ).trim();
-
-    const uuidPattern =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-    if (!uuidPattern.test(referrerId)) {
-      return json({
-        success: false,
-        error: "INVALID_REFERRAL"
-      }, 400);
-    }
-
-    // التأكد من وجود صاحب رابط الدعوة
-    const referrer = await env.DB.prepare(`
-      SELECT user_id
-      FROM visitors
-      WHERE user_id = ?
-    `).bind(referrerId).first();
 
     if (!referrer) {
-      return json({
-        success: false,
-        error: "REFERRER_NOT_FOUND"
-      }, 404);
+      return json({ success: false, error: "REFERRER_NOT_FOUND" }, 404);
     }
 
-    // إنشاء حساب جديد
-    const cookie = await createVisitorCookie(env);
-
-    const match = cookie.match(
-      /^oxide_visitor=([^;]+)/
-    );
-
-    if (!match) {
-      throw new Error("Session creation failed");
+    let userId = await getVisitor(request, env);
+    if (!userId) {
+      cookie = await createVisitorCookie(env);
+      const match = cookie.match(/^oxide_visitor=([^;]+)/);
+      if (!match) throw new Error("Session creation failed");
+      userId = decodeURIComponent(match[1]).split(".")[0];
     }
 
-    const userId = decodeURIComponent(match[1]).split(".")[0];
-
-    if (userId === referrerId) {
-      return json({
-        success: false,
-        error: "SELF_REFERRAL_NOT_ALLOWED"
-      }, 400);
+    if (String(userId).toLowerCase() === String(referrer.user_id).toLowerCase()) {
+      return response({ success: false, error: "SELF_REFERRAL_NOT_ALLOWED" }, cookie, 400);
     }
 
-    const created = await env.DB.prepare(`
-      INSERT OR IGNORE INTO visitors
-      (user_id, progress, points, created_at)
+    const now = Math.floor(Date.now() / 1000);
+    await env.DB.prepare(`
+      INSERT OR IGNORE INTO visitors (user_id, progress, points, created_at)
       VALUES (?, 0, 0, ?)
-    `).bind(
-      userId,
-      Math.floor(Date.now() / 1000)
-    ).run();
+    `).bind(userId, now).run();
 
-    if (created.meta?.changes !== 1) {
-      return response({
-        success: false,
-        error: "VISITOR_ALREADY_EXISTS"
-      }, cookie, 409);
+    const already = await env.DB.prepare(
+      "SELECT id FROM referrals WHERE referred_id = ? LIMIT 1"
+    ).bind(userId).first();
+    if (already) {
+      return response({ success: false, error: "REFERRAL_ALREADY_USED" }, cookie, 409);
     }
 
-    // تسجيل الإحالة: Trigger قاعدة البيانات يضيف 15 نقطة
-    const result = await env.DB.prepare(`
-      INSERT OR IGNORE INTO referrals
-      (referrer_id, referred_id, points_awarded, created_at)
-      VALUES (?, ?, 15, ?)
-    `).bind(
-      referrerId,
-      userId,
-      Math.floor(Date.now() / 1000)
-    ).run();
+    // D1 batch is transactional: the referrer trigger awards 50 and the invited
+    // account receives 30 only when this one-time referral row is inserted.
+    const results = await env.DB.batch([
+      env.DB.prepare(`
+        INSERT OR IGNORE INTO referrals
+          (referrer_id, referred_id, points_awarded, created_at)
+        VALUES (?, ?, 50, ?)
+      `).bind(referrer.user_id, userId, now),
+      env.DB.prepare(`
+        UPDATE visitors SET points = points + 30
+        WHERE user_id = ?
+          AND EXISTS (SELECT 1 FROM referrals WHERE referred_id = ?)
+      `).bind(userId, userId)
+    ]);
 
-    if (result.meta?.changes !== 1) {
-      return response({
-        success: false,
-        error: "REFERRAL_NOT_REGISTERED"
-      }, cookie, 409);
+    if (Number(results?.[0]?.meta?.changes || 0) !== 1) {
+      return response({ success: false, error: "REFERRAL_ALREADY_USED" }, cookie, 409);
     }
 
     return response({
       success: true,
       registered: true,
-      pointsAwarded: 15,
+      invitedPointsAwarded: 30,
+      referrerPointsAwarded: 50,
       userId: shortId(userId)
     }, cookie);
-
   } catch (error) {
-    return json({
-      success: false,
-      error: "Could not register referral"
-    }, 500);
+    console.error("Referral registration failed:", error);
+    return response({ success: false, error: "Could not register referral" }, cookie, 500);
   }
 }
