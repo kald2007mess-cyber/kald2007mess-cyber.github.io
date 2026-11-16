@@ -200,7 +200,7 @@ export async function onRequestPost({ request, env }) {
         UPDATE visitors SET points = points + 30
         WHERE user_id = ?
           AND changes() = 1
-          AND EXISTS (SELECT 1 FROM referrals WHERE referred_id = ?)
+          AND changes() = 1\n          AND EXISTS (SELECT 1 FROM referrals WHERE referred_id = ?)
       `).bind(userId, userId),
       env.DB.prepare(`
         UPDATE referrals SET points_awarded = 50
