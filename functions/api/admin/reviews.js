@@ -33,46 +33,34 @@ async function ensureRedemptionOrdersTable(DB) {
   }
 }
 
-async function ensureNotificationsTable(DB) {
+async function notifyUser(DB, userUuid, type, title, body) {
   await DB.prepare(`
-    CREATE TABLE IF NOT EXISTS oxide_notifications (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id TEXT NOT NULL,
-      type TEXT NOT NULL,
-      title TEXT NOT NULL,
-      body TEXT NOT NULL DEFAULT '',
-      reward_points INTEGER NOT NULL DEFAULT 0,
-      created_at INTEGER NOT NULL,
-      read_at INTEGER,
-      claimed_at INTEGER,
-      claim_token TEXT
-    )
-  `).run();
-  await DB.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_oxide_notifications_user
-    ON oxide_notifications(user_id, created_at DESC)
-  `).run();
-}
-
-async function notifyUser(DB, userId, type, title, body) {
-  await ensureNotificationsTable(DB);
-  await DB.prepare(`
-    INSERT INTO oxide_notifications(user_id,type,title,body,reward_points,created_at)
-    VALUES(?,?,?,?,0,?)
-  `).bind(userId, type, title, body, Math.floor(Date.now() / 1000)).run();
+    INSERT INTO notifications
+      (user_uuid, type, title, body, reward_points, created_at)
+    VALUES (?, ?, ?, ?, 0, ?)
+  `).bind(userUuid, type, title, body, Math.floor(Date.now() / 1000)).run();
 }
 
 async function getReviewItems(DB, type) {
   if (type === "missions") {
     const result = await DB.prepare(`
-      SELECT s.id, s.user_id, s.mission_id, s.proof_file_id, s.created_at,
-             m.title AS mission_title, m.reward_points,
-             v.points, v.created_at AS user_created_at,
-             CASE WHEN s.proof_file_id IS NOT NULL AND s.proof_file_id != ''
-                       AND s.proof_file_id != 'uploading' THEN 1 ELSE 0 END AS proof_available
+      SELECT
+        s.id,
+        s.user_uuid AS user_id,
+        s.mission_id,
+        s.proof_file_key AS proof_file_id,
+        s.created_at,
+        m.title AS mission_title,
+        m.reward_points,
+        u.points,
+        u.created_at AS user_created_at,
+        CASE WHEN s.proof_file_key IS NOT NULL
+                   AND s.proof_file_key != ''
+                   AND s.proof_file_key != 'uploading'
+             THEN 1 ELSE 0 END AS proof_available
       FROM mission_submissions s
-      JOIN oxide_admin_missions m ON m.id = s.mission_id
-      LEFT JOIN visitors v ON v.user_id = s.user_id
+      JOIN missions m ON m.id = s.mission_id
+      LEFT JOIN users u ON u.user_uuid = s.user_uuid
       WHERE s.status = 'pending'
       ORDER BY s.created_at ASC, s.id ASC
       LIMIT 50
@@ -81,14 +69,23 @@ async function getReviewItems(DB, type) {
   }
 
   const result = await DB.prepare(`
-    SELECT o.id, o.user_id, o.display_id, o.offer_id, o.offer_name,
-           o.points_cost, o.user_uuid_input, o.created_at,
-           v.points, v.created_at AS user_created_at,
-           (SELECT COUNT(*) FROM mission_submissions s
-             WHERE s.user_id = o.user_id AND s.status = 'approved') AS completed_missions,
-           (SELECT COUNT(*) FROM referrals r WHERE r.referrer_id = o.user_id) AS invited_friends
+    SELECT
+      o.id,
+      o.user_id,
+      o.display_id,
+      o.offer_id,
+      o.offer_name,
+      o.points_cost,
+      o.user_uuid_input,
+      o.created_at,
+      u.points,
+      u.created_at AS user_created_at,
+      (SELECT COUNT(*) FROM mission_submissions s
+        WHERE s.user_uuid = o.user_id AND s.status = 'approved') AS completed_missions,
+      (SELECT COUNT(*) FROM referrals r
+        WHERE r.referrer_uuid = o.user_id AND r.status = 'confirmed') AS invited_friends
     FROM oxide_redemption_orders o
-    LEFT JOIN visitors v ON v.user_id = o.user_id
+    LEFT JOIN users u ON u.user_uuid = o.user_id
     WHERE o.status = 'pending'
     ORDER BY o.created_at ASC, o.id ASC
     LIMIT 50
@@ -96,12 +93,14 @@ async function getReviewItems(DB, type) {
   return result.results || [];
 }
 
-async function reviewMission(DB, id, decision) {
+async function reviewMission(DB, id, decision, adminTelegramId) {
   const submission = await DB.prepare(`
-    SELECT s.id, s.user_id, s.mission_id, s.status, m.title, m.reward_points
+    SELECT s.id, s.user_uuid, s.mission_id, s.status,
+           m.title, m.reward_points
     FROM mission_submissions s
-    JOIN oxide_admin_missions m ON m.id = s.mission_id
+    JOIN missions m ON m.id = s.mission_id
     WHERE s.id = ?
+    LIMIT 1
   `).bind(id).first();
 
   if (!submission || submission.status !== "pending") {
@@ -112,19 +111,44 @@ async function reviewMission(DB, id, decision) {
   const reward = Math.max(0, Math.floor(Number(submission.reward_points) || 0));
 
   if (decision === "approve") {
+    const user = await DB.prepare(`
+      SELECT user_uuid FROM users
+      WHERE user_uuid = ? AND status = 'active'
+      LIMIT 1
+    `).bind(submission.user_uuid).first();
+    if (!user) return { success: false, status: 404, error: "USER_NOT_AVAILABLE" };
+
     const results = await DB.batch([
       DB.prepare(`
-        UPDATE visitors SET points = points + ?
-        WHERE user_id = ? AND EXISTS (
-          SELECT 1 FROM mission_submissions
-          WHERE id = ? AND status = 'pending'
-        )
-      `).bind(reward, submission.user_id, id),
+        UPDATE users
+        SET points = COALESCE(points, 0) + ?, updated_at = ?
+        WHERE user_uuid = ? AND status = 'active'
+          AND EXISTS (
+            SELECT 1 FROM mission_submissions
+            WHERE id = ? AND status = 'pending'
+          )
+      `).bind(reward, now, submission.user_uuid, id),
       DB.prepare(`
         UPDATE mission_submissions
-        SET status = 'approved', reviewed_at = ?
+        SET status = 'approved', reviewed_at = ?, reviewer_telegram_id = ?
         WHERE id = ? AND status = 'pending'
-      `).bind(now, id)
+          AND EXISTS (
+            SELECT 1 FROM users WHERE user_uuid = ? AND status = 'active'
+          )
+      `).bind(now, String(adminTelegramId), id, submission.user_uuid),
+      DB.prepare(`
+        INSERT INTO point_ledger
+          (user_uuid, delta, balance_after, reason, reference_type,
+           reference_id, admin_telegram_id, created_at)
+        SELECT user_uuid, ?, points, 'mission_approved',
+               'mission_submission', ?, ?, ?
+        FROM users
+        WHERE user_uuid = ?
+          AND EXISTS (
+            SELECT 1 FROM mission_submissions
+            WHERE id = ? AND status = 'approved'
+          )
+      `).bind(reward, String(id), String(adminTelegramId), now, submission.user_uuid, id)
     ]);
 
     if (Number(results[0]?.meta?.changes || 0) !== 1 ||
@@ -133,36 +157,43 @@ async function reviewMission(DB, id, decision) {
     }
 
     try {
-      await notifyUser(DB, submission.user_id, "mission_approved",
+      await notifyUser(DB, submission.user_uuid, "mission_approved",
         "✅ تمت الموافقة على مهمتك",
         "تم قبول المهمة " + String(submission.title || "") +
         " وإضافة " + reward.toLocaleString() + " نقطة إلى رصيدك.");
-    } catch (error) { console.error("Mission approval notification failed", error); }
+    } catch (error) {
+      console.error("Mission approval notification failed", error);
+    }
     return { success: true, message: "تم قبول المهمة وإضافة " + reward.toLocaleString() + " نقطة للمستخدم." };
   }
 
   const rejected = await DB.prepare(`
-    UPDATE mission_submissions SET status = 'rejected', reviewed_at = ?
+    UPDATE mission_submissions
+    SET status = 'rejected', reviewed_at = ?, reviewer_telegram_id = ?
     WHERE id = ? AND status = 'pending'
-  `).bind(now, id).run();
+  `).bind(now, String(adminTelegramId), id).run();
 
   if (Number(rejected.meta?.changes || 0) !== 1) {
     return { success: false, status: 409, error: "REQUEST_ALREADY_REVIEWED" };
   }
 
   try {
-    await notifyUser(DB, submission.user_id, "mission_rejected",
+    await notifyUser(DB, submission.user_uuid, "mission_rejected",
       "❌ تم رفض إثبات المهمة",
       "لم يتم قبول إثبات المهمة " + String(submission.title || "") +
       ". راجع المطلوب وأرسل إثباتًا صحيحًا جديدًا.");
-  } catch (error) { console.error("Mission rejection notification failed", error); }
+  } catch (error) {
+    console.error("Mission rejection notification failed", error);
+  }
   return { success: true, message: "تم رفض المهمة. يمكن للمستخدم إرسال دليل جديد." };
 }
 
-async function reviewRedemption(DB, id, decision) {
+async function reviewRedemption(DB, id, decision, adminTelegramId) {
   const order = await DB.prepare(`
     SELECT id, user_id, display_id, offer_name, points_cost, status
-    FROM oxide_redemption_orders WHERE id = ?
+    FROM oxide_redemption_orders
+    WHERE id = ?
+    LIMIT 1
   `).bind(id).first();
 
   if (!order || order.status !== "pending") {
@@ -174,7 +205,8 @@ async function reviewRedemption(DB, id, decision) {
 
   if (decision === "approve") {
     const updated = await DB.prepare(`
-      UPDATE oxide_redemption_orders SET status = 'approved', reviewed_at = ?
+      UPDATE oxide_redemption_orders
+      SET status = 'approved', reviewed_at = ?
       WHERE id = ? AND status = 'pending'
     `).bind(now, id).run();
 
@@ -187,7 +219,9 @@ async function reviewRedemption(DB, id, decision) {
         "✅ تمت الموافقة على طلب الاستبدال",
         "تم قبول طلبك رقم #" + id + " للعرض " +
         String(order.offer_name) + ". تم اعتماد الاستبدال من الإدارة.");
-    } catch (error) { console.error("Redemption approval notification failed", error); }
+    } catch (error) {
+      console.error("Redemption approval notification failed", error);
+    }
     return { success: true, message: "تمت الموافقة على طلب الاستبدال." };
   }
 
@@ -199,11 +233,9 @@ async function reviewRedemption(DB, id, decision) {
       WHERE id = ? AND status = 'pending'
     `).bind(now, refundToken, id),
     DB.prepare(`
-      UPDATE visitors SET points = points + (
-        SELECT points_cost FROM oxide_redemption_orders
-        WHERE id = ? AND refund_token = ?
-      )
-      WHERE user_id = (
+      UPDATE users
+      SET points = COALESCE(points, 0) + ?, updated_at = ?
+      WHERE user_uuid = (
         SELECT user_id FROM oxide_redemption_orders
         WHERE id = ? AND refund_token = ?
       )
@@ -211,7 +243,19 @@ async function reviewRedemption(DB, id, decision) {
         SELECT 1 FROM oxide_redemption_orders
         WHERE id = ? AND refund_token = ?
       )
-    `).bind(id, refundToken, id, refundToken, id, refundToken)
+    `).bind(points, now, id, refundToken, id, refundToken),
+    DB.prepare(`
+      INSERT INTO point_ledger
+        (user_uuid, delta, balance_after, reason, reference_type,
+         reference_id, admin_telegram_id, created_at)
+      SELECT user_uuid, ?, points, 'redemption_refund',
+             'redemption_order', ?, ?, ?
+      FROM users
+      WHERE user_uuid = (
+        SELECT user_id FROM oxide_redemption_orders
+        WHERE id = ? AND refund_token = ?
+      )
+    `).bind(points, String(id), String(adminTelegramId), now, id, refundToken)
   ]);
 
   if (Number(results[0]?.meta?.changes || 0) !== 1 ||
@@ -224,7 +268,9 @@ async function reviewRedemption(DB, id, decision) {
       "❌ تم رفض طلب الاستبدال",
       "تم رفض طلبك رقم #" + id + " للعرض " + String(order.offer_name) +
       " وإعادة " + points.toLocaleString() + " نقطة إلى رصيدك.");
-  } catch (error) { console.error("Redemption rejection notification failed", error); }
+  } catch (error) {
+    console.error("Redemption rejection notification failed", error);
+  }
   return { success: true, message: "تم رفض الطلب وإعادة " + points.toLocaleString() + " نقطة للمستخدم." };
 }
 
@@ -233,17 +279,18 @@ async function getProofResponse(env, initData, submissionId) {
   if (!auth.ok) return adminAuthResponse(auth);
 
   const row = await env.DB.prepare(`
-    SELECT proof_file_id FROM mission_submissions
+    SELECT proof_file_key
+    FROM mission_submissions
     WHERE id = ? AND status = 'pending'
   `).bind(submissionId).first();
 
-  if (!row?.proof_file_id || row.proof_file_id === "uploading") {
+  if (!row?.proof_file_key || row.proof_file_key === "uploading") {
     return json({ success: false, error: "PROOF_NOT_FOUND" }, 404);
   }
 
   const infoResponse = await fetch(
     "https://api.telegram.org/bot" + env.TELEGRAM_BOT_TOKEN +
-    "/getFile?file_id=" + encodeURIComponent(row.proof_file_id)
+    "/getFile?file_id=" + encodeURIComponent(row.proof_file_key)
   );
   const info = await infoResponse.json();
   const filePath = info?.result?.file_path;
@@ -307,17 +354,17 @@ export async function onRequestPost({ request, env }) {
       }
       if (type === "redemptions") await ensureRedemptionOrdersTable(env.DB);
       const result = type === "missions"
-        ? await reviewMission(env.DB, id, decision)
-        : await reviewRedemption(env.DB, id, decision);
+        ? await reviewMission(env.DB, id, decision, auth.telegramId)
+        : await reviewRedemption(env.DB, id, decision, auth.telegramId);
       return json(result, result.status || (result.success ? 200 : 400));
     }
 
     return json({ success: false, error: "INVALID_ACTION" }, 400);
   } catch (error) {
+    console.error("Admin reviews failed:", error);
     return json({
       success: false,
-      error: "ADMIN_REVIEWS_ERROR",
-      details: String(error?.message || error)
+      error: "ADMIN_REVIEWS_ERROR"
     }, 500);
   }
 }
