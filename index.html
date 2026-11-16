@@ -6,7 +6,8 @@
 <title>OXIDE HUB</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;font-family:Arial,sans-serif;color:white;text-align:center;background:linear-gradient(rgba(3,8,22,.68),rgba(3,8,22,.88)),url("background.png") center/cover fixed;background-size:auto,105% 105%;padding:25px 12px;animation:backgroundDrift 35s ease-in-out infinite alternate;isolation:isolate}
+html{min-height:100%;background-color:#030816}
+body{margin:0;min-height:100vh;background-color:#030816;font-family:Arial,sans-serif;color:white;text-align:center;background-image:linear-gradient(rgba(3,8,22,.68),rgba(3,8,22,.88)),url("background.png");background-position:center,center;background-repeat:no-repeat;background-attachment:scroll,fixed;background-size:auto,105% 105%;padding:25px 12px;animation:backgroundDrift 35s ease-in-out infinite alternate;isolation:isolate}
 @keyframes backgroundDrift{from{background-position:center,48% 48%}to{background-position:center,52% 52%}}
 .stars{position:fixed;inset:-100px;z-index:-1;pointer-events:none;opacity:.25;background-image:radial-gradient(2px 2px at 30px 40px,#fff,transparent),radial-gradient(1px 1px at 100px 130px,#fff,transparent),radial-gradient(2px 2px at 190px 80px,#54caff,transparent),radial-gradient(1px 1px at 250px 190px,#fff,transparent),radial-gradient(2px 2px at 320px 40px,#fff,transparent);background-size:350px 250px;animation:starMove 65s linear infinite}
 @keyframes starMove{from{transform:translate(0,0)}to{transform:translate(-100px,80px)}}
