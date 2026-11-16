@@ -1,4 +1,5 @@
 import { getVisitor, json } from "../_lib/session.js";
+import { ensureMissionColumns } from "../_lib/mission-schema.js";
 
 export async function onRequestGet({ request, env }) {
   try {
@@ -20,12 +21,15 @@ export async function onRequestGet({ request, env }) {
       return json({ error: "USER_NOT_AVAILABLE" }, 404);
     }
 
+    await ensureMissionColumns(env.DB);
+
     const missionsResult = await env.DB.prepare(`
       SELECT
         m.id,
         m.title,
         m.platform,
         m.description,
+        m.target_url,
         m.reward_points,
         COALESCE(s.status, 'not_submitted') AS status
       FROM missions m
@@ -33,7 +37,7 @@ export async function onRequestGet({ request, env }) {
         ON s.mission_id = m.id
         AND s.user_uuid = ?
       WHERE m.enabled = 1
-      ORDER BY m.id ASC
+      ORDER BY m.sort_order ASC, m.id ASC
     `).bind(userId).all();
 
     const missions = (missionsResult.results || []).map(mission => ({
@@ -41,8 +45,7 @@ export async function onRequestGet({ request, env }) {
       title: mission.title,
       platform: mission.platform,
       description: mission.description,
-      // The current D1 missions table has no target_url column.
-      targetUrl: "",
+      targetUrl: mission.target_url || "",
       rewardPoints: Number(mission.reward_points || 0),
       status: mission.status || "not_submitted"
     }));
