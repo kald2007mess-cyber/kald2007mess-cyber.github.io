@@ -44,7 +44,8 @@ export async function onRequestPost({ request, env }) {
       totalPoints,
       referrals,
       pendingRewards,
-      pendingMissions
+      pendingMissions,
+      downloads
     ] = await Promise.all([
       count(env.DB, "SELECT COUNT(*) AS total FROM users"),
       count(env.DB, "SELECT COUNT(*) AS total FROM users WHERE created_at >= ?", todayStart),
@@ -68,8 +69,7 @@ export async function onRequestPost({ request, env }) {
         referrals,
         pendingRewards,
         pendingMissions,
-        // No download analytics table exists in the current D1 schema.
-        downloads: 0
+        downloads
       }
     });
   } catch (error) {
