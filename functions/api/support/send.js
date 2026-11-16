@@ -48,6 +48,18 @@ export async function onRequestPost({ request, env }) {
       return json({ error: "CONVERSATION_CREATE_FAILED" }, 500);
     }
 
+    const recent = await env.DB.prepare(`
+      SELECT COUNT(*) AS total
+      FROM support_messages
+      WHERE conversation_id = ?
+        AND sender = 'user'
+        AND created_at >= ?
+    `).bind(conversation.id, now - 60).first();
+
+    if (Number(recent?.total || 0) >= 5) {
+      return json({ error: "SUPPORT_RATE_LIMIT" }, 429);
+    }
+
     await env.DB.prepare(`
       INSERT INTO support_messages
         (conversation_id, sender, message_type, message_text, created_at)
