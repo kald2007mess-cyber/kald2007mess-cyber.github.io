@@ -32,6 +32,10 @@ async function ensureOrdersTable(DB) {
     CREATE INDEX IF NOT EXISTS idx_oxide_redemption_user
     ON oxide_redemption_orders(user_id, created_at DESC)
   `).run();
+  const columns = await DB.prepare("PRAGMA table_info(oxide_redemption_orders)").all();
+  if (!(columns.results || []).some(column => column.name === "user_uuid_input")) {
+    await DB.prepare("ALTER TABLE oxide_redemption_orders ADD COLUMN user_uuid_input TEXT").run();
+  }
 }
 
 async function getUser(request, env) {
