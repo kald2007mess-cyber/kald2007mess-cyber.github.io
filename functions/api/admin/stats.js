@@ -2,6 +2,7 @@ import {
   authorizeAdmin,
   adminAuthResponse
 } from "../_lib/admin-auth.js";
+import { ensurePlatformTables } from "../_lib/platform-schema.js";
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -29,6 +30,8 @@ export async function onRequestPost({ request, env }) {
     const auth = await authorizeAdmin(String(body.initData || ""), env, "stats");
     if (!auth.ok) return adminAuthResponse(auth);
 
+    await ensurePlatformTables(env.DB);
+
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
     const todayStart = Math.floor(today.getTime() / 1000);
@@ -50,7 +53,8 @@ export async function onRequestPost({ request, env }) {
       count(env.DB, "SELECT COALESCE(SUM(points), 0) AS total FROM users"),
       count(env.DB, "SELECT COUNT(*) AS total FROM referrals"),
       count(env.DB, "SELECT COUNT(*) AS total FROM withdrawals WHERE status = 'pending'"),
-      count(env.DB, "SELECT COUNT(*) AS total FROM mission_submissions WHERE status = 'pending'")
+      count(env.DB, "SELECT COUNT(*) AS total FROM mission_submissions WHERE status = 'pending'"),
+      count(env.DB, "SELECT COUNT(*) AS total FROM platform_file_downloads")
     ]);
 
     return json({
