@@ -99,7 +99,7 @@ export async function onRequestGet({ request, env }) {
 
       FROM news_posts p
       ORDER BY p.created_at DESC
-      LIMIT 50
+      LIMIT 200
     `).bind(userId).all();
 
     return json({
