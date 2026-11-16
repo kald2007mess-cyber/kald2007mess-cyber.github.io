@@ -1400,7 +1400,7 @@ initializeOxideHub();
    const unlocked=progress>=REQUIRED;
    for(const [key,button] of Object.entries(buttons)){
      if(!button)continue;
-     const enabled=visibility[key]!==false;
+     const enabled=true;
      const available=enabled;
      button.classList.toggle("available",available);
      let soon=button.querySelector(".platform-soon-label");
@@ -1418,7 +1418,7 @@ initializeOxideHub();
    }
  }
  function openPlatform(key){
-   if(visibility[key]===false){return;}
+   
    
    const destination=destinations[key];if(destination)window.location.href=destination;
  }
