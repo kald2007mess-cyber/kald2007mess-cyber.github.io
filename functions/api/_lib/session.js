@@ -68,3 +68,9 @@ export async function createVisitorCookie(env) {
 
   return `oxide_visitor=${encodeURIComponent(id + "." + signature)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=315360000`;
 }
+
+export async function createVisitorCookieForId(env, id) {
+  if (!env.SESSION_SECRET || !id) throw new Error("Missing visitor identity configuration");
+  const signature = toBase64Url(await hmac(env.SESSION_SECRET, String(id)));
+  return `oxide_visitor=${encodeURIComponent(String(id) + "." + signature)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=315360000`;
+}
