@@ -181,7 +181,7 @@ export async function onRequestGet({ request, env }) {
     if (item.file_key && (
       !String(item.file_key).startsWith(platform + "/") ||
       String(item.file_key).includes("..") ||
-      String(item.file_key).includes("\\\\")
+      String(item.file_key).includes("\\")
     )) {
       return json({ success: false, error: "INVALID_FILE_KEY" }, 500);
     }
