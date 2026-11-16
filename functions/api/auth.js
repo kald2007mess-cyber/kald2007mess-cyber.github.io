@@ -119,7 +119,10 @@ export async function onRequestPost({ request, env }) {
     if (action === "register" || action === "login") {
       const username = String(body.username || "").trim().toLowerCase();
       const password = String(body.password || "");
-      if (!/^[a-z0-9_]{3,20}$/.test(username)) {
+      if (action === "register" && !/^[a-z0-9_]{3,20}$/.test(username)) {
+        return json({ success: false, error: "INVALID_USERNAME" }, 400);
+      }
+      if (!username || username.length > 254) {
         return json({ success: false, error: "INVALID_USERNAME" }, 400);
       }
       if (password.length < 8 || password.length > 128) {
