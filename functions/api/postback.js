@@ -289,6 +289,10 @@ export async function onRequestPost({ request, env }) {
       return new Response("ok", { status: 200 });
     }
 
+    // OXIDE HUB earning placements are currently disabled (SOON).
+    // Acknowledge provider callbacks without writing legacy tables or crediting points.
+    return new Response("ok", { status: 200 });
+
     const now = Math.floor(Date.now() / 1000);
 
     if (subId.startsWith("island_")) {
