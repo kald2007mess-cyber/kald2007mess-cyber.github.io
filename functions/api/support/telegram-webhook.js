@@ -274,73 +274,117 @@ async function handleGiftMessage(message, env) {
 async function handleRedemptionCallback(callback, env) {
   const message = callback.message;
   if (!message || String(message.chat?.id) !== String(env.TELEGRAM_ADMIN_ID)) {
-    await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id, text: "غير مصرح لك بهذا الإجراء" });
+    await telegram(env, "answerCallbackQuery", {
+      callback_query_id: callback.id,
+      text: "غير مصرح لك بهذا الإجراء"
+    });
     return;
   }
-  const match = String(callback.data || "").match(/^oxide_redeem:(approve|reject):(\d+)$/);
+
+  const match = String(callback.data || "").match(/^oxide_redeem:(approve|reject):(\\d+)$/);
   if (!match) return;
+
   const action = match[1];
   const orderId = Number(match[2]);
   const now = Math.floor(Date.now() / 1000);
   const order = await env.DB.prepare(`
     SELECT id, user_id, display_id, offer_name, points_cost, status
-    FROM oxide_redemption_orders WHERE id = ?
+    FROM oxide_redemption_orders
+    WHERE id = ?
+    LIMIT 1
   `).bind(orderId).first();
+
   if (!order || order.status !== "pending") {
-    await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id, text: "الطلب غير موجود أو تمت مراجعته مسبقًا" });
+    await telegram(env, "answerCallbackQuery", {
+      callback_query_id: callback.id,
+      text: "الطلب غير موجود أو تمت مراجعته مسبقاً"
+    });
     return;
   }
+
   let resultText = "";
   if (action === "approve") {
     const updated = await env.DB.prepare(`
-      UPDATE oxide_redemption_orders SET status = 'approved', reviewed_at = ?
+      UPDATE oxide_redemption_orders
+      SET status = 'approved', reviewed_at = ?
       WHERE id = ? AND status = 'pending'
     `).bind(now, orderId).run();
+
     if (Number(updated.meta?.changes || 0) !== 1) {
-      await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id, text: "تمت مراجعة الطلب مسبقًا" });
+      await telegram(env, "answerCallbackQuery", {
+        callback_query_id: callback.id,
+        text: "تمت مراجعة الطلب مسبقاً"
+      });
       return;
     }
+
     try {
-      await createMissionNotification(env, order.user_id, "redemption_approved",
+      await createMissionNotification(
+        env, order.user_id, "redemption_approved",
         "✅ تمت الموافقة على طلب الاستبدال",
-        "تم قبول طلبك رقم #" + orderId + " للعرض " + String(order.offer_name) +
-        ". تم اعتماد الاستبدال من الإدارة.");
-    } catch (error) { console.error("Redemption approval notification failed", error); }
+        "تم قبول طلبك رقم #" + orderId + " للعرض " +
+          String(order.offer_name) + ". تم اعتماد الاستبدال من الإدارة."
+      );
+    } catch (error) {
+      console.error("Redemption approval notification failed", error);
+    }
     resultText = "✅ تمت الموافقة على طلب الاستبدال.";
   } else {
     const refundToken = crypto.randomUUID();
+    const points = Math.max(0, Math.floor(Number(order.points_cost) || 0));
     const results = await env.DB.batch([
       env.DB.prepare(`
-        UPDATE oxide_redemption_orders SET status = 'rejected', reviewed_at = ?, refund_token = ?
+        UPDATE oxide_redemption_orders
+        SET status = 'rejected', reviewed_at = ?, refund_token = ?
         WHERE id = ? AND status = 'pending'
       `).bind(now, refundToken, orderId),
       env.DB.prepare(`
-        UPDATE visitors SET points = points + (
-          SELECT points_cost FROM oxide_redemption_orders WHERE id = ? AND refund_token = ?
-        )
-        WHERE user_id = (
-          SELECT user_id FROM oxide_redemption_orders WHERE id = ? AND refund_token = ?
-        )
-        AND EXISTS (
-          SELECT 1 FROM oxide_redemption_orders WHERE id = ? AND refund_token = ?
-        )
-      `).bind(orderId, refundToken, orderId, refundToken, orderId, refundToken)
+        UPDATE users
+        SET points = COALESCE(points, 0) + ?, updated_at = ?
+        WHERE user_uuid = ? AND status = 'active'
+          AND EXISTS (
+            SELECT 1 FROM oxide_redemption_orders
+            WHERE id = ? AND refund_token = ?
+          )
+      `).bind(points, now, order.user_id, orderId, refundToken),
+      env.DB.prepare(`
+        INSERT INTO point_ledger
+          (user_uuid, delta, balance_after, reason, reference_type,
+           reference_id, admin_telegram_id, created_at)
+        SELECT user_uuid, ?, points, 'redemption_refund',
+               'redemption_order', ?, ?, ?
+        FROM users
+        WHERE user_uuid = ? AND status = 'active'
+          AND EXISTS (
+            SELECT 1 FROM oxide_redemption_orders
+            WHERE id = ? AND refund_token = ?
+          )
+      `).bind(points, String(orderId), String(env.TELEGRAM_ADMIN_ID), now, order.user_id, orderId, refundToken)
     ]);
-    const rejected = Number(results[0]?.meta?.changes || 0);
-    const refunded = Number(results[1]?.meta?.changes || 0);
-    if (rejected !== 1 || refunded !== 1) {
-      await telegram(env, "answerCallbackQuery", { callback_query_id: callback.id, text: "تعذر رفض الطلب أو تمت مراجعته مسبقًا" });
+
+    if (Number(results[0]?.meta?.changes || 0) !== 1 ||
+        Number(results[1]?.meta?.changes || 0) !== 1) {
+      await telegram(env, "answerCallbackQuery", {
+        callback_query_id: callback.id,
+        text: "تعذر إرجاع النقاط أو تمت مراجعة الطلب مسبقاً"
+      });
       return;
     }
+
     try {
-      await createMissionNotification(env, order.user_id, "redemption_rejected",
+      await createMissionNotification(
+        env, order.user_id, "redemption_rejected",
         "❌ تم رفض طلب الاستبدال",
-        "تم رفض طلبك رقم #" + orderId + " للعرض " + String(order.offer_name) +
-        " وإعادة " + Number(order.points_cost).toLocaleString() +
-        " نقطة إلى رصيدك.");
-    } catch (error) { console.error("Redemption rejection notification failed", error); }
-    resultText = "❌ تم رفض الطلب وإعادة " + Number(order.points_cost).toLocaleString() + " نقطة للمستخدم.";
+        "تم رفض طلبك رقم #" + orderId + " للعرض " +
+          String(order.offer_name) + " وإعادة " +
+          points.toLocaleString() + " نقطة إلى رصيدك."
+      );
+    } catch (error) {
+      console.error("Redemption rejection notification failed", error);
+    }
+    resultText = "❌ تم رفض الطلب وإعادة " + points.toLocaleString() + " نقطة للمستخدم.";
   }
+
   await telegram(env, "answerCallbackQuery", {
     callback_query_id: callback.id,
     text: action === "approve" ? "تمت الموافقة ✅" : "تم الرفض وإرجاع النقاط ❌"
@@ -348,7 +392,7 @@ async function handleRedemptionCallback(callback, env) {
   await telegram(env, "editMessageText", {
     chat_id: message.chat.id,
     message_id: message.message_id,
-    text: (message.text || "") + "\n\n" + resultText,
+    text: (message.text || "") + "\\n\\n" + resultText,
     reply_markup: { inline_keyboard: [] }
   });
 }
