@@ -1,5 +1,6 @@
 
 import { json, getVisitor } from "./_lib/session.js";
+import { ensurePlatformTables } from "./_lib/platform-schema.js";
 
 function parseRange(rangeHeader, size) {
   if (!rangeHeader) return null;
@@ -108,6 +109,8 @@ export async function onRequestGet({ request, env }) {
       }, 500);
     }
 
+    await ensurePlatformTables(env.DB);
+
     const visitorId = await getVisitor(request, env);
 
     if (!visitorId) {
@@ -118,9 +121,9 @@ export async function onRequestGet({ request, env }) {
     }
 
     const visitor = await env.DB.prepare(`
-      SELECT user_id
-      FROM visitors
-      WHERE user_id = ?
+      SELECT user_uuid
+      FROM users
+      WHERE user_uuid = ? AND status = 'active'
     `).bind(visitorId).first();
 
     if (!visitor) {
