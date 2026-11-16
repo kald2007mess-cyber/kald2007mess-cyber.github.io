@@ -15,7 +15,7 @@ function json(data, status = 200) {
 }
 
 function validTelegramId(value) {
-  return /^\\d{5,20}$/.test(String(value || ""));
+  return /^\d{5,20}$/.test(String(value || ""));
 }
 
 export async function onRequestPost({ request, env }) {
