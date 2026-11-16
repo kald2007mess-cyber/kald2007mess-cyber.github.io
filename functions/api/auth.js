@@ -87,16 +87,7 @@ async function currentPoints(DB, id) {
   const row = await DB.prepare("SELECT points FROM visitors WHERE user_id = ?").bind(id).first();
   return Number(row?.points || 0);
 }
-async function successFor(DB, id, cookie, method) {
-  return makeResponse({
-    success: true,
-    authenticated: true,
-    method,
-    userId: id,
-    displayId: displayId(id),
-    points: await currentPoints(DB, id)
-  }, cookie || await createVisitorCookieForId({ SESSION_SECRET: "" }, id));
-}
+
 export async function onRequestGet({ env }) {
   try {
     if (!env.DB || !env.SESSION_SECRET) return json({ success: false, error: "SERVER_CONFIGURATION_MISSING" }, 500);
