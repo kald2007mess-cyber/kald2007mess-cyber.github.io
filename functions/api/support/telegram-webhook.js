@@ -766,13 +766,11 @@ export async function onRequestPost({ request, env }) {
     }
 
     if (update.message) {
-      // أمر إرسال هدايا النقاط أولاً، ثم نشر الأخبار، ثم الدعم.
+      // Handle point gifts and support replies. News management remains
+      // disabled until its tables are added through a reviewed migration.
       const giftHandled = await handleGiftMessage(update.message, env);
       if (!giftHandled) {
-        const newsHandled = await handleNewsMessage(update.message, env);
-        if (!newsHandled) {
-          await handleSupportReply(update.message, env);
-        }
+        await handleSupportReply(update.message, env);
       }
 
       return json({ success: true });
