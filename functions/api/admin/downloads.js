@@ -1,4 +1,5 @@
 import { json } from "../_lib/session.js";
+import { ensurePlatformTables } from "../_lib/platform-schema.js";
 import {
   authorizeAdmin,
   adminAuthResponse
@@ -871,6 +872,8 @@ export async function onRequestPost({ request, env }) {
     if (!env.DB || !env.DOWNLOADS_BUCKET) {
       return json({ success: false, error: "SERVER_CONFIG" }, 500);
     }
+
+    await ensurePlatformTables(env.DB);
 
     const contentType = request.headers.get("Content-Type") || "";
 
