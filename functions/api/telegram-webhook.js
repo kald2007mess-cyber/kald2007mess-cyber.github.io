@@ -202,6 +202,7 @@ export async function onRequestPost({ request, env }) {
                  'mission_submission', ?, ?, ?
           FROM users
           WHERE user_uuid = ?
+            AND changes() = 1
             AND EXISTS (
               SELECT 1 FROM mission_submissions
               WHERE id = ? AND status = 'approved'
