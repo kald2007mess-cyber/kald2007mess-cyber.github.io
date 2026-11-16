@@ -35,14 +35,14 @@ export async function onRequestPost({ request, env }) {
     if (String(message.from?.id) !== String(env.TELEGRAM_ADMIN_ID)) return new Response("ok");
 
     const chatId = message.chat.id;
-    const command = message.text.trim().split(/\\s+/)[0].split("@")[0].toLowerCase();
+    const command = message.text.trim().split(/\s+/)[0].split("@")[0].toLowerCase();
 
     if (command === "/start") {
       await sendMessage(env, chatId,
-        "🚀 مرحبًا بك في لوحة إدارة OXIDE HUB!\\n\\n" +
-        "📊 الأوامر المتاحة:\\n" +
-        "/stats - إحصائيات الموقع\\n" +
-        "/visitors - عدد المستخدمين\\n" +
+        "🚀 مرحبًا بك في لوحة إدارة OXIDE HUB!\n\n" +
+        "📊 الأوامر المتاحة:\n" +
+        "/stats - إحصائيات الموقع\n" +
+        "/visitors - عدد المستخدمين\n" +
         "/rewards - مجموع النقاط");
     } else if (command === "/stats" || command === "/visitors" || command === "/rewards") {
       const visitors = await env.DB.prepare("SELECT COUNT(*) AS total FROM users").first();
@@ -66,12 +66,12 @@ export async function onRequestPost({ request, env }) {
         await sendMessage(env, chatId, `⭐ مجموع النقاط الحالية: ${Number(totalPoints?.total || 0).toLocaleString()}`);
       } else {
         await sendMessage(env, chatId,
-          "📊 OXIDE HUB STATISTICS\\n\\n" +
-          `👥 إجمالي المستخدمين: ${Number(visitors?.total || 0)}\\n` +
-          `🆕 مستخدمو اليوم: ${Number(todayVisitors?.total || 0)}\\n\\n` +
-          `📺 الإعلانات المسجلة كمؤكدة: ${Number(ads?.total || 0)}\\n` +
-          `🎯 إعلانات PTC: ${Number(ptc?.total || 0)}\\n` +
-          `📅 إعلانات اليوم: ${Number(todayAds?.total || 0)}\\n\\n` +
+          "📊 OXIDE HUB STATISTICS\n\n" +
+          `👥 إجمالي المستخدمين: ${Number(visitors?.total || 0)}\n` +
+          `🆕 مستخدمو اليوم: ${Number(todayVisitors?.total || 0)}\n\n` +
+          `📺 الإعلانات المسجلة كمؤكدة: ${Number(ads?.total || 0)}\n` +
+          `🎯 إعلانات PTC: ${Number(ptc?.total || 0)}\n` +
+          `📅 إعلانات اليوم: ${Number(todayAds?.total || 0)}\n\n` +
           `⭐ مجموع النقاط: ${Number(totalPoints?.total || 0).toLocaleString()}`);
       }
     }
