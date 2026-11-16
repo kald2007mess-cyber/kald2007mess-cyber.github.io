@@ -184,46 +184,19 @@ export async function authorizeAdmin(
     };
   }
 
-  let deputy;
-
-  try {
-    deputy = await env.DB.prepare(`
-      SELECT telegram_id, active
-      FROM oxide_admin_deputies
-      WHERE telegram_id = ?
-      LIMIT 1
-    `).bind(telegramId).first();
-  } catch {
-    return {
-      ok: false,
-      status: 500,
-      error: "DEPUTY_LOOKUP_FAILED"
-    };
-  }
-
-  if (!deputy || Number(deputy.active) !== 1) {
-    return {
-      ok: false,
-      status: 403,
-      error: "DEPUTY_INACTIVE_OR_NOT_FOUND"
-    };
-  }
-
   let permissions = [];
 
   try {
     const result = await env.DB.prepare(`
       SELECT permission
-      FROM oxide_admin_deputy_permissions
-      WHERE telegram_id = ?
+      FROM admin_permissions
+      WHERE telegram_user_id = ? AND active = 1
       ORDER BY permission
     `).bind(telegramId).all();
 
     permissions = (result.results || [])
       .map(row => String(row.permission || ""))
-      .filter(permission =>
-        ALLOWED_PERMISSIONS.has(permission)
-      );
+      .filter(permission => ALLOWED_PERMISSIONS.has(permission));
   } catch {
     return {
       ok: false,
