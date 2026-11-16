@@ -187,19 +187,33 @@ export async function onRequestPost({ request, env }) {
       return response({ success: false, error: "REFERRAL_ALREADY_USED" }, cookie, 409);
     }
 
-    // D1 batch is transactional: the referrer trigger awards 50 and the invited
-    // account receives 30 only when this one-time referral row is inserted.
+    // Keep the existing database trigger compatible: insert the historical
+    // 15-point event, then top it up by 35 so the referrer receives exactly 50.
+    // Each follow-up statement runs only when the preceding statement changed one row.
     const results = await env.DB.batch([
       env.DB.prepare(`
         INSERT OR IGNORE INTO referrals
           (referrer_id, referred_id, points_awarded, created_at)
-        VALUES (?, ?, 50, ?)
+        VALUES (?, ?, 15, ?)
       `).bind(referrer.user_id, userId, now),
       env.DB.prepare(`
         UPDATE visitors SET points = points + 30
         WHERE user_id = ?
+          AND changes() = 1
           AND EXISTS (SELECT 1 FROM referrals WHERE referred_id = ?)
-      `).bind(userId, userId)
+      `).bind(userId, userId),
+      env.DB.prepare(`
+        UPDATE referrals SET points_awarded = 50
+        WHERE referred_id = ?
+          AND points_awarded = 15
+          AND changes() = 1
+      `).bind(userId),
+      env.DB.prepare(`
+        UPDATE visitors SET points = points + 35
+        WHERE user_id = ?
+          AND changes() = 1
+          AND EXISTS (SELECT 1 FROM referrals WHERE referred_id = ? AND points_awarded = 50)
+      `).bind(referrer.user_id, userId)
     ]);
 
     if (Number(results?.[0]?.meta?.changes || 0) !== 1) {
