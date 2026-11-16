@@ -56,7 +56,7 @@ export async function onRequestPost({ request, env }) {
     const matches = await env.DB.prepare(`
       SELECT user_uuid
       FROM users
-      WHERE UPPER(SUBSTR(REPLACE(public_id, '-', ''), 1, 8)) = ?
+      WHERE UPPER(REPLACE(public_id, 'OX-', '')) = ?
         AND status = 'active'
       LIMIT 2
     `).bind(prefix).all();
