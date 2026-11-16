@@ -101,9 +101,9 @@ async function handleGiftMessage(message, env) {
 
     if (/^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$/.test(raw)) {
       user = await env.DB.prepare(`
-        SELECT user_id, points, created_at
-        FROM visitors
-        WHERE UPPER(user_id) = ?
+        SELECT user_uuid AS user_id, points, created_at
+        FROM users
+        WHERE UPPER(user_uuid) = ?
         LIMIT 1
       `).bind(raw).first();
     } else {
@@ -115,9 +115,9 @@ async function handleGiftMessage(message, env) {
       }
 
       const matches = await env.DB.prepare(`
-        SELECT user_id, points, created_at
-        FROM visitors
-        WHERE UPPER(SUBSTR(REPLACE(user_id, '-', ''), 1, 8)) = ?
+        SELECT user_uuid AS user_id, points, created_at
+        FROM users
+        WHERE UPPER(SUBSTR(REPLACE(user_uuid, '-', ''), 1, 8)) = ?
         LIMIT 2
       `).bind(prefix).all();
 
@@ -177,8 +177,8 @@ async function handleGiftMessage(message, env) {
 
       const results = await env.DB.batch([
         env.DB.prepare(`
-          INSERT INTO oxide_notifications
-            (user_id, type, title, body, reward_points, created_at)
+          INSERT INTO notifications
+            (user_uuid, type, title, body, reward_points, created_at)
           SELECT target_user_id, 'reward', ?, ?, ?, ?
           FROM telegram_gift_sessions
           WHERE admin_id = ? AND stage = 'points' AND target_user_id = ?
