@@ -39,7 +39,14 @@ async function ensureAuthSchema(DB) {
     ["auth_created_at", "INTEGER"]
   ];
   for (const [name, type] of additions) {
-    if (!names.has(name)) await DB.prepare(`ALTER TABLE visitors ADD COLUMN ${name} ${type}`).run();
+    if (!names.has(name)) {
+      try {
+        await DB.prepare(`ALTER TABLE visitors ADD COLUMN ${name} ${type}`).run();
+      } catch (error) {
+        // A parallel first login may have added the same column already.
+        if (!String(error?.message || "").toLowerCase().includes("duplicate column")) throw error;
+      }
+    }
   }
   await DB.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_visitors_email_unique ON visitors(email COLLATE NOCASE) WHERE email IS NOT NULL").run();
   await DB.prepare("CREATE UNIQUE INDEX IF NOT EXISTS idx_visitors_google_sub_unique ON visitors(google_sub) WHERE google_sub IS NOT NULL").run();
