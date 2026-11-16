@@ -66,5 +66,5 @@ export async function createVisitorCookie(env) {
     await hmac(env.SESSION_SECRET, id)
   );
 
-  return `oxide_visitor=${encodeURIComponent(id + "." + signature)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=31536000`;
+  return `oxide_visitor=${encodeURIComponent(id + "." + signature)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=315360000`;
 }
