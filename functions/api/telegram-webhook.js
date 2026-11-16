@@ -149,15 +149,15 @@ export async function onRequestPost({ request, env }) {
     const submission = await env.DB.prepare(`
       SELECT
         s.id,
-        s.user_id,
+        s.user_uuid,
         s.mission_id,
         s.status,
         m.title,
         m.reward_points
       FROM mission_submissions s
-      INNER JOIN oxide_admin_missions m
-        ON m.id = s.mission_id
+      INNER JOIN missions m ON m.id = s.mission_id
       WHERE s.id = ?
+      LIMIT 1
     `).bind(submissionId).first();
 
     if (!submission) {
@@ -165,7 +165,6 @@ export async function onRequestPost({ request, env }) {
         callback_query_id: callback.id,
         text: "الطلب أو المهمة غير موجودة"
       });
-
       return json({ success: true });
     }
 
@@ -174,91 +173,114 @@ export async function onRequestPost({ request, env }) {
         callback_query_id: callback.id,
         text: "تمت مراجعة هذا الطلب مسبقاً"
       });
-
       return json({ success: true });
     }
 
     let resultText = "";
 
     if (action === "approve") {
-      const reward = Math.max(
-        0,
-        Math.floor(Number(submission.reward_points) || 0)
-      );
-
+      const reward = Math.max(0, Math.floor(Number(submission.reward_points) || 0));
       const user = await env.DB.prepare(`
-        SELECT user_id
-        FROM visitors
-        WHERE user_id = ?
-      `).bind(submission.user_id).first();
+        SELECT user_uuid
+        FROM users
+        WHERE user_uuid = ? AND status = 'active'
+        LIMIT 1
+      `).bind(submission.user_uuid).first();
 
       if (!user) {
         await telegram(env, "answerCallbackQuery", {
           callback_query_id: callback.id,
-          text: "المستخدم غير موجود"
+          text: "المستخدم غير موجود أو غير نشط"
         });
-
         return json({ success: true });
       }
 
       const results = await env.DB.batch([
         env.DB.prepare(`
-          UPDATE visitors
-          SET points = points + ?
-          WHERE user_id = ?
+          UPDATE users
+          SET points = COALESCE(points, 0) + ?, updated_at = ?
+          WHERE user_uuid = ? AND status = 'active'
             AND EXISTS (
-              SELECT 1
-              FROM mission_submissions
-              WHERE id = ?
-                AND status = 'pending'
+              SELECT 1 FROM mission_submissions
+              WHERE id = ? AND status = 'pending'
             )
         `).bind(reward, now, submission.user_uuid, submissionId),
 
         env.DB.prepare(`
           UPDATE mission_submissions
           SET status = 'approved',
-              reviewed_at = ?
-          WHERE id = ?
-            AND status = 'pending'
-        `).bind(now, submissionId)
+              reviewed_at = ?,
+              reviewer_telegram_id = ?
+          WHERE id = ? AND status = 'pending'
+            AND EXISTS (
+              SELECT 1 FROM users
+              WHERE user_uuid = ? AND status = 'active'
+            )
+        `).bind(now, String(env.TELEGRAM_ADMIN_ID), submissionId, submission.user_uuid),
+
+        env.DB.prepare(`
+          INSERT INTO point_ledger
+            (user_uuid, delta, balance_after, reason, reference_type,
+             reference_id, admin_telegram_id, created_at)
+          SELECT user_uuid, ?, points, 'mission_approved',
+                 'mission_submission', ?, ?, ?
+          FROM users
+          WHERE user_uuid = ?
+            AND EXISTS (
+              SELECT 1 FROM mission_submissions
+              WHERE id = ? AND status = 'approved'
+            )
+        `).bind(reward, String(submissionId), String(env.TELEGRAM_ADMIN_ID), now, submission.user_uuid, submissionId)
       ]);
 
       const awarded = Number(results[0]?.meta?.changes || 0);
       const updated = Number(results[1]?.meta?.changes || 0);
-
       if (awarded !== 1 || updated !== 1) {
-        return json({
-          success: true,
-          message: "Already reviewed"
-        });
+        return json({ success: true, message: "Already reviewed" });
       }
 
-      try{await createMissionNotification(env,submission.user_id,"mission_approved","✅ تمت الموافقة على مهمتك",`تم قبول مهمة ${submission.title} وإضافة ${reward} نقطة إلى رصيدك.`);}catch(error){console.error("Mission notification failed",error);}
+      try {
+        await createMissionNotification(
+          env,
+          submission.user_uuid,
+          "mission_approved",
+          "✅ تمت الموافقة على مهمتك",
+          `تم قبول مهمة ${submission.title} وإضافة ${reward} نقطة إلى رصيدك.`
+        );
+      } catch (error) {
+        console.error("Mission notification failed", error);
+      }
 
       resultText =
-        `✅ تمت الموافقة على مهمة ${submission.title}\n` +
+        `✅ تمت الموافقة على مهمة ${submission.title}\\n` +
         `🎁 تمت إضافة ${reward} نقطة للمستخدم.`;
-
     } else {
       const rejected = await env.DB.prepare(`
         UPDATE mission_submissions
         SET status = 'rejected',
-            reviewed_at = ?
-        WHERE id = ?
-          AND status = 'pending'
-      `).bind(now, submissionId).run();
+            reviewed_at = ?,
+            reviewer_telegram_id = ?
+        WHERE id = ? AND status = 'pending'
+      `).bind(now, String(env.TELEGRAM_ADMIN_ID), submissionId).run();
 
       if (Number(rejected.meta?.changes || 0) !== 1) {
-        return json({
-          success: true,
-          message: "Already reviewed"
-        });
+        return json({ success: true, message: "Already reviewed" });
       }
 
-      try{await createMissionNotification(env,submission.user_id,"mission_rejected","❌ تم رفض إثبات المهمة",`لم يتم قبول إثبات مهمة ${submission.title}. راجع المطلوب وأرسل إثباتًا صحيحًا جديدًا.`);}catch(error){console.error("Mission notification failed",error);}
+      try {
+        await createMissionNotification(
+          env,
+          submission.user_uuid,
+          "mission_rejected",
+          "❌ تم رفض إثبات المهمة",
+          `لم يتم قبول إثبات مهمة ${submission.title}. راجع المطلوب وأرسل إثباتًا صحيحًا جديدًا.`
+        );
+      } catch (error) {
+        console.error("Mission notification failed", error);
+      }
 
       resultText =
-        `❌ تم رفض مهمة ${submission.title}.\n` +
+        `❌ تم رفض مهمة ${submission.title}.\\n` +
         "يمكن للمستخدم المحاولة مجدداً.";
     }
 
