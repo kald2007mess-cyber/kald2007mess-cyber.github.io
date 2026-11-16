@@ -65,11 +65,11 @@ export async function onRequestPost({ request, env }) {
       const displayId = user.public_id ||
         ("OX-" + userId.replace(/-/g, "").slice(0, 8).toUpperCase());
       const telegramText =
-        "📩 OXIDE HUB SUPPORT\\n\\n" +
-        "👤 User: " + displayId + "\\n" +
-        "🧵 Conversation: #" + conversation.id + "\\n" +
-        "🔎 Reply to this message to answer the user.\\n\\n" +
-        "💬 Message:\\n" + message;
+        "📩 OXIDE HUB SUPPORT\n\n" +
+        "👤 User: " + displayId + "\n" +
+        "🧵 Conversation: #" + conversation.id + "\n" +
+        "🔎 Reply to this message to answer the user.\n\n" +
+        "💬 Message:\n" + message;
 
       try {
         const response = await fetch(
