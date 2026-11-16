@@ -92,7 +92,7 @@ export async function onRequestGet({ request, env }) {
     return json({
       success: true,
 
-      referralCode: userId,
+      referralCode: shortId(user.user_id),
 
       user: {
         userId: shortId(user.user_id),
