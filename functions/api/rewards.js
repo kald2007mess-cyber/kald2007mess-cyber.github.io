@@ -190,15 +190,15 @@ export async function onRequestPost({ request, env }) {
     `).bind(userUuid, -offer.points, debitBalance, String(orderId), now).run();
 
     const messageText =
-      "🎁 OXIDE HUB — طلب استبدال نقاط جديد\\n\\n" +
-      "🧾 الطلب: #" + orderId + "\\n" +
-      "👤 المستخدم: " + displayId + "\\n" +
-      "💰 رصيد المستخدم قبل الطلب: " + (debitBalance + offer.points).toLocaleString() + " نقطة\\n" +
-      "📋 المهمات المكتملة: " + completedMissions + "\\n" +
-      "👥 الأصدقاء المدعوون: " + invitedFriends + "\\n" +
-      "🎮 العرض: " + offer.name + "\\n" +
-      "🎁 النقاط المطلوبة: " + offer.points.toLocaleString() + "\\n" +
-      "🪪 UUID الذي أدخله: " + enteredUuid + "\\n\\n" +
+      "🎁 OXIDE HUB — طلب استبدال نقاط جديد\n\n" +
+      "🧾 الطلب: #" + orderId + "\n" +
+      "👤 المستخدم: " + displayId + "\n" +
+      "💰 رصيد المستخدم قبل الطلب: " + (debitBalance + offer.points).toLocaleString() + " نقطة\n" +
+      "📋 المهمات المكتملة: " + completedMissions + "\n" +
+      "👥 الأصدقاء المدعوون: " + invitedFriends + "\n" +
+      "🎮 العرض: " + offer.name + "\n" +
+      "🎁 النقاط المطلوبة: " + offer.points.toLocaleString() + "\n" +
+      "🪪 UUID الذي أدخله: " + enteredUuid + "\n\n" +
       "اختر الموافقة أو الرفض:";
 
     const tgResponse = await fetch(
