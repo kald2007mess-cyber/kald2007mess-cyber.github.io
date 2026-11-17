@@ -1404,7 +1404,7 @@ initializeOxideHub();
    const unlocked=progress>=REQUIRED;
    for(const [key,button] of Object.entries(buttons)){
      if(!button)continue;
-     const enabled=true;
+     const enabled=false;
      const available=enabled;
      button.classList.toggle("available",available);
      let soon=button.querySelector(".platform-soon-label");
